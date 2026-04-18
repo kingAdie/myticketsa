@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MyTicketSA — Events, Travel, Equipment & More</title>
+  <meta name="description" content="Book tickets, rent event equipment, plan travel and more. South Africa's trusted event platform."/>
+  <meta name="theme-color" content="#080808"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/home.css"/>
+</head>
+<body>
+
+<div id="fileBanner" style="display:none;background:#1e3a5f;border-bottom:1px solid rgba(59,130,246,.4);padding:10px 24px;text-align:center;font-size:.8125rem;color:#93C5FD;">
+  ⚠️ <strong>Run the backend first:</strong>
+  <code style="background:rgba(255,255,255,.1);padding:1px 7px;border-radius:4px;">cd backend &amp;&amp; npm run dev</code>
+  then visit <a href="http://localhost:5500" style="color:#60A5FA;text-decoration:underline;">http://localhost:5500</a>
+</div>
+<script>if(window.location.protocol==='file:')document.getElementById('fileBanner').style.display='block'</script>
+
+<!-- ═══════════════════════════════════════
+     NAVBAR
+     ═══════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-icon">🎟</div>
+      <div class="navbar__logo-wordmark">
+        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+      </div>
+    </a>
+
+    <!-- Category tabs — pill bar in centre -->
+    <nav class="navbar__cats" id="navCats" aria-label="Categories">
+      <button class="navbar__cat active" data-cat="events">
+        <span class="cat-icon">🎤</span>Events
+      </button>
+      <button class="navbar__cat" data-cat="travel">
+        <span class="cat-icon">✈️</span>Travel &amp; Tours
+      </button>
+      <button class="navbar__cat" data-cat="equipment" onclick="window.location.href='services/index.html'">
+        <span class="cat-icon">🧊</span>Event Equipment
+      </button>
+      <button class="navbar__cat" data-cat="marketing">
+        <span class="cat-icon">🏷️</span>Tags &amp; Marketing
+      </button>
+    </nav>
+
+    <!-- Auth actions — ALWAYS Login + Sign Up when logged out, user menu when in -->
+    <div class="navbar__actions" id="navbarActions"></div>
+
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════
+     HERO
+     ═══════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero__grid" aria-hidden="true"></div>
+
+  <div class="container hero__inner">
+    <div>
+      <div class="hero__tag"><span class="live"></span>South Africa's #1 Event Platform</div>
+
+      <h1 class="hero__h1">
+        Your Next<br/>
+        <span class="green">Experience</span><br/>
+        Starts Here.
+      </h1>
+
+      <p class="hero__sub">
+        Tickets, travel packages, rentable event equipment and branded materials —
+        everything you need for unforgettable South African experiences.
+      </p>
+
+      <div class="hero__cta">
+        <a href="#discover" class="btn btn-primary btn-lg">Explore Now</a>
+        <button class="btn btn-secondary btn-lg" id="heroListEventBtn">List Your Event</button>
+      </div>
+
+      <div class="hero__search" role="search">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="heroSearch" placeholder="Search events, tours, cities..." aria-label="Search"/>
+          <button class="btn btn-primary btn-sm" id="heroSearchBtn">Search</button>
+        </div>
+      </div>
+
+      <div class="hero__stats">
+        <div><div class="hero__stat-n">42K+</div><div class="hero__stat-l">Tickets Sold</div></div>
+        <div class="hero__stat-div"></div>
+        <div><div class="hero__stat-n">1,200+</div><div class="hero__stat-l">Events Listed</div></div>
+        <div class="hero__stat-div"></div>
+        <div><div class="hero__stat-n">4.9★</div><div class="hero__stat-l">Customer Rating</div></div>
+      </div>
+    </div>
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="hero__back-card">
+        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&q=70" alt=""/>
+      </div>
+      <div class="hero__main-card">
+        <div class="hero__main-card-img">
+          <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80" alt="Cape Town Jazz Festival"/>
+        </div>
+        <div class="hero__main-card-body">
+          <div class="hero__main-card-cat">🎵 Music · Cape Town</div>
+          <div class="hero__main-card-title">Cape Town Jazz Festival 2025</div>
+          <div class="hero__main-card-meta">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Friday, 28 March 2025</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>CTICC, Cape Town</span>
+          </div>
+          <div class="hero__main-card-foot">
+            <div class="hero__main-card-price">R 850</div>
+            <a href="event.html?id=EVT001" class="btn btn-primary btn-sm">Book Now</a>
+          </div>
+        </div>
+      </div>
+      <div class="hero__pill hero__pill--tl">
+        <div class="hero__pill-icon green">🎫</div>
+        <div><strong>240 sold</strong><small>in the last hour</small></div>
+      </div>
+      <div class="hero__pill hero__pill--br">
+        <div class="hero__pill-icon blue">⚡</div>
+        <div><strong>Instant</strong><small>confirmation</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     CATEGORY SHOWCASE
+     ═══════════════════════════════════════ -->
+<section class="categories-section" id="discover">
+  <div class="container">
+    <div class="categories-row">
+
+      <div class="cat-card" tabindex="0" role="button" aria-label="Browse Events" onclick="scrollToEvents('events')">
+        <div class="cat-icon">🎤</div>
+        <div>
+          <div class="cat-name">Events</div>
+          <div class="cat-desc">Concerts, sport, festivals &amp; shows</div>
+          <div class="cat-count">320+ listed</div>
+        </div>
+      </div>
+
+      <div class="cat-card" tabindex="0" role="button" aria-label="Travel & Tours" onclick="scrollToEvents('travel')">
+        <div class="cat-icon">✈️</div>
+        <div>
+          <div class="cat-name">Travel &amp; Tours</div>
+          <div class="cat-desc">Day trips, getaways &amp; packages</div>
+          <div class="cat-count">85+ packages</div>
+        </div>
+      </div>
+
+      <!-- Event Equipment → goes to services page -->
+      <div class="cat-card cat-card--equipment" tabindex="0" role="button" aria-label="Event Equipment" onclick="window.location.href='services/index.html'">
+        <div class="cat-icon">🧊</div>
+        <div>
+          <div class="cat-name">Event Equipment</div>
+          <div class="cat-desc">Freezers, toilets, tents, generators</div>
+          <div class="cat-count">12+ services</div>
+        </div>
+        <div class="cat-card__arrow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+      </div>
+
+      <div class="cat-card" tabindex="0" role="button" aria-label="Tags & Marketing" onclick="scrollToEvents('marketing')">
+        <div class="cat-icon">🏷️</div>
+        <div>
+          <div class="cat-name">Tags &amp; Marketing</div>
+          <div class="cat-desc">Wristbands, branded print &amp; merch</div>
+          <div class="cat-count">50+ products</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     TRUST MARQUEE
+     ═══════════════════════════════════════ -->
+<div class="trust-bar" aria-hidden="true">
+  <div class="trust-bar__track">
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Secure Payments</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Instant eTickets</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>24/7 Support</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">🇿🇦 Built in South Africa</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Verified Organisers</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">💳 PayFast Secured</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">100K+ Happy Customers</div>
+    <div class="trust-sep"></div>
+    <!-- duplicate for seamless loop -->
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Secure Payments</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Instant eTickets</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>24/7 Support</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">🇿🇦 Built in South Africa</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Verified Organisers</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">💳 PayFast Secured</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">100K+ Happy Customers</div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     EVENTS LISTING
+     ═══════════════════════════════════════ -->
+<section class="events-section" id="events">
+  <div class="container">
+    <div class="events-head">
+      <div>
+        <div class="eyebrow">Upcoming &amp; Featured</div>
+        <h2 class="section-title">Find Your Next <span class="accent">Experience</span></h2>
+      </div>
+      <div class="filter-row" id="categoryFilters" role="tablist">
+        <button class="filter-pill active" data-filter="all" role="tab">All</button>
+      </div>
+    </div>
+
+    <div class="grid-3 events-grid" id="eventsGrid" role="list">
+      <div class="event-card" aria-hidden="true"><div class="skeleton" style="height:200px;border-radius:var(--r4) var(--r4) 0 0"></div><div style="padding:var(--s3)"><div class="skeleton" style="height:11px;width:45%;margin-bottom:12px"></div><div class="skeleton" style="height:17px;margin-bottom:10px"></div><div class="skeleton" style="height:11px;width:70%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:60%"></div></div></div>
+      <div class="event-card" aria-hidden="true"><div class="skeleton" style="height:200px;border-radius:var(--r4) var(--r4) 0 0"></div><div style="padding:var(--s3)"><div class="skeleton" style="height:11px;width:45%;margin-bottom:12px"></div><div class="skeleton" style="height:17px;margin-bottom:10px"></div><div class="skeleton" style="height:11px;width:70%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:60%"></div></div></div>
+      <div class="event-card" aria-hidden="true"><div class="skeleton" style="height:200px;border-radius:var(--r4) var(--r4) 0 0"></div><div style="padding:var(--s3)"><div class="skeleton" style="height:11px;width:45%;margin-bottom:12px"></div><div class="skeleton" style="height:17px;margin-bottom:10px"></div><div class="skeleton" style="height:11px;width:70%;margin-bottom:6px"></div><div class="skeleton" style="height:11px;width:60%"></div></div></div>
+    </div>
+
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-state__icon">🔍</div>
+      <h3>Nothing found</h3>
+      <p>Try a different search or category.</p>
+      <button class="btn btn-secondary" id="clearSearchBtn" style="margin-top:20px">Clear Search</button>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════ -->
+<section class="how-section section-lg">
+  <div class="container">
+    <div class="section-head center">
+      <div class="eyebrow" style="justify-content:center">Simple &amp; Fast</div>
+      <h2 class="section-title">Three Steps to Your Seat</h2>
+      <p class="section-sub" style="margin:14px auto 0">No queues, no hassle — just great experiences booked in seconds.</p>
+    </div>
+    <div class="steps-grid mt-4">
+      <div class="step-item">
+        <div class="step-n">01</div>
+        <h3>Discover</h3>
+        <p>Browse events, tours, equipment and more from verified South African organisers.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-n">02</div>
+        <h3>Select &amp; Book</h3>
+        <p>Choose your ticket type or service. Create a free account in under 60 seconds.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-n">03</div>
+        <h3>Show Up &amp; Enjoy</h3>
+        <p>Your eTicket arrives instantly with a QR code. Show up and scan — done.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     SOCIAL PROOF
+     ═══════════════════════════════════════ -->
+<section class="proof-section">
+  <div class="container">
+    <div class="proof-grid">
+      <div class="proof-item"><div class="proof-n">42<span>K+</span></div><div class="proof-label">Tickets Sold</div></div>
+      <div class="proof-item"><div class="proof-n">1,200<span>+</span></div><div class="proof-label">Events Listed</div></div>
+      <div class="proof-item"><div class="proof-n">320<span>+</span></div><div class="proof-label">Verified Organisers</div></div>
+      <div class="proof-item"><div class="proof-n">4.9<span>★</span></div><div class="proof-label">Average Rating</div></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     NEWSLETTER
+     ═══════════════════════════════════════ -->
+<section class="newsletter-section section">
+  <div class="container">
+    <div class="newsletter-box">
+      <div class="eyebrow" style="justify-content:center">Stay in the Loop</div>
+      <h2>Never Miss an Event</h2>
+      <p>Early-bird offers, new listings and exclusive deals — straight to your inbox.</p>
+      <form class="newsletter-form" id="newsletterForm" novalidate>
+        <div class="search-bar" style="flex:1;border-radius:var(--r2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+          <input type="email" id="newsletterEmail" placeholder="Your email address..." required/>
+        </div>
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo">
+          <div class="footer__logo-icon">🎟</div>
+          <div class="footer__wordmark"><span class="g">my</span><span class="w">ticket</span><span class="g">sa</span></div>
+        </div>
+        <p class="footer__desc">South Africa's most trusted platform for events, travel, tours and event services. Book confidently, every time.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Browse</p>
+        <ul class="footer__links">
+          <li><a href="#events">Events</a></li>
+          <li><a href="#events">Travel &amp; Tours</a></li>
+          <li><a href="services/index.html">Event Equipment</a></li>
+          <li><a href="#events">Tags &amp; Marketing</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Company</p>
+        <ul class="footer__links">
+          <li><a href="#">About Us</a></li>
+          <li><a href="#" id="footerListEvent">List Your Event</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Support</p>
+        <ul class="footer__links">
+          <li><a href="mailto:support@myticketsa.co.za">Help Centre</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Refund Policy</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2025 MyTicketSA. All rights reserved. Built in South Africa 🇿🇦 &nbsp;·&nbsp;
+        <a href="admin/login.html" style="color:var(--text-3);font-size:.8125rem;text-decoration:none;transition:color .2s"
+           onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text-3)'">Admin</a>
+      </p>
+      <div class="footer__socials">
+        <a href="#" aria-label="Facebook">f</a>
+        <a href="#" aria-label="Twitter">X</a>
+        <a href="#" aria-label="Instagram">in</a>
+        <a href="#" aria-label="LinkedIn">li</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/events.js"></script>
+<script src="js/home.js"></script>
+<script>
+  // Navbar scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // Mobile toggle
+  document.getElementById('mobileToggle').addEventListener('click', () => {
+    document.getElementById('navbar').classList.toggle('navbar--open');
+  });
+
+  // Nav category tabs (not equipment — that navigates away)
+  document.querySelectorAll('.navbar__cat:not([data-cat="equipment"])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.navbar__cat').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
+      const map = { events:'all', travel:'Travel', marketing:'Marketing' };
+      const val = map[btn.dataset.cat] || 'all';
+      setTimeout(() => {
+        (document.querySelector(`[data-filter="${val}"]`) || document.querySelector('[data-filter="all"]'))?.click();
+      }, 400);
+    });
+  });
+
+  // Category cards accessibility
+  document.querySelectorAll('.cat-card').forEach(c => {
+    c.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); c.click(); } });
+  });
+
+  // Scroll + filter helper
+  function scrollToEvents(cat) {
+    document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
+    const map = { events:'all', travel:'Travel', marketing:'Marketing' };
+    setTimeout(() => {
+      (document.querySelector(`[data-filter="${map[cat]||'all'}"]`) || document.querySelector('[data-filter="all"]'))?.click();
+    }, 500);
+  }
+
+  // ── Gated: List Your Event ─────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    function handleListEvent(e) {
+      e.preventDefault();
+      Auth.requireAuth(
+        () => window.location.href = 'organiser.html',
+        '✏️ Sign in to list your event'
+      );
+    }
+    document.getElementById('heroListEventBtn')?.addEventListener('click', handleListEvent);
+    document.getElementById('footerListEvent')?.addEventListener('click', handleListEvent);
+  });
+</script>
+</body>
+</html>

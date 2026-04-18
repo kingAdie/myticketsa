@@ -1,0 +1,553 @@
+/* ================================================
+   MyTicketSA — Services Pages (services.css)
+   Used by: services/index.html, services/service.html
+   ================================================ */
+
+/* ══════════════════════════════════════════════════
+   SERVICES INDEX — Hero
+   ══════════════════════════════════════════════════ */
+.svc-hero {
+  position: relative;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--b0);
+  padding: 80px 0 56px;
+  overflow: hidden;
+}
+
+.svc-hero__bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 80% at 80% 50%, rgba(59,130,246,.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 0%,  rgba(22,163,74,.05)  0%, transparent 50%);
+  pointer-events: none;
+}
+
+.svc-hero__title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  margin: 8px 0 14px;
+  position: relative;
+}
+
+.svc-hero__sub {
+  font-size: 1.0625rem;
+  color: var(--text-2);
+  max-width: 540px;
+  line-height: 1.75;
+  margin-bottom: var(--s4);
+  position: relative;
+}
+
+.svc-hero__search {
+  max-width: 420px;
+  position: relative;
+}
+
+/* ── Filter tabs ── */
+.svc-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--b0);
+  margin-bottom: var(--s4);
+}
+
+.svc-filter {
+  padding: 7px 16px;
+  border-radius: var(--rx);
+  border: 1.5px solid var(--b1);
+  background: transparent;
+  color: var(--text-2);
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+  letter-spacing: .01em;
+}
+
+.svc-filter:hover  { border-color: var(--b2); color: var(--text); background: var(--bg-2); }
+.svc-filter.active { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 0 16px var(--green-glow); }
+
+/* ══════════════════════════════════════════════════
+   SERVICE CARDS — Grid
+   ══════════════════════════════════════════════════ */
+.svc-grid-wrap {
+  padding-bottom: var(--s5);
+}
+
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s3);
+}
+
+.svc-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r4);
+  overflow: hidden;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), border-color .25s, box-shadow .25s;
+}
+
+.svc-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--green-border);
+  box-shadow: 0 0 0 1px var(--green-border), var(--sh-g), var(--sh-lg);
+}
+
+/* Card image */
+.svc-card__img {
+  position: relative;
+  overflow: hidden;
+  height: 190px;
+}
+
+.svc-card__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .5s ease;
+}
+
+.svc-card:hover .svc-card__img img { transform: scale(1.06); }
+
+.svc-card__img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8,8,8,.8) 0%, transparent 55%);
+}
+
+.svc-card__tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(8,8,8,.75);
+  border: 1px solid var(--b1);
+  backdrop-filter: blur(8px);
+  padding: 3px 10px;
+  border-radius: var(--rx);
+  font-size: .6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-2);
+}
+
+/* Card body */
+.svc-card__body {
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.svc-card__icon {
+  font-size: 1.375rem;
+  margin-bottom: 8px;
+}
+
+.svc-card__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -.01em;
+}
+
+.svc-card__desc {
+  font-size: .875rem;
+  color: var(--text-2);
+  line-height: 1.65;
+  flex: 1;
+  margin-bottom: var(--s2);
+}
+
+.svc-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--s2);
+}
+
+.svc-card__meta span {
+  font-size: .8125rem;
+  color: var(--text-3);
+}
+
+.svc-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--s2);
+  border-top: 1px solid var(--b0);
+}
+
+.svc-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--green);
+}
+
+.svc-price small {
+  font-size: .75rem;
+  font-weight: 400;
+  color: var(--text-3);
+  font-family: 'Inter', sans-serif;
+  margin-left: 2px;
+}
+
+.svc-card__cta {
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--text-2);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: color .2s;
+}
+
+.svc-card:hover .svc-card__cta { color: var(--green); }
+
+/* Empty state */
+.svc-empty {
+  text-align: center;
+  padding: 80px 0;
+  color: var(--text-2);
+}
+.svc-empty h3 { font-size: 1.25rem; color: var(--text); margin-bottom: 8px; }
+
+/* ── CTA Banner ── */
+.svc-cta-banner {
+  background: var(--bg-1);
+  border-top: 1px solid var(--b0);
+  border-bottom: 1px solid var(--b0);
+  padding: var(--s4) 0;
+  margin-top: var(--s4);
+}
+
+.svc-cta-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+
+.svc-cta-banner h2  { font-size: 1.375rem; margin-bottom: 4px; }
+.svc-cta-banner p   { color: var(--text-2); font-size: .9375rem; }
+
+
+/* ══════════════════════════════════════════════════
+   SERVICE DETAIL PAGE
+   ══════════════════════════════════════════════════ */
+.svc-detail-loading {
+  min-height: 50vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+/* Hero banner */
+.svc-detail-hero {
+  position: relative;
+  height: 420px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+}
+
+.svc-detail-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8,8,8,.95) 0%, rgba(8,8,8,.5) 50%, rgba(8,8,8,.2) 100%);
+}
+
+.svc-detail-hero__inner {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 48px;
+}
+
+.svc-detail-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--rx);
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  font-size: .6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--tag-color, var(--green));
+  margin-bottom: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.svc-detail-title {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -.04em;
+  color: #fff;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 12px rgba(0,0,0,.5);
+}
+
+.svc-detail-subtitle {
+  font-size: 1.0625rem;
+  color: rgba(255,255,255,.75);
+  max-width: 520px;
+  line-height: 1.6;
+  margin-bottom: var(--s3);
+  text-shadow: 0 1px 8px rgba(0,0,0,.4);
+}
+
+.svc-detail-price-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--green);
+  padding: 8px 20px;
+  border-radius: var(--rx);
+  box-shadow: 0 0 24px var(--green-glow);
+}
+
+.svc-detail-price-from {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.svc-detail-price-unit {
+  font-size: .875rem;
+  color: rgba(255,255,255,.8);
+}
+
+/* Detail content */
+.svc-detail-content {
+  padding: var(--s5) 0;
+}
+
+.svc-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--s4);
+  align-items: start;
+}
+
+.svc-detail-section {
+  margin-bottom: var(--s4);
+}
+
+.svc-detail-section h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--s2);
+  letter-spacing: -.02em;
+}
+
+.svc-detail-section p {
+  font-size: .9375rem;
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: var(--s2);
+}
+
+/* Specs table */
+.svc-specs {
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  overflow: hidden;
+}
+
+.svc-spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px var(--s3);
+  font-size: .9375rem;
+  gap: var(--s2);
+}
+
+.svc-spec-row + .svc-spec-row { border-top: 1px solid var(--b0); }
+.svc-spec-label { color: var(--text-3); font-weight: 500; flex-shrink: 0; }
+.svc-spec-value { color: var(--text); font-weight: 600; text-align: right; }
+
+/* Includes list */
+.svc-includes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.svc-includes li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .9375rem;
+  color: var(--text-2);
+}
+
+.svc-includes li svg { flex-shrink: 0; }
+
+/* ── Sticky request card ── */
+.svc-detail-right {
+  position: sticky;
+  top: 90px;
+}
+
+.svc-request-card {
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r4);
+  padding: var(--s4);
+  box-shadow: var(--sh-lg);
+}
+
+.svc-request-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s3);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--b0);
+}
+
+.svc-request-icon {
+  font-size: 2.25rem;
+  line-height: 1;
+}
+
+.svc-request-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.svc-request-price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--green);
+}
+
+.svc-request-price span {
+  font-size: .8125rem;
+  font-weight: 400;
+  color: var(--text-3);
+  font-family: 'Inter', sans-serif;
+}
+
+.svc-request-includes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: var(--s2);
+}
+
+.svc-request-include-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .875rem;
+  color: var(--text-2);
+}
+
+.svc-request-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: .8125rem;
+  color: var(--text-3);
+  margin-top: var(--s2);
+  line-height: 1.5;
+}
+
+.svc-request-note svg { flex-shrink: 0; margin-top: 1px; }
+
+/* ── Related services ── */
+.svc-related {
+  margin-top: var(--s5);
+  padding-top: var(--s5);
+  border-top: 1px solid var(--b0);
+}
+
+.svc-related-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  margin-bottom: var(--s3);
+  letter-spacing: -.02em;
+}
+
+.svc-related-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+}
+
+.svc-related-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  padding: var(--s2) var(--s3);
+  text-decoration: none;
+  transition: all .2s;
+}
+
+.svc-related-card:hover {
+  border-color: var(--green-border);
+  background: var(--bg-3);
+  transform: translateX(4px);
+}
+
+.svc-related-card svg { margin-left: auto; color: var(--text-3); flex-shrink: 0; transition: color .2s; }
+.svc-related-card:hover svg { color: var(--green); }
+
+.svc-related-icon   { font-size: 1.5rem; flex-shrink: 0; }
+.svc-related-name   { font-size: .9375rem; font-weight: 700; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; }
+.svc-related-price  { font-size: .8125rem; color: var(--text-3); margin-top: 2px; }
+
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .svc-grid             { grid-template-columns: repeat(2, 1fr); }
+  .svc-detail-grid      { grid-template-columns: 1fr; }
+  .svc-detail-right     { position: static; }
+  .svc-request-card     { margin-top: var(--s4); }
+  .svc-related-grid     { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .svc-hero             { padding: 56px 0 40px; }
+  .svc-detail-hero      { height: 320px; }
+  .svc-cta-banner__inner{ flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .svc-grid             { grid-template-columns: 1fr; }
+  .svc-related-grid     { grid-template-columns: 1fr; }
+  .svc-filters          { gap: 6px; }
+  .svc-filter           { padding: 6px 12px; font-size: .75rem; }
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Event Equipment — MyTicketSA</title>
+  <meta name="description" content="Rent event equipment across South Africa. Mobile freezers, portable toilets, tents, generators, sound systems and more."/>
+  <meta name="theme-color" content="#080808"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="../css/auth.css"/>
+  <link rel="stylesheet" href="services.css"/>
+</head>
+<body>
+
+<!-- ═══════════════════════════ NAVBAR ═══════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="../index.html" class="navbar__logo">
+      <div class="navbar__logo-icon">🎟</div>
+      <div class="navbar__logo-wordmark">
+        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+      </div>
+    </a>
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ PAGE HERO ═══════════════════════════ -->
+<div class="svc-hero">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="../index.html">Home</a>
+      <span class="breadcrumb__sep">›</span>
+      <span class="breadcrumb__current">Event Equipment</span>
+    </nav>
+    <div class="eyebrow" style="margin-top:var(--s2)">Rental Services</div>
+    <h1 class="svc-hero__title">Event Equipment</h1>
+    <p class="svc-hero__sub">
+      Everything your event needs — delivered, set up, and collected.
+      Professional equipment, trusted suppliers, transparent pricing.
+    </p>
+
+    <!-- Search bar -->
+    <div class="svc-hero__search">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="svcSearch" placeholder="Search equipment..." aria-label="Search services"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorative background -->
+  <div class="svc-hero__bg" aria-hidden="true"></div>
+</div>
+
+
+<!-- ═══════════════════════════ FILTER TAGS ═══════════════════════════ -->
+<div class="svc-filters container">
+  <button class="svc-filter active" data-filter="all">All Equipment</button>
+  <button class="svc-filter" data-filter="cooling">Cooling</button>
+  <button class="svc-filter" data-filter="sanitation">Sanitation</button>
+  <button class="svc-filter" data-filter="shelter">Shelter</button>
+  <button class="svc-filter" data-filter="power">Power</button>
+  <button class="svc-filter" data-filter="audio">Audio &amp; Visual</button>
+  <button class="svc-filter" data-filter="crowd">Crowd Control</button>
+</div>
+
+
+<!-- ═══════════════════════════ SERVICES GRID ═══════════════════════════ -->
+<main class="container svc-grid-wrap">
+  <div class="svc-grid" id="svcGrid">
+
+    <!-- MOBILE FREEZERS -->
+    <a href="service.html?id=mobile-freezers" class="svc-card" data-tags="cooling">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="Mobile Freezers" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Cooling</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🧊</div>
+        <h3 class="svc-card__title">Mobile Freezers</h3>
+        <p class="svc-card__desc">Industrial-grade mobile chest freezers and upright units for beverages, food and medical supplies.</p>
+        <div class="svc-card__meta">
+          <span>📏 Various sizes</span>
+          <span>⚡ Plugs in or diesel-powered</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 650<small>/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- PORTABLE TOILETS -->
+    <a href="service.html?id=portable-toilets" class="svc-card" data-tags="sanitation">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80" alt="Portable Toilets" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Sanitation</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🚽</div>
+        <h3 class="svc-card__title">Portable Toilets</h3>
+        <p class="svc-card__desc">Self-contained portable toilets with hand sanitiser dispensers. Standard, VIP and accessible units available.</p>
+        <div class="svc-card__meta">
+          <span>♿ Accessible options</span>
+          <span>🧼 Daily servicing available</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 350<small>/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MARQUEE TENTS -->
+    <a href="service.html?id=marquee-tents" class="svc-card" data-tags="shelter">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1478147427282-58a87a433128?w=600&q=80" alt="Marquee Tents" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Shelter</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">⛺</div>
+        <h3 class="svc-card__title">Marquee Tents</h3>
+        <p class="svc-card__desc">Elegant frame and peg marquee tents for any event size. Includes installation and breakdown.</p>
+        <div class="svc-card__meta">
+          <span>📐 6m × 9m to 20m × 40m</span>
+          <span>🔧 Setup included</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 2,800<small>/event</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- GENERATORS -->
+    <a href="service.html?id=generators" class="svc-card" data-tags="power">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=80" alt="Generators" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Power</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">⚡</div>
+        <h3 class="svc-card__title">Generators</h3>
+        <p class="svc-card__desc">Silent diesel generators from 10 kVA to 500 kVA. Load-shedding proof — keep your event running.</p>
+        <div class="svc-card__meta">
+          <span>🔇 Silent models available</span>
+          <span>⛽ Fuel management included</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 1,200<small>/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- SOUND SYSTEMS -->
+    <a href="service.html?id=sound-systems" class="svc-card" data-tags="audio">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80" alt="Sound Systems" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Audio &amp; Visual</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🔊</div>
+        <h3 class="svc-card__title">Sound Systems</h3>
+        <p class="svc-card__desc">Professional PA systems, subwoofers, microphones and monitors for stages of any size.</p>
+        <div class="svc-card__meta">
+          <span>🎚️ Technician available</span>
+          <span>📡 Up to 10,000 capacity</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 3,500<small>/event</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- LED SCREENS -->
+    <a href="service.html?id=led-screens" class="svc-card" data-tags="audio">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80" alt="LED Screens" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Audio &amp; Visual</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🖥️</div>
+        <h3 class="svc-card__title">LED Screens &amp; Lighting</h3>
+        <p class="svc-card__desc">Outdoor and indoor LED walls, stage lighting rigs, uplighting and trussing for any venue.</p>
+        <div class="svc-card__meta">
+          <span>☀️ Outdoor-rated</span>
+          <span>💡 Full lighting design</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 4,000<small>/event</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CROWD BARRIERS -->
+    <a href="service.html?id=crowd-barriers" class="svc-card" data-tags="crowd">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=600&q=80" alt="Crowd Barriers" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Crowd Control</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🚧</div>
+        <h3 class="svc-card__title">Crowd Barriers</h3>
+        <p class="svc-card__desc">Steel mojo barriers, mesh fencing and queue management systems for safe crowd flow.</p>
+        <div class="svc-card__meta">
+          <span>🔩 Modular system</span>
+          <span>📦 Delivery + collection</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 180<small>/barrier/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- HAND WASH STATIONS -->
+    <a href="service.html?id=hand-wash-stations" class="svc-card" data-tags="sanitation">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=600&q=80" alt="Hand Wash Stations" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Sanitation</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🧼</div>
+        <h3 class="svc-card__title">Hand Wash Stations</h3>
+        <p class="svc-card__desc">Freestanding hand wash units with soap, paper towels and waste tanks — no plumbing needed.</p>
+        <div class="svc-card__meta">
+          <span>💧 Self-contained</span>
+          <span>♻️ Daily refill service</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 220<small>/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- MOBILE BAR -->
+    <a href="service.html?id=mobile-bar" class="svc-card" data-tags="cooling">
+      <div class="svc-card__img">
+        <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&q=80" alt="Mobile Bar" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
+        <div class="svc-card__img-overlay"></div>
+        <span class="svc-card__tag">Cooling</span>
+      </div>
+      <div class="svc-card__body">
+        <div class="svc-card__icon">🍺</div>
+        <h3 class="svc-card__title">Mobile Bar Units</h3>
+        <p class="svc-card__desc">Fully equipped mobile bar counters with built-in refrigeration, ice makers and draught beer systems.</p>
+        <div class="svc-card__meta">
+          <span>🧊 Built-in cooling</span>
+          <span>🔌 Plug &amp; play</span>
+        </div>
+        <div class="svc-card__foot">
+          <span class="svc-price">From R 1,800<small>/day</small></span>
+          <span class="svc-card__cta">Request →</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Empty state -->
+  <div class="svc-empty hidden" id="svcEmpty">
+    <div style="font-size:2.5rem;margin-bottom:12px">🔍</div>
+    <h3>No equipment found</h3>
+    <p>Try a different filter or search term.</p>
+    <button class="btn btn-secondary" style="margin-top:20px" onclick="resetFilters()">Show All</button>
+  </div>
+</main>
+
+
+<!-- ═══════════════════════════ CTA BANNER ═══════════════════════════ -->
+<section class="svc-cta-banner">
+  <div class="container svc-cta-banner__inner">
+    <div>
+      <h2>Can't find what you need?</h2>
+      <p>Tell us what equipment your event requires and we'll source it for you.</p>
+    </div>
+    <button class="btn btn-primary btn-lg" id="customRequestBtn">Make a Custom Request</button>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo">
+          <div class="footer__logo-icon">🎟</div>
+          <div class="footer__wordmark"><span class="g">my</span><span class="w">ticket</span><span class="g">sa</span></div>
+        </div>
+        <p class="footer__desc">South Africa's most trusted platform for events, travel, tours and event services.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Equipment</p>
+        <ul class="footer__links">
+          <li><a href="service.html?id=mobile-freezers">Mobile Freezers</a></li>
+          <li><a href="service.html?id=portable-toilets">Portable Toilets</a></li>
+          <li><a href="service.html?id=generators">Generators</a></li>
+          <li><a href="service.html?id=marquee-tents">Marquee Tents</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <ul class="footer__links">
+          <li><a href="../index.html">Browse Events</a></li>
+          <li><a href="../organiser.html">List Your Event</a></li>
+          <li><a href="../dashboard.html">My Dashboard</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Support</p>
+        <ul class="footer__links">
+          <li><a href="mailto:support@myticketsa.co.za">Help Centre</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2025 MyTicketSA. All rights reserved. Built in South Africa 🇿🇦</p>
+      <div class="footer__socials">
+        <a href="#" aria-label="Facebook">f</a>
+        <a href="#" aria-label="Instagram">in</a>
+        <a href="#" aria-label="Twitter">X</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  Utils.initMobileNav();
+
+  // Navbar scroll
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+  }, { passive: true });
+
+  // Filter tabs
+  document.querySelectorAll('.svc-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.svc-filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      filterServices(btn.dataset.filter, document.getElementById('svcSearch').value);
+    });
+  });
+
+  // Search
+  document.getElementById('svcSearch').addEventListener('input', e => {
+    const activeFilter = document.querySelector('.svc-filter.active')?.dataset.filter || 'all';
+    filterServices(activeFilter, e.target.value);
+  });
+
+  function filterServices(category, query) {
+    const q = (query || '').toLowerCase();
+    let any = false;
+    document.querySelectorAll('.svc-card').forEach(card => {
+      const tags  = card.dataset.tags || '';
+      const text  = card.textContent.toLowerCase();
+      const catOk = category === 'all' || tags.includes(category);
+      const txtOk = !q || text.includes(q);
+      const show  = catOk && txtOk;
+      card.style.display = show ? '' : 'none';
+      if (show) any = true;
+    });
+    document.getElementById('svcEmpty').classList.toggle('hidden', any);
+  }
+
+  function resetFilters() {
+    document.querySelectorAll('.svc-filter').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-filter="all"]').classList.add('active');
+    document.getElementById('svcSearch').value = '';
+    filterServices('all', '');
+  }
+
+  // Custom request — gated
+  document.getElementById('customRequestBtn').addEventListener('click', () => {
+    Auth.requireAuth(
+      () => window.location.href = '../dashboard.html?tab=service&custom=1',
+      '✏️ Sign in to submit a custom equipment request'
+    );
+  });
+</script>
+</body>
+</html>

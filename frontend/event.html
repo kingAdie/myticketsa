@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Details — MyTicketSA</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/event.css" />
+  <meta property="og:title" content="Event Details — MyTicketSA"/>
+  <meta property="og:description" content="Get your tickets now on MyTicketSA."/>
+  <meta property="og:type" content="website"/>
+  <meta name="theme-color" content="#0B0B0B"/>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+</head>
+<body>
+
+  <!-- ============ NAVIGATION ============ -->
+  <nav class="navbar" id="navbar">
+    <div class="container navbar__inner">
+      <a href="index.html" class="navbar__logo">
+        <div class="navbar__logo-icon">🎟</div>
+        <div class="navbar__logo-wordmark">
+          <span class="w-my">my</span><span class="w-ticket">ticket</span><span class="w-sa">sa</span>
+        </div>
+      </a>
+      <div class="navbar__links">
+        <a href="index.html">Home</a>
+        <a href="index.html#events" class="active">Browse Events</a>
+        <a href="#">How It Works</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="navbar__actions" id="navbarActions">
+        <!-- Auth.js populates this -->
+      </div>
+      <button class="navbar__toggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============ BANNER ============ -->
+  <div class="event-banner" id="eventBanner">
+    <img class="event-banner__img" id="bannerImage" src="" alt="" />
+    <div class="event-banner__overlay"></div>
+    <div class="event-banner__content">
+      <span class="badge badge-green" id="eventCategory">Loading...</span>
+    </div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <main class="section">
+    <div class="container">
+
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Home</a>
+        <span class="breadcrumb__sep">›</span>
+        <a href="index.html#events">Events</a>
+        <span class="breadcrumb__sep">›</span>
+        <span class="breadcrumb__current" id="breadcrumbTitle">Event</span>
+      </nav>
+
+      <div class="event-layout">
+
+        <!-- ---- Main Content ---- -->
+        <div class="event-main">
+          <h1 class="event-title" id="eventTitle">Loading event...</h1>
+
+          <!-- Meta -->
+          <div class="event-meta-row" id="eventMeta">
+            <div class="event-meta-item">
+              <div class="event-meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <strong id="eventDate">Date</strong>
+                <span id="eventTime">Time</span>
+              </div>
+            </div>
+            <div class="event-meta-item">
+              <div class="event-meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+              <div>
+                <strong id="eventLocation">Location</strong>
+                <span id="eventCity">City</span>
+              </div>
+            </div>
+            <div class="event-meta-item">
+              <div class="event-meta-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <strong>Organiser</strong>
+                <span id="eventOrganiser">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="event-desc-section">
+            <h2>About This Event</h2>
+            <div id="eventDescription" class="event-desc-text">Loading description...</div>
+          </div>
+
+          <!-- Tags -->
+          <div class="event-tags" id="eventTags"></div>
+        </div>
+
+        <!-- ---- Ticket Panel ---- -->
+        <aside class="ticket-panel">
+          <div class="ticket-panel__accent"></div>
+          <div class="ticket-panel__header">
+            <h2>Select Tickets</h2>
+            <p>Choose your ticket type and quantity</p>
+          </div>
+
+          <div class="ticket-types" id="ticketTypes"></div>
+
+          <div class="ticket-qty-section hidden" id="ticketQtySection">
+            <label class="form-label" style="margin-bottom:var(--sp-sm);display:block;">Quantity</label>
+            <div class="flex-between">
+              <div class="qty-selector">
+                <button class="qty-btn" id="qtyDecrease" aria-label="Decrease" disabled>−</button>
+                <span class="qty-value" id="qtyValue">1</span>
+                <button class="qty-btn" id="qtyIncrease" aria-label="Increase">+</button>
+              </div>
+              <div class="ticket-subtotal">
+                <span class="ticket-subtotal__label">Subtotal</span>
+                <span class="ticket-subtotal__value" id="subtotalValue">R 0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ticket-panel__cta">
+            <button class="btn btn-primary btn-lg btn-full" id="buyTicketBtn" disabled>
+              Select a Ticket Type
+            </button>
+          </div>
+
+          <div class="ticket-panel__secure">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Secure · Instant confirmation</span>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+    <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div>
+          <div class="footer__logo">
+            <div class="footer__logo-icon">🎟</div>
+            <div class="footer__wordmark"><span class="w-my">my</span><span class="w-ticket">ticket</span><span class="w-sa">sa</span></div>
+          </div>
+          <p class="footer__desc">South Africa's trusted ticketing platform. Discover, book and experience the best events across the country.</p>
+        </div>
+        <div>
+          <p class="footer__heading">Events</p>
+          <ul class="footer__links">
+            <li><a href="index.html#events">Browse All Events</a></li>
+            <li><a href="index.html#events">Music &amp; Concerts</a></li>
+            <li><a href="index.html#events">Sport</a></li>
+            <li><a href="index.html#events">Food &amp; Drink</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Company</p>
+          <ul class="footer__links">
+            <li><a href="#">About Us</a></li>
+            <li><a href="organiser.html">List Your Event</a></li>
+            <li><a href="#">Contact Us</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__heading">Support</p>
+          <ul class="footer__links">
+            <li><a href="#">Help Centre</a></li>
+            <li><a href="#">Refund Policy</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p>© 2025 MyTicketSA. All rights reserved. Built in South Africa 🇿🇦 &nbsp;·&nbsp; <a href="admin/login.html" style="color:var(--text-muted);font-size:.8125rem;text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text-muted)'">Admin Portal</a></p>
+        <div class="footer__socials">
+          <a href="#" aria-label="Facebook">f</a>
+          <a href="#" aria-label="Twitter">X</a>
+          <a href="#" aria-label="Instagram">in</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/event.js"></script>
+</body>
+</html>

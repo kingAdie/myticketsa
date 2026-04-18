@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Service Details — MyTicketSA</title>
+  <meta name="theme-color" content="#080808"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <link rel="stylesheet" href="../css/auth.css"/>
+  <link rel="stylesheet" href="services.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="../index.html" class="navbar__logo">
+      <div class="navbar__logo-icon">🎟</div>
+      <div class="navbar__logo-wordmark">
+        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+      </div>
+    </a>
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN — populated by JS -->
+<main id="serviceMain">
+  <div class="svc-detail-loading">
+    <div class="spinner" style="margin:0 auto"></div>
+    <p style="color:var(--text-3);margin-top:16px;text-align:center">Loading service…</p>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__grid">
+      <div>
+        <div class="footer__logo">
+          <div class="footer__logo-icon">🎟</div>
+          <div class="footer__wordmark"><span class="g">my</span><span class="w">ticket</span><span class="g">sa</span></div>
+        </div>
+        <p class="footer__desc">South Africa's most trusted platform for events and event services.</p>
+      </div>
+      <div>
+        <p class="footer__heading">Equipment</p>
+        <ul class="footer__links">
+          <li><a href="service.html?id=mobile-freezers">Mobile Freezers</a></li>
+          <li><a href="service.html?id=portable-toilets">Portable Toilets</a></li>
+          <li><a href="service.html?id=generators">Generators</a></li>
+          <li><a href="index.html">View All →</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Platform</p>
+        <ul class="footer__links">
+          <li><a href="../index.html">Browse Events</a></li>
+          <li><a href="../dashboard.html">My Dashboard</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer__heading">Support</p>
+        <ul class="footer__links">
+          <li><a href="mailto:support@myticketsa.co.za">Help Centre</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <p>© 2025 MyTicketSA. All rights reserved. Built in South Africa 🇿🇦</p>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+Utils.initMobileNav();
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+}, { passive: true });
+
+/* ── Service data catalogue ─────────────────── */
+const SERVICES = {
+  'mobile-freezers': {
+    id:       'mobile-freezers',
+    icon:     '🧊',
+    tag:      'Cooling',
+    tagColor: '#3B82F6',
+    title:    'Mobile Freezers',
+    subtitle: 'Keep your drinks cold and food fresh — wherever your event is.',
+    image:    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=85',
+    priceFrom: 'R 650',
+    priceUnit: 'per unit / day',
+    description: `Our mobile chest and upright freezers keep beverages, food and medical supplies at the perfect temperature throughout your event. Available in sizes from 100L to 600L, and in single-door, double-door and multi-compartment configurations.\n\nAll units are cleaned, tested and delivered on the day of your event. A generator add-on is available if your venue doesn't have reliable power.`,
+    specs: [
+      { label: 'Sizes',        value: '100L · 200L · 350L · 600L' },
+      { label: 'Power',        value: '220V plug-in or diesel generator' },
+      { label: 'Temp Range',   value: '-18°C to -25°C (freezer) / 0°C–8°C (fridge)' },
+      { label: 'Delivery',     value: 'Nationwide delivery available' },
+      { label: 'Min Hire',     value: '1 day minimum' },
+      { label: 'Included',     value: 'Delivery, setup, collection' },
+    ],
+    includes: ['Delivery & setup', 'Collection after event', 'Sanitised before delivery', 'Generator add-on available'],
+    relatedIds: ['mobile-bar', 'generators', 'hand-wash-stations'],
+  },
+  'portable-toilets': {
+    id:       'portable-toilets',
+    icon:     '🚽',
+    tag:      'Sanitation',
+    tagColor: '#22C55E',
+    title:    'Portable Toilets',
+    subtitle: 'Professional, hygienic sanitation solutions for outdoor events.',
+    image:    'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200&q=85',
+    priceFrom: 'R 350',
+    priceUnit: 'per unit / day',
+    description: `Self-contained portable toilet units for events of all sizes. Our fleet includes standard portable units, luxury VIP trailers with running water and mirrors, and wheelchair-accessible units to ensure inclusivity.\n\nAll units arrive clean, stocked with toilet paper and hand sanitiser. Daily servicing available for multi-day events.`,
+    specs: [
+      { label: 'Unit Types',  value: 'Standard · VIP Trailer · Accessible' },
+      { label: 'Servicing',   value: 'Daily emptying & restocking available' },
+      { label: 'Capacity',    value: '1 unit per 50 guests recommended' },
+      { label: 'Delivery',    value: 'Nationwide delivery available' },
+      { label: 'Min Hire',    value: '1 day minimum' },
+      { label: 'Included',    value: 'Delivery, TP, hand sanitiser, collection' },
+    ],
+    includes: ['Delivery & placement', 'Initial stocking (TP & sanitiser)', 'Collection after event', 'Daily servicing available'],
+    relatedIds: ['hand-wash-stations', 'crowd-barriers', 'generators'],
+  },
+  'marquee-tents': {
+    id:       'marquee-tents',
+    icon:     '⛺',
+    tag:      'Shelter',
+    tagColor: '#F59E0B',
+    title:    'Marquee Tents',
+    subtitle: 'Create stunning covered spaces for your event — any size, any style.',
+    image:    'https://images.unsplash.com/photo-1478147427282-58a87a433128?w=1200&q=85',
+    priceFrom: 'R 2,800',
+    priceUnit: 'per event',
+    description: `Frame marquees, peg-and-pole tents and stretch tents for weddings, corporate events, festivals and more. We handle full installation and breakdown — you just focus on your event.\n\nOptional linings, flooring, lighting and furniture packages available. All tents are weather-rated and safety-certified.`,
+    specs: [
+      { label: 'Sizes',       value: '6×9m up to 20×40m' },
+      { label: 'Styles',      value: 'Frame · Peg & Pole · Stretch' },
+      { label: 'Add-ons',     value: 'Lining · Flooring · Lighting · Furniture' },
+      { label: 'Setup Time',  value: '1–2 days before event' },
+      { label: 'Min Hire',    value: '1 event' },
+      { label: 'Included',    value: 'Installation & breakdown' },
+    ],
+    includes: ['Professional installation', 'Breakdown & removal', 'Weather-rated materials', 'Safety-certified structure'],
+    relatedIds: ['sound-systems', 'led-screens', 'generators'],
+  },
+  'generators': {
+    id:       'generators',
+    icon:     '⚡',
+    tag:      'Power',
+    tagColor: '#EAB308',
+    title:    'Generators',
+    subtitle: 'Load-shedding proof power — keep your event running no matter what.',
+    image:    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&q=85',
+    priceFrom: 'R 1,200',
+    priceUnit: 'per day',
+    description: `Silent diesel generators from 10 kVA to 500 kVA. Whether you need backup power for a small market or primary power for a full festival, we have the right unit.\n\nAll generators come fuelled for 8 hours. Refuel service and 24-hour technician support available.`,
+    specs: [
+      { label: 'Sizes',       value: '10 kVA · 25 kVA · 60 kVA · 150 kVA · 500 kVA' },
+      { label: 'Fuel',        value: 'Diesel, pre-fuelled for 8 hours' },
+      { label: 'Noise Level', value: 'Silent enclosure models available' },
+      { label: 'Support',     value: '24-hour on-call technician' },
+      { label: 'Min Hire',    value: '1 day minimum' },
+      { label: 'Included',    value: 'Delivery, setup, fuel for 8hrs' },
+    ],
+    includes: ['Delivery & placement', 'Initial fuel load (8 hrs)', '24hr technician on-call', 'Collection after event'],
+    relatedIds: ['sound-systems', 'led-screens', 'mobile-freezers'],
+  },
+  'sound-systems': {
+    id:       'sound-systems',
+    icon:     '🔊',
+    tag:      'Audio & Visual',
+    tagColor: '#8B5CF6',
+    title:    'Sound Systems',
+    subtitle: 'Crystal-clear audio for stages and venues of every size.',
+    image:    'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1200&q=85',
+    priceFrom: 'R 3,500',
+    priceUnit: 'per event',
+    description: `Professional line-array PA systems, subwoofers, stage monitors, wireless microphones and mixing consoles. Our audio engineers handle setup, sound check and operate throughout your event.\n\nPackages for intimate venues (100–300 pax) through to large-scale festival stages (5,000–10,000 pax).`,
+    specs: [
+      { label: 'Packages',    value: 'Small (100–300) · Medium (300–2K) · Large (2K–10K)' },
+      { label: 'Includes',    value: 'PA · Subs · Monitors · Mics · Mixer' },
+      { label: 'Engineer',    value: 'Sound engineer included in all packages' },
+      { label: 'Setup',       value: '4–8 hours before event' },
+      { label: 'Min Hire',    value: '1 event' },
+      { label: 'Included',    value: 'Full setup, operation & breakdown' },
+    ],
+    includes: ['Full setup & sound check', 'Qualified sound engineer', 'All cables & stands', 'Breakdown & collection'],
+    relatedIds: ['led-screens', 'generators', 'marquee-tents'],
+  },
+  'led-screens': {
+    id:       'led-screens',
+    icon:     '🖥️',
+    tag:      'Audio & Visual',
+    tagColor: '#8B5CF6',
+    title:    'LED Screens & Lighting',
+    subtitle: 'Make your event visually stunning with professional LED and lighting.',
+    image:    'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=85',
+    priceFrom: 'R 4,000',
+    priceUnit: 'per event',
+    description: `Modular indoor and outdoor LED video walls, stage uplighting, moving head fixtures, trussing and rigging. Our technicians handle all installation and programming.\n\nIdeal for concerts, corporate launches, product activations and large-format festivals.`,
+    specs: [
+      { label: 'LED Walls',    value: 'Modular P3 (indoor) & P6 (outdoor)' },
+      { label: 'Lighting',     value: 'Moving heads · Spotlights · Uplighting' },
+      { label: 'Rigging',      value: 'Trussing & rigging structures included' },
+      { label: 'Technician',   value: 'Lighting designer available' },
+      { label: 'Min Hire',     value: '1 event' },
+      { label: 'Included',     value: 'Setup, operation & breakdown' },
+    ],
+    includes: ['Full installation & rigging', 'Lighting programmer / operator', 'All cabling & trussing', 'Breakdown & collection'],
+    relatedIds: ['sound-systems', 'generators', 'marquee-tents'],
+  },
+  'crowd-barriers': {
+    id:       'crowd-barriers',
+    icon:     '🚧',
+    tag:      'Crowd Control',
+    tagColor: '#EF4444',
+    title:    'Crowd Barriers',
+    subtitle: 'Safe, professional crowd management for events of all sizes.',
+    image:    'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=85',
+    priceFrom: 'R 180',
+    priceUnit: 'per barrier / day',
+    description: `Steel mojo barriers, galvanised mesh fencing, retractable belt queue systems and VIP rope-and-post barriers. All barriers are galvanised, load-tested and SABS-compliant.\n\nWe advise on barrier placement based on your venue layout and expected crowd numbers.`,
+    specs: [
+      { label: 'Types',       value: 'Mojo · Mesh Fence · Queue · VIP Rope' },
+      { label: 'Material',    value: 'Galvanised steel, SABS-compliant' },
+      { label: 'Min Order',   value: '10 barriers minimum' },
+      { label: 'Setup',       value: 'Day before event' },
+      { label: 'Min Hire',    value: '1 day minimum' },
+      { label: 'Included',    value: 'Delivery, placement, collection' },
+    ],
+    includes: ['Delivery & professional placement', 'Layout consultation', 'Collection after event', 'Load-tested & certified'],
+    relatedIds: ['portable-toilets', 'hand-wash-stations', 'generators'],
+  },
+  'hand-wash-stations': {
+    id:       'hand-wash-stations',
+    icon:     '🧼',
+    tag:      'Sanitation',
+    tagColor: '#22C55E',
+    title:    'Hand Wash Stations',
+    subtitle: 'Keep your guests clean and healthy — no plumbing required.',
+    image:    'https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?w=1200&q=85',
+    priceFrom: 'R 220',
+    priceUnit: 'per unit / day',
+    description: `Freestanding hand wash stations with foot-pump or sensor operation, liquid soap dispensers, paper towel holders and waste collection tanks. No plumbing or water connection needed.\n\nIdeal for outdoor events, food festivals and high-traffic areas. Daily refill service available.`,
+    specs: [
+      { label: 'Operation',   value: 'Foot-pump or sensor-operated' },
+      { label: 'Capacity',    value: '40L fresh water tank' },
+      { label: 'Waste',       value: 'Built-in 40L waste collection' },
+      { label: 'Consumables', value: 'Soap & paper towels included' },
+      { label: 'Min Hire',    value: '1 day minimum' },
+      { label: 'Included',    value: 'Delivery, stocking, collection' },
+    ],
+    includes: ['Delivery & placement', 'Fully stocked (soap & paper towels)', 'Collection after event', 'Daily refill available'],
+    relatedIds: ['portable-toilets', 'crowd-barriers'],
+  },
+  'mobile-bar': {
+    id:       'mobile-bar',
+    icon:     '🍺',
+    tag:      'Cooling',
+    tagColor: '#3B82F6',
+    title:    'Mobile Bar Units',
+    subtitle: 'Fully equipped mobile bars — plug in and start serving.',
+    image:    'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=1200&q=85',
+    priceFrom: 'R 1,800',
+    priceUnit: 'per unit / day',
+    description: `All-in-one mobile bar counters with built-in refrigeration, ice maker, under-counter storage and draught beer fittings. Available in 2m, 3m and 4m configurations, in black or white.\n\nPerfect for festivals, corporate events, weddings and private functions. Staff and liquor licensing consultations available.`,
+    specs: [
+      { label: 'Sizes',       value: '2m · 3m · 4m counter' },
+      { label: 'Cooling',     value: 'Built-in under-counter fridge & ice maker' },
+      { label: 'Draught',     value: 'Draught beer fittings included' },
+      { label: 'Power',       value: '220V plug-in' },
+      { label: 'Min Hire',    value: '1 day minimum' },
+      { label: 'Included',    value: 'Delivery, setup, collection' },
+    ],
+    includes: ['Delivery & setup', 'Built-in refrigeration', 'Ice maker', 'Collection after event'],
+    relatedIds: ['mobile-freezers', 'generators', 'crowd-barriers'],
+  },
+};
+
+/* ── Render the service page ────────────────── */
+function renderService(svc) {
+  const related = (svc.relatedIds || [])
+    .map(id => SERVICES[id]).filter(Boolean).slice(0, 3);
+
+  document.title = `${svc.title} — MyTicketSA`;
+
+  document.getElementById('serviceMain').innerHTML = `
+
+    <!-- Hero image banner -->
+    <div class="svc-detail-hero" style="background-image:url('${svc.image}')">
+      <div class="svc-detail-hero__overlay"></div>
+      <div class="container svc-detail-hero__inner">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="../index.html">Home</a>
+          <span class="breadcrumb__sep">›</span>
+          <a href="index.html">Event Equipment</a>
+          <span class="breadcrumb__sep">›</span>
+          <span class="breadcrumb__current">${svc.title}</span>
+        </nav>
+        <div class="svc-detail-tag" style="--tag-color:${svc.tagColor}">${svc.tag}</div>
+        <h1 class="svc-detail-title">${svc.icon} ${svc.title}</h1>
+        <p class="svc-detail-subtitle">${svc.subtitle}</p>
+        <div class="svc-detail-price-badge">
+          <span class="svc-detail-price-from">${svc.priceFrom}</span>
+          <span class="svc-detail-price-unit">${svc.priceUnit}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container svc-detail-content">
+
+      <div class="svc-detail-grid">
+
+        <!-- Left: Description + Specs -->
+        <div class="svc-detail-left">
+
+          <div class="svc-detail-section">
+            <h2>About This Service</h2>
+            ${svc.description.split('\n\n').map(p => `<p>${p}</p>`).join('')}
+          </div>
+
+          <div class="svc-detail-section">
+            <h2>Specifications</h2>
+            <div class="svc-specs">
+              ${svc.specs.map(s => `
+                <div class="svc-spec-row">
+                  <span class="svc-spec-label">${s.label}</span>
+                  <span class="svc-spec-value">${s.value}</span>
+                </div>`).join('')}
+            </div>
+          </div>
+
+          <div class="svc-detail-section">
+            <h2>What's Included</h2>
+            <ul class="svc-includes">
+              ${svc.includes.map(i => `<li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${i}</li>`).join('')}
+            </ul>
+          </div>
+
+        </div>
+
+        <!-- Right: Sticky request card -->
+        <div class="svc-detail-right">
+          <div class="svc-request-card" id="requestCard">
+            <div class="svc-request-card__header">
+              <span class="svc-request-icon">${svc.icon}</span>
+              <div>
+                <div class="svc-request-title">${svc.title}</div>
+                <div class="svc-request-price">${svc.priceFrom} <span>${svc.priceUnit}</span></div>
+              </div>
+            </div>
+
+            <div class="svc-request-includes">
+              ${svc.includes.slice(0, 3).map(i => `
+                <div class="svc-request-include-row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>${i}</span>
+                </div>`).join('')}
+            </div>
+
+            <button class="btn btn-primary btn-full btn-lg" id="requestServiceBtn" style="margin-top:var(--s3)">
+              Request This Service
+            </button>
+            <button class="btn btn-secondary btn-full" id="quoteBtn" style="margin-top:var(--s1)">
+              Get a Quote First
+            </button>
+
+            <p class="svc-request-note">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              No payment required to request. We'll confirm availability &amp; pricing within 24 hours.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Related services -->
+      ${related.length ? `
+      <div class="svc-related">
+        <h2 class="svc-related-title">You Might Also Need</h2>
+        <div class="svc-related-grid">
+          ${related.map(r => `
+            <a href="service.html?id=${r.id}" class="svc-related-card">
+              <span class="svc-related-icon">${r.icon}</span>
+              <div>
+                <div class="svc-related-name">${r.title}</div>
+                <div class="svc-related-price">${r.priceFrom} ${r.priceUnit}</div>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>`).join('')}
+        </div>
+      </div>` : ''}
+
+    </div>`;
+
+  /* ── Wire buttons ─────────────────────────── */
+  document.getElementById('requestServiceBtn').addEventListener('click', () => {
+    Auth.requireAuth(
+      () => {
+        const params = new URLSearchParams({
+          tab:     'service',
+          service: svc.id,
+          name:    svc.title,
+        });
+        window.location.href = `../dashboard.html?${params}`;
+      },
+      `🔒 Sign in to request ${svc.title}`
+    );
+  });
+
+  document.getElementById('quoteBtn').addEventListener('click', () => {
+    Auth.requireAuth(
+      () => {
+        const params = new URLSearchParams({
+          tab:     'service',
+          service: svc.id,
+          name:    svc.title,
+          mode:    'quote',
+        });
+        window.location.href = `../dashboard.html?${params}`;
+      },
+      `🔒 Sign in to request a quote`
+    );
+  });
+}
+
+/* ── Boot ───────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const id = new URLSearchParams(window.location.search).get('id');
+  const svc = SERVICES[id];
+
+  if (!svc) {
+    document.getElementById('serviceMain').innerHTML = `
+      <div style="text-align:center;padding:120px var(--px)">
+        <div style="font-size:3rem;margin-bottom:16px">🤔</div>
+        <h2>Service not found</h2>
+        <p style="margin:12px 0 28px">That service doesn't exist or may have moved.</p>
+        <a href="index.html" class="btn btn-primary">Browse All Equipment</a>
+      </div>`;
+    return;
+  }
+
+  renderService(svc);
+});
+</script>
+</body>
+</html>
