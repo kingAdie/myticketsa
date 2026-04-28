@@ -10,32 +10,46 @@
 
 'use strict';
 
-// Load .env here as a safety net in case this file is required before server.js
-// does it — calling config() multiple times is harmless.
 require('dotenv').config();
 
 const mysql = require('mysql2/promise');
 
 let pool = null;
 
+function parseDbUrl(url) {
+  try {
+    const u = new URL(url);
+    return {
+      host:     u.hostname,
+      port:     parseInt(u.port || '3306', 10),
+      user:     decodeURIComponent(u.username),
+      password: decodeURIComponent(u.password),
+      database: u.pathname.replace(/^\//, ''),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function getPool() {
   if (pool) return pool;
 
+  const rawUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PRIVATE_URL;
+  const fromUrl = rawUrl ? parseDbUrl(rawUrl) : null;
+
   const config = {
-    host:               process.env.DB_HOST     || 'localhost',
-    port:               parseInt(process.env.DB_PORT || '3306', 10),
-    user:               process.env.DB_USER     || 'root',
-    password:           process.env.DB_PASSWORD || '',
-    database:           process.env.DB_NAME     || 'myticketsa',
+    host:     fromUrl?.host     || process.env.MYSQLHOST     || process.env.MYSQL_HOST     || process.env.DB_HOST     || 'localhost',
+    port:     fromUrl?.port     || parseInt(process.env.MYSQLPORT    || process.env.MYSQL_PORT    || process.env.DB_PORT     || '3306', 10),
+    user:     fromUrl?.user     || process.env.MYSQLUSER     || process.env.MYSQL_USER     || process.env.DB_USER     || 'root',
+    password: fromUrl?.password || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    database: fromUrl?.database || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME     || 'myticketsa',
     waitForConnections: true,
     connectionLimit:    10,
     queueLimit:         0,
     charset:            'utf8mb4',
     timezone:           '+00:00',
     typeCast(field, next) {
-      // Keep DATE as 'YYYY-MM-DD' string — matches JSON store format
       if (field.type === 'DATE') return field.string();
-      // Keep TIME as 'HH:MM' string
       if (field.type === 'TIME') {
         const raw = field.string();
         return raw ? raw.slice(0, 5) : null;

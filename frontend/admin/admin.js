@@ -17,13 +17,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   Utils.initMobileNav();
 
   /* ── Sidebar navigation ────────────────────────────────────────────── */
-  function showSection(name) {
+  window.showSection = function showSection(name) {
     document.querySelectorAll('.admin-section').forEach(s => s.classList.add('hidden'));
     document.querySelectorAll('.admin-nav-item').forEach(a => a.classList.remove('active'));
     document.getElementById(`section-${name}`)?.classList.remove('hidden');
     document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
 
-    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users' };
+    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests' };
     Utils.setText('#pageTitle', titles[name] || 'Admin');
 
     if (name === 'events')   loadEvents();
@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('adminLogoutBtn').addEventListener('click', () => Auth.logout());
+  document.getElementById('refreshRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
 
   /* Sidebar toggle on mobile */
   document.getElementById('sidebarToggle')?.addEventListener('click', () => {
@@ -46,16 +47,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ── Dashboard stats ───────────────────────────────────────────────── */
   async function loadStats() {
     try {
-      const res  = await fetch(_API_BASE + '/api/admin/stats', { headers: Auth.headers() });
-      const data = await res.json();
-      if (!data.success) return;
-      const s = data.stats;
-      Utils.setText('#st-total',      s.totalEvents);
-      Utils.setText('#st-published',  s.publishedEvents);
-      Utils.setText('#st-pending',    s.pendingEvents);
-      Utils.setText('#st-tickets',    s.ticketsSold);
-      Utils.setText('#st-users',      s.totalUsers);
-      Utils.setText('#st-organisers', s.organisers);
+      const [statsRes, reqRes] = await Promise.all([
+        fetch(_API_BASE + '/api/admin/stats',    { headers: Auth.headers() }),
+        fetch(_API_BASE + '/api/admin/requests', { headers: Auth.headers() }),
+      ]);
+      const statsData = await statsRes.json();
+      if (statsData.success) {
+        const s = statsData.stats;
+        Utils.setText('#st-total',      s.totalEvents);
+        Utils.setText('#st-published',  s.publishedEvents);
+        Utils.setText('#st-pending',    s.pendingEvents);
+        Utils.setText('#st-tickets',    s.ticketsSold);
+        Utils.setText('#st-users',      s.totalUsers);
+        Utils.setText('#st-organisers', s.organisers);
+      }
+      if (reqRes.ok) {
+        const reqData = await reqRes.json();
+        const pending = (reqData.requests || []).filter(r => r.status === 'pending').length;
+        Utils.setText('#st-requests', pending);
+      }
     } catch (err) {
       console.warn('[Admin] Stats load failed:', err.message);
     }
@@ -360,40 +370,54 @@ document.addEventListener('DOMContentLoaded', async () => {
    ════════════════════════════════════════════════════ */
 
 async function loadServiceRequests() {
-  const container = document.getElementById('section-requests');
-  if (!container) return;
-  container.innerHTML = '<div class="admin-loading">Loading requests…</div>';
+  const body = document.getElementById('requestsBody');
+  if (!body) return;
+  body.innerHTML = '<div class="req-loading"><div class="spinner"></div><span>Loading requests…</span></div>';
 
   try {
     const res  = await fetch(_API_BASE + '/api/admin/requests', { headers: Auth.headers() });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+    if (!res.ok) throw new Error(data.error || 'Failed to load requests');
 
     const requests = data.requests || [];
 
     if (!requests.length) {
-      container.innerHTML = '<div class="admin-empty">No service requests yet.</div>';
+      body.innerHTML = `
+        <div class="req-empty">
+          <div class="req-empty-icon">📋</div>
+          <p>No service requests yet.</p>
+          <small>When users submit equipment or service requests, they will appear here.</small>
+        </div>`;
       return;
     }
 
     const statusColors = {
-      pending:   '#F59E0B',
-      quoted:    '#3B82F6',
-      confirmed: '#16A34A',
-      cancelled: '#EF4444',
+      pending:   { bg: 'rgba(245,158,11,.12)',  text: '#F59E0B', border: 'rgba(245,158,11,.3)'  },
+      quoted:    { bg: 'rgba(59,130,246,.12)',   text: '#3B82F6', border: 'rgba(59,130,246,.3)'  },
+      confirmed: { bg: 'rgba(22,163,74,.12)',    text: '#16A34A', border: 'rgba(22,163,74,.3)'   },
+      cancelled: { bg: 'rgba(239,68,68,.12)',    text: '#EF4444', border: 'rgba(239,68,68,.3)'   },
+    };
+
+    const badge = s => {
+      const c = statusColors[s] || { bg:'rgba(128,128,128,.12)', text:'#888', border:'rgba(128,128,128,.3)' };
+      return `<span class="req-status-badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">${s}</span>`;
     };
 
     const rows = requests.map(r => `
-      <tr>
-        <td>${r.id}</td>
-        <td>${escH(r.service_name)}</td>
-        <td>${escH(r.first_name + ' ' + r.last_name)}<br>
-            <small style="color:var(--text-3)">${escH(r.email)}</small></td>
-        <td>${escH(r.location)}</td>
-        <td>${r.event_date || '—'}</td>
-        <td><span class="admin-badge" style="background:${statusColors[r.status] || '#888'}22;color:${statusColors[r.status] || '#888'};border-color:${statusColors[r.status] || '#888'}44">${r.status}</span></td>
+      <tr class="req-row">
+        <td class="req-id">#${r.id}</td>
         <td>
-          <select class="admin-status-sel" data-req-id="${r.id}" style="font-size:.8125rem;padding:4px 8px;background:var(--bg-3);border:1px solid var(--b1);border-radius:6px;color:var(--text);cursor:pointer">
+          <div class="req-service">${escH(r.service_name || '—')}</div>
+        </td>
+        <td>
+          <div class="req-name">${escH((r.first_name || '') + ' ' + (r.last_name || ''))}</div>
+          <div class="req-email">${escH(r.email || '')}</div>
+        </td>
+        <td class="req-location">${escH(r.location || '—')}</td>
+        <td class="req-date">${r.event_date ? new Date(r.event_date).toLocaleDateString('en-ZA') : '—'}</td>
+        <td>${badge(r.status || 'pending')}</td>
+        <td>
+          <select class="req-status-sel" data-req-id="${r.id}">
             <option value="pending"   ${r.status==='pending'   ? 'selected':''}>Pending</option>
             <option value="quoted"    ${r.status==='quoted'    ? 'selected':''}>Quoted</option>
             <option value="confirmed" ${r.status==='confirmed' ? 'selected':''}>Confirmed</option>
@@ -402,46 +426,63 @@ async function loadServiceRequests() {
         </td>
       </tr>`).join('');
 
-    container.innerHTML = `
-      <div class="admin-section-head">
-        <h2>Service / Equipment Requests</h2>
-        <span class="admin-count">${requests.length} total</span>
+    const pending = requests.filter(r => r.status === 'pending').length;
+
+    body.innerHTML = `
+      <div class="req-summary">
+        <span class="req-count">${requests.length} total</span>
+        ${pending ? `<span class="req-pending-chip">${pending} pending review</span>` : '<span class="req-ok-chip">All reviewed ✓</span>'}
       </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead><tr>
-            <th>#</th><th>Service</th><th>Organiser</th>
-            <th>Location</th><th>Date</th><th>Status</th><th>Action</th>
-          </tr></thead>
+      <div class="req-table-wrap">
+        <table class="req-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Service</th>
+              <th>Requester</th>
+              <th>Location</th>
+              <th>Event Date</th>
+              <th>Status</th>
+              <th>Update</th>
+            </tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </div>`;
 
-    // Wire up status change selects
-    container.querySelectorAll('.admin-status-sel').forEach(sel => {
+    body.querySelectorAll('.req-status-sel').forEach(sel => {
+      sel.dataset.prev = sel.value;
       sel.addEventListener('change', async function () {
         const id     = this.dataset.reqId;
         const status = this.value;
+        const prev   = this.dataset.prev;
         try {
           const r = await fetch(`${_API_BASE}/api/admin/requests/${id}/status`, {
-            method: 'PUT',
-            headers: Auth.headers(),
+            method: 'PUT', headers: Auth.headers(),
             body: JSON.stringify({ status }),
           });
           const d = await r.json();
-          if (!r.ok) throw new Error(d.error);
-          if (typeof Utils !== 'undefined') Utils.showToast(`Request #${id} → ${status}`, 'success');
+          if (!r.ok) throw new Error(d.error || 'Update failed');
+          Utils.showToast(`Request #${id} marked as "${status}"`, 'success');
+          this.dataset.prev = status;
+          // Refresh the status badge in the same row
+          const badge = this.closest('tr').querySelector('.req-status-badge');
+          if (badge) {
+            const c = statusColors[status] || { bg:'rgba(128,128,128,.12)', text:'#888', border:'rgba(128,128,128,.3)' };
+            badge.style.background   = c.bg;
+            badge.style.color        = c.text;
+            badge.style.borderColor  = c.border;
+            badge.textContent        = status;
+          }
         } catch (err) {
-          if (typeof Utils !== 'undefined') Utils.showToast('Failed: ' + err.message, 'error');
-          this.value = this.dataset.prev || 'pending';
+          Utils.showToast('Failed: ' + err.message, 'error');
+          this.value = prev;
         }
-        this.dataset.prev = this.value;
       });
-      sel.dataset.prev = sel.value;
     });
 
   } catch (err) {
-    container.innerHTML = `<div class="admin-error">${err.message}</div>`;
+    body.innerHTML = `<div class="req-error"><span>⚠️</span> ${escH(err.message)}</div>`;
   }
 }
 

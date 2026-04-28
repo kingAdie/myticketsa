@@ -292,7 +292,7 @@ const Auth = (() => {
       }
 
     } catch {
-      showError('Cannot connect to the server. Is the backend running?');
+      showError('Unable to reach the server. Please try again in a moment.');
       btn.disabled = false; btn.textContent = 'Log In';
     }
   }

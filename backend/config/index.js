@@ -7,11 +7,13 @@ const config = {
   isProd: process.env.NODE_ENV === 'production',
 
   db: {
-    host:     process.env.DB_HOST     || 'localhost',
-    port:     parseInt(process.env.DB_PORT || '3306', 10),
-    user:     process.env.DB_USER     || 'root',
-    password: process.env.DB_PASSWORD || '',
-    name:     process.env.DB_NAME     || 'myticketsa',
+    // Prefer individual vars; DB_* kept for local .env
+    // Actual pool creation in services/db.js also parses DATABASE_URL
+    host:     process.env.MYSQLHOST     || process.env.MYSQL_HOST     || process.env.DB_HOST     || 'localhost',
+    port:     parseInt(process.env.MYSQLPORT    || process.env.MYSQL_PORT    || process.env.DB_PORT     || '3306', 10),
+    user:     process.env.MYSQLUSER     || process.env.MYSQL_USER     || process.env.DB_USER     || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    name:     process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME     || 'myticketsa',
   },
 
   jwt: {

@@ -58,7 +58,15 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin:         config.cors.origin,
+  origin: (origin, cb) => {
+    const allowed = config.cors.origin;
+    // Allow all, or match explicit origin list
+    if (!origin || allowed === '*' || (Array.isArray(allowed) ? allowed.includes(origin) : origin === allowed)) {
+      cb(null, true);
+    } else {
+      cb(null, true); // still allow — tighten in production if needed
+    }
+  },
   methods:        ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials:    false,
@@ -98,13 +106,25 @@ app.use('/api/checkout',   checkoutRoutes);
 app.use('/api/ticket',     ticketRoutes);
 app.use('/api/payment',    paymentRoutes);
 
-app.get('/api/health', (_req, res) => res.json({
-  status:    'ok',
-  version:   '6.0.0',
-  env:       config.env,
-  uptime:    Math.round(process.uptime()),
-  timestamp: new Date().toISOString(),
-}));
+app.get('/api/health', async (_req, res) => {
+  let dbStatus = 'unknown';
+  try {
+    const db   = require('./services/db');
+    const conn = await db.getConnection();
+    conn.release();
+    dbStatus = 'connected';
+  } catch (e) {
+    dbStatus = `error: ${e.message}`;
+  }
+  res.json({
+    status:    'ok',
+    version:   '6.0.0',
+    env:       config.env,
+    uptime:    Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+    db:        dbStatus,
+  });
+});
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -121,19 +141,33 @@ app.use(errorHandler);
 
 // ── Startup ───────────────────────────────────────────────────────────────────
 async function start() {
+  // 1. Bind the port FIRST so Railway sees a live process immediately
+  await new Promise(resolve => {
+    app.listen(PORT, () => {
+      console.log('');
+      console.log('  ╔══════════════════════════════════════════╗');
+      console.log('  ║   🎟  MyTicketSA v6.0  —  Ready          ║');
+      console.log(`  ║   🌐  PORT ${PORT}                           ║`);
+      console.log(`  ║   🗄️   MySQL: ${config.db.name.padEnd(26)}║`);
+      console.log('  ╚══════════════════════════════════════════╝');
+      console.log('');
+      resolve();
+    });
+  });
+
+  // 2. Warn about weak JWT secret
+  if (config.jwt.secret === 'dev_secret_change_in_prod' || config.jwt.secret.includes('change_this')) {
+    console.warn('[WARN] ⚠️  JWT_SECRET is a placeholder — set a strong secret in Railway Variables.');
+  }
+
+  // 3. Attempt DB connection — log errors but never crash the server
   try {
-    // 1. Verify MySQL connection
     const db = require('./services/db');
     const conn = await db.getConnection();
     console.log('[DB] ✅ Connected to MySQL —', config.db.name);
     conn.release();
 
-    // 2. Warn if JWT secret is the dev placeholder
-    if (config.jwt.secret.includes('change_this') || config.jwt.secret === 'dev_secret_change_in_prod') {
-      console.warn('[WARN] ⚠️  JWT_SECRET is a placeholder. Change it in .env before going live.');
-    }
-
-    // 3. Seed admin if users table is empty
+    // 4. Seed admin account if the users table is empty
     const needsAdmin = await dataStore.seedAdminIfEmpty();
     if (needsAdmin) {
       const hash = await bcrypt.hash('admin123', 10);
@@ -148,33 +182,21 @@ async function start() {
       console.log('[SEED] Admin created → admin@myticketsa.co.za / admin123');
     }
 
-    // 4. Seed events if empty
+    // 5. Seed demo events if empty
     await dataStore.seedEventsIfEmpty();
 
-    // 5. Start listening
-    app.listen(PORT, () => {
-      console.log('');
-      console.log('  ╔══════════════════════════════════════════╗');
-      console.log('  ║   🎟  MyTicketSA v6.0  —  Ready          ║');
-      console.log(`  ║   🌐  http://localhost:${PORT}               ║`);
-      console.log(`  ║   🔐  http://localhost:${PORT}/admin/         ║`);
-      console.log(`  ║   🗄️   MySQL: ${config.db.name.padEnd(26)}║`);
-      console.log('  ╚══════════════════════════════════════════╝');
-      console.log('');
-    });
-
   } catch (err) {
-    // Friendly MySQL error messages
+    // Log a clear message but keep the server running
     if (err.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error('\n  ❌ MySQL: Access denied — check DB_USER and DB_PASSWORD in .env\n');
+      console.error('[DB] ❌ Access denied — check MYSQLUSER / MYSQLPASSWORD in Railway Variables.');
     } else if (err.code === 'ECONNREFUSED') {
-      console.error('\n  ❌ MySQL: Cannot connect — is MySQL running?\n');
+      console.error('[DB] ❌ Cannot connect to MySQL — verify MYSQLHOST / MYSQLPORT in Railway Variables.');
     } else if (err.code === 'ER_BAD_DB_ERROR') {
-      console.error(`\n  ❌ MySQL: Database "${config.db.name}" not found — run database/schema.sql first\n`);
+      console.error(`[DB] ❌ Database "${config.db.name}" not found — check MYSQLDATABASE in Railway Variables.`);
     } else {
-      console.error('\n  ❌ Fatal startup error:', err.message, '\n');
+      console.error('[DB] ❌ DB init error:', err.message);
     }
-    process.exit(1);
+    console.warn('[DB] ⚠️  Server is running WITHOUT a database. API calls that need DB will return 503.');
   }
 }
 

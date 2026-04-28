@@ -6,7 +6,7 @@ const _API_BASE = (function () {
   if (port === '5500' || port === '3000') return '';
 
   // Production — point to Railway backend
-  return 'https://myticketsa-backend-production.up.railway.app';
+  return 'https://myticketsa-production.up.railway.app';
 })();
 
 const _ORGANISER_API = _API_BASE + '/api/organiser';
