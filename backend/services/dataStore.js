@@ -95,8 +95,10 @@ async function saveEvent(event) {
       INSERT INTO events
         (id, status, title, category, event_date, event_time, end_time,
          location, city, province, description, image, price,
-         featured, sold_out, organiser_name, organiser_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         featured, sold_out, organiser_name, organiser_id, created_at,
+         address, payment_type, payment_link, bank_name, account_holder,
+         account_number, branch_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         status         = VALUES(status),
         title          = VALUES(title),
@@ -113,7 +115,14 @@ async function saveEvent(event) {
         featured       = VALUES(featured),
         sold_out       = VALUES(sold_out),
         organiser_name = VALUES(organiser_name),
-        organiser_id   = VALUES(organiser_id)
+        organiser_id   = VALUES(organiser_id),
+        address        = VALUES(address),
+        payment_type   = VALUES(payment_type),
+        payment_link   = VALUES(payment_link),
+        bank_name      = VALUES(bank_name),
+        account_holder = VALUES(account_holder),
+        account_number = VALUES(account_number),
+        branch_code    = VALUES(branch_code)
     `, [
       event.id,
       event.status    || 'pending',
@@ -133,6 +142,13 @@ async function saveEvent(event) {
       event.organiser || null,
       event.organiserId,
       event.createdAt ? new Date(event.createdAt) : new Date(),
+      event.address || null,
+      event.paymentType || null,
+      event.paymentLink || null,
+      event.bankName || null,
+      event.accountHolder || null,
+      event.accountNumber || null,
+      event.branchCode || null,
     ]);
 
     if (Array.isArray(event.ticketTypes) && event.ticketTypes.length > 0) {
@@ -185,6 +201,13 @@ function toEvent(row, allTTs, allTags) {
     price: parseFloat(row.price), featured: !!row.featured, sold_out: !!row.sold_out,
     organiser: row.organiser_name, organiserId: row.organiser_id,
     createdAt: row.created_at, updatedAt: row.updated_at,
+    address: row.address || null,
+    paymentType: row.payment_type || null,
+    paymentLink: row.payment_link || null,
+    bankName: row.bank_name || null,
+    accountHolder: row.account_holder || null,
+    accountNumber: row.account_number || null,
+    branchCode: row.branch_code || null,
     ticketTypes: myTT.map(tt => ({
       id: tt.id, name: tt.name, description: tt.description,
       price: parseFloat(tt.price), available: tt.available, sold: tt.sold || 0,

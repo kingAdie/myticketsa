@@ -23,13 +23,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(`section-${name}`)?.classList.remove('hidden');
     document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
 
-    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests' };
+    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests', organisers: 'Organisers', customers: 'Customers', media: 'Media Library' };
     Utils.setText('#pageTitle', titles[name] || 'Admin');
 
-    if (name === 'events')   loadEvents();
-    if (name === 'tickets')  loadTickets();
-    if (name === 'users')    loadUsers();
-    if (name === 'requests') loadServiceRequests();
+    if (name === 'events')     loadEvents();
+    if (name === 'tickets')    loadTickets();
+    if (name === 'users')      loadUsers();
+    if (name === 'requests')   loadServiceRequests();
+    if (name === 'organisers') loadOrganisers();
+    if (name === 'customers')  loadCustomers();
+    if (name === 'media')      loadMedia();
   }
 
   document.querySelectorAll('.admin-nav-item[data-section]').forEach(item => {
@@ -153,6 +156,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${e.status !== 'published' ? `<button class="event-action-btn approve-ev" data-id="${e.id}">✅ Publish</button>` : `<button class="event-action-btn unpublish-ev" data-id="${e.id}">⏸ Unpublish</button>`}
               ${!e.featured ? `<button class="event-action-btn feature-ev" data-id="${e.id}">⭐ Feature</button>` : `<button class="event-action-btn unfeature-ev" data-id="${e.id}">☆ Unfeature</button>`}
               <button class="event-action-btn reject-ev" data-id="${e.id}">❌ Reject</button>
+              <button class="event-action-btn view-poster-ev" data-id="${e.id}" data-img="${e.image || ''}">🖼 View Poster</button>
+              <button class="event-action-btn enhance-ev" data-id="${e.id}">✨ Enhance Image</button>
               <button class="event-action-btn delete-ev" data-id="${e.id}" style="color:#EF4444;">🗑 Delete</button>
             </div>
           </div>
@@ -175,6 +180,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.querySelectorAll('.feature-ev')  .forEach(b => b.addEventListener('click', () => toggleFeatured(b.dataset.id, true)));
     body.querySelectorAll('.unfeature-ev').forEach(b => b.addEventListener('click', () => toggleFeatured(b.dataset.id, false)));
     body.querySelectorAll('.delete-ev')   .forEach(b => b.addEventListener('click', () => deleteEvent(b.dataset.id)));
+    body.querySelectorAll('.view-poster-ev').forEach(b => b.addEventListener('click', () => viewPoster(b.dataset.img)));
+    body.querySelectorAll('.enhance-ev').forEach(b => b.addEventListener('click', () => enhanceImage(b.dataset.id)));
   }
 
   /* Filter & search */
@@ -360,10 +367,153 @@ document.addEventListener('DOMContentLoaded', async () => {
   `;
   document.head.appendChild(style);
 
+  function viewPoster(imgUrl) {
+    if (!imgUrl) { Utils.showToast('No poster uploaded for this event.', 'error'); return; }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.innerHTML = `<img src="${imgUrl}" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.8);" alt="Event poster"/>`;
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
+
+  async function enhanceImage(id) {
+    const btn = document.querySelector(`.enhance-ev[data-id="${id}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enhancing…'; }
+    try {
+      const res = await fetch(`${_API_BASE}/api/admin/events/${id}/enhance`, {
+        method: 'POST', headers: Auth.headers(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        Utils.showToast('Image enhanced! Refreshing event…', 'success');
+        setTimeout(() => loadEvents(), 800);
+      } else {
+        Utils.showToast(data.error || 'Enhancement failed.', 'error');
+      }
+    } catch {
+      Utils.showToast('Server error during enhancement.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '✨ Enhance Image'; }
+    }
+  }
+
   /* ── Bootstrap ──────────────────────────────────────────────────────── */
   await loadStats();
   await loadPendingList();
 });
+
+/* ════════════════════════════════════════════════════
+   ORGANISERS — Admin Management
+   ════════════════════════════════════════════════════ */
+
+async function loadOrganisers() {
+  const body = document.getElementById('adminOrganisersBody');
+  if (!body) return;
+  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(_API_BASE + '/api/admin/organisers', { headers: Auth.headers() });
+    const data = await res.json();
+    const orgs = data.organisers || [];
+    if (!orgs.length) { body.innerHTML = '<div class="org-empty"><p>No organisers yet.</p></div>'; return; }
+    body.innerHTML = orgs.map(o => `
+      <div class="admin-row" style="grid-template-columns:1fr 180px 80px 80px;">
+        <div>
+          <div class="admin-row-title">${escH(o.name)}</div>
+          <div class="admin-row-meta">${escH(o.email)}${o.org !== '—' ? ` · ${escH(o.org)}` : ''}</div>
+        </div>
+        <div class="admin-row-meta">${new Date(o.joined).toLocaleDateString('en-ZA')}</div>
+        <div style="text-align:center;font-weight:700;color:var(--text-primary);">${o.events.total}</div>
+        <div style="text-align:center;">
+          <span class="status-badge published">${o.events.published} live</span>
+        </div>
+      </div>`).join('');
+    document.getElementById('organiserSearchInput')?.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      body.querySelectorAll('.admin-row').forEach(row => {
+        row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  } catch (err) {
+    body.innerHTML = `<div class="org-empty"><p>Failed to load organisers.</p></div>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   CUSTOMERS — Admin Management
+   ════════════════════════════════════════════════════ */
+
+async function loadCustomers() {
+  const body = document.getElementById('adminCustomersBody');
+  if (!body) return;
+  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(_API_BASE + '/api/admin/customers', { headers: Auth.headers() });
+    const data = await res.json();
+    const customers = data.customers || [];
+    if (!customers.length) { body.innerHTML = '<div class="org-empty"><p>No customers yet.</p></div>'; return; }
+    body.innerHTML = customers.map(c => `
+      <div class="admin-row" style="grid-template-columns:1fr 180px 80px 100px;">
+        <div>
+          <div class="admin-row-title">${escH(c.name)}</div>
+          <div class="admin-row-meta">${escH(c.email)}</div>
+        </div>
+        <div class="admin-row-meta">${new Date(c.joined).toLocaleDateString('en-ZA')}</div>
+        <div style="text-align:center;font-weight:700;">${c.bookings}</div>
+        <div style="text-align:right;font-weight:700;color:var(--green);">R ${parseFloat(c.spent).toFixed(2)}</div>
+      </div>`).join('');
+    document.getElementById('customerSearchInput')?.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      body.querySelectorAll('.admin-row').forEach(row => {
+        row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  } catch (err) {
+    body.innerHTML = `<div class="org-empty"><p>Failed to load customers.</p></div>`;
+  }
+}
+
+/* ════════════════════════════════════════════════════
+   MEDIA LIBRARY — Admin Management
+   ════════════════════════════════════════════════════ */
+
+async function loadMedia() {
+  const body = document.getElementById('adminMediaBody');
+  if (!body) return;
+  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
+  try {
+    const res = await fetch(_API_BASE + '/api/admin/media', { headers: Auth.headers() });
+    const data = await res.json();
+    const files = data.files || [];
+    document.getElementById('mediaCount').textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+    if (!files.length) {
+      body.innerHTML = '<div class="org-empty"><p>No uploaded images yet. Images uploaded via event creation will appear here.</p></div>';
+      return;
+    }
+    body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:24px;">` +
+      files.map(f => `
+        <div style="border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;background:var(--bg-elevated);">
+          <img src="${f.url}" alt="${f.filename}" loading="lazy"
+            style="width:100%;height:140px;object-fit:cover;cursor:pointer;"
+            onclick="viewPosterGlobal('${f.url}')"/>
+          <div style="padding:8px 12px;">
+            <div style="font-size:.75rem;color:var(--text-secondary);word-break:break-all;">${f.filename}</div>
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px;">${(f.size/1024).toFixed(1)} KB</div>
+          </div>
+        </div>`).join('') + `</div>`;
+  } catch (err) {
+    body.innerHTML = `<div class="org-empty"><p>Failed to load media.</p></div>`;
+  }
+}
+
+// Global viewPoster helper for inline onclick in media grid
+window.viewPosterGlobal = function(imgUrl) {
+  if (!imgUrl) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  overlay.innerHTML = `<img src="${imgUrl}" style="max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.8);" alt="Event poster"/>`;
+  overlay.addEventListener('click', () => overlay.remove());
+  document.body.appendChild(overlay);
+};
 
 /* ════════════════════════════════════════════════════
    SERVICE REQUESTS — Admin Management

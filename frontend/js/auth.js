@@ -192,6 +192,20 @@ const Auth = (() => {
             <label class="form-label" for="signupPassword">Password <span style="color:var(--text-3);font-weight:400;">(min 6 chars)</span></label>
             <input type="password" id="signupPassword" class="form-input" placeholder="Create a password" required autocomplete="new-password"/>
           </div>
+          <div class="form-group">
+            <label class="form-label">Account Type</label>
+            <div class="auth-role-toggle" role="radiogroup" aria-label="Account type">
+              <button type="button" class="auth-role-btn active" data-role="attendee" aria-pressed="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Attendee
+              </button>
+              <button type="button" class="auth-role-btn" data-role="organiser" aria-pressed="false">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Event Organiser
+              </button>
+            </div>
+            <input type="hidden" id="signupRole" value="attendee"/>
+          </div>
           <button type="submit" class="btn btn-primary btn-full" id="signupSubmitBtn">Create Account</button>
           <p class="auth-switch">Already have an account? <button type="button" class="auth-switch-btn" data-switch="login">Log in →</button></p>
         </form>
@@ -208,6 +222,19 @@ const Auth = (() => {
 
     document.getElementById('loginForm') .addEventListener('submit', handleLogin);
     document.getElementById('signupForm').addEventListener('submit', handleSignup);
+
+    // Role toggle buttons
+    overlay.querySelectorAll('.auth-role-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlay.querySelectorAll('.auth-role-btn').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+        document.getElementById('signupRole').value = btn.dataset.role;
+      });
+    });
   }
 
   function switchTab(tab) {
@@ -309,7 +336,7 @@ const Auth = (() => {
       lastName:  document.getElementById('signupLast')?.value.trim(),
       email:     document.getElementById('signupEmail')?.value.trim(),
       password:  document.getElementById('signupPassword')?.value,
-      role:      'attendee',
+      role:      document.getElementById('signupRole')?.value || 'attendee',
     };
 
     btn.disabled = true; btn.textContent = 'Creating account…';

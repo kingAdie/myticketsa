@@ -4,19 +4,153 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Event Equipment — MyTicketSA</title>
-  <meta name="description" content="Rent event equipment across South Africa. Mobile freezers, Mobile Toilets, tents, generators, sound systems and more."/>
+  <meta name="description" content="Rent event equipment across South Africa. Generators, mobile freezers, toilets, tents and more."/>
   <meta name="theme-color" content="#080808"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <!-- Load shared styles — paths are relative to frontend/services/ -->
   <link rel="stylesheet" href="../css/styles.css"/>
   <link rel="stylesheet" href="../css/auth.css"/>
-  <link rel="stylesheet" href="services.css"/>
+
+  <style>
+  /* ═══════════════════════════════════════════════════
+     ALL EQUIPMENT PAGE STYLES — self-contained
+     No dependency on services.css or card-improvements
+  ═══════════════════════════════════════════════════ */
+
+  /* ── Hero ── */
+  .svc-hero{position:relative;min-height:480px;display:flex;align-items:flex-end;overflow:hidden;background:#080808}
+  .svc-hero__bg{position:absolute;inset:0;z-index:0}
+  .svc-hero__bg img{width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:brightness(.22) saturate(.8);transform:scale(1.04);animation:hZoom 22s ease-in-out infinite alternate}
+  @keyframes hZoom{0%{transform:scale(1.04)}100%{transform:scale(1.09) translate(-1%,1%)}}
+  .svc-hero__overlay{position:absolute;inset:0;z-index:1;background:linear-gradient(to top,#080808 0%,rgba(8,8,8,.5) 46%,rgba(8,8,8,.15) 100%),linear-gradient(135deg,rgba(8,8,8,.6) 0%,transparent 55%)}
+  .svc-hero__glow{position:absolute;inset:0;z-index:2;background:radial-gradient(ellipse 55% 60% at 88% 16%,rgba(22,163,74,.12) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 8% 78%,rgba(37,99,235,.08) 0%,transparent 55%);pointer-events:none}
+  .svc-hero__inner{position:relative;z-index:3;padding:96px 0 52px;width:100%}
+  .svc-hero__eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#16A34A;margin-bottom:16px}
+  .svc-hero__dot{width:7px;height:7px;border-radius:50%;background:#16A34A;flex-shrink:0;box-shadow:0 0 14px rgba(22,163,74,.9);animation:dp 2s ease-in-out infinite}
+  @keyframes dp{0%,100%{box-shadow:0 0 6px rgba(22,163,74,.7)}50%{box-shadow:0 0 22px rgba(22,163,74,.9)}}
+  .svc-hero__title{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(2.8rem,5.5vw,4.5rem);font-weight:800;letter-spacing:-.045em;color:#fff;margin-bottom:14px;line-height:1}
+  .svc-hero__sub{font-size:1.0625rem;color:rgba(255,255,255,.58);max-width:520px;line-height:1.75}
+
+  /* ── Main bento area ── */
+  .eq-main{padding:56px 0 90px;background:#080808}
+  .eq-count-bar{margin-bottom:28px}
+  .eq-count-label{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.28);letter-spacing:.08em;text-transform:uppercase}
+
+  /* ── Bento grid ── */
+  .eq-bento{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+  .eq-stack{display:flex;flex-direction:column;gap:14px}
+  .eq-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;flex:1}
+
+  /* ── Tile base ── */
+  .eq-tile{position:relative;border-radius:22px;overflow:hidden;cursor:pointer;isolation:isolate;border:1px solid rgba(255,255,255,.07);transition:transform .45s cubic-bezier(.34,1.4,.64,1),box-shadow .45s,border-color .3s}
+  .eq-tile:hover{transform:scale(1.016) translateY(-4px);box-shadow:0 28px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.13)}
+  .eq-tile--hero{min-height:540px}
+  .eq-tile--wide{flex:1;min-height:200px}
+  .eq-tile--mini{min-height:224px}
+
+  /* Image */
+  .eq-tile__media{position:absolute;inset:0;z-index:0}
+  .eq-tile__media img{width:100%;height:100%;object-fit:cover;filter:brightness(.6) saturate(1.1);transition:transform .7s cubic-bezier(.25,.46,.45,.94),filter .4s}
+  .eq-tile:hover .eq-tile__media img{transform:scale(1.07);filter:brightness(.8) saturate(1.2)}
+
+  /* Glass */
+  .eq-tile__glass{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:24px 24px 22px;background:linear-gradient(to top,rgba(5,5,5,.98) 0%,rgba(5,5,5,.9) 38%,rgba(5,5,5,.55) 68%,transparent 100%);transition:backdrop-filter .3s}
+  .eq-tile:hover .eq-tile__glass{backdrop-filter:blur(2px)}
+  .eq-tile__glass--row{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:20px 24px 22px}
+  .eq-glass__left{flex:1}
+  .eq-glass__right{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex-shrink:0}
+  .eq-tile__glass--mini{padding:15px 17px 16px}
+
+  /* Specular shine */
+  .eq-tile__shine{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 50%,rgba(255,255,255,.02) 100%);opacity:0;transition:opacity .3s;border-radius:inherit}
+  .eq-tile:hover .eq-tile__shine{opacity:1}
+
+  /* Full-card link overlay */
+  .eq-tile__link{position:absolute;inset:0;z-index:1;border-radius:inherit}
+
+  /* Left colour accent */
+  .eq-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;z-index:4;border-radius:22px 0 0 22px;opacity:0;transition:opacity .3s}
+  .eq-tile:hover::before{opacity:1}
+  .eq-tile--hero::before{background:linear-gradient(180deg,#FCD34D,#D97706)}
+  .eq-tile--wide::before{background:linear-gradient(180deg,#93C5FD,#2563EB)}
+  .eq-tile--mini[data-cat="sanitation"]::before{background:linear-gradient(180deg,#4ADE80,#16A34A)}
+  .eq-tile--mini[data-cat="shelter"]::before{background:linear-gradient(180deg,#C4B5FD,#7C3AED)}
+
+  /* Pills */
+  .eq-pill{display:inline-flex;align-items:center;gap:5px;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;padding:5px 11px;border-radius:9999px;margin-bottom:11px;border:1px solid transparent;transition:box-shadow .3s}
+  .eq-pill--amber{background:rgba(217,119,6,.22);border-color:rgba(253,186,26,.28);color:#FCD34D}
+  .eq-pill--blue{background:rgba(37,99,235,.22);border-color:rgba(147,197,253,.28);color:#BAE6FD}
+  .eq-pill--green{background:rgba(22,163,74,.22);border-color:rgba(74,222,128,.28);color:#4ADE80}
+  .eq-pill--purple{background:rgba(124,58,237,.22);border-color:rgba(196,181,253,.28);color:#C4B5FD}
+  .eq-tile:hover .eq-pill--amber{box-shadow:0 0 18px rgba(253,186,26,.4)}
+  .eq-tile:hover .eq-pill--blue{box-shadow:0 0 18px rgba(147,197,253,.4)}
+  .eq-tile:hover .eq-pill--green{box-shadow:0 0 18px rgba(74,222,128,.4)}
+  .eq-tile:hover .eq-pill--purple{box-shadow:0 0 18px rgba(196,181,253,.4)}
+
+  /* Typography */
+  .eq-tile__name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-.028em;line-height:1.1;margin:0 0 9px}
+  .eq-tile__name--sm{font-size:1rem;margin-bottom:7px}
+  .eq-tile__desc{font-size:.82rem;color:rgba(255,255,255,.55);line-height:1.62;margin-bottom:18px;max-width:380px}
+  .eq-tile__desc--sm{font-size:.76rem;margin-bottom:14px;max-width:none}
+
+  /* Spec dots */
+  .eq-tile__specs{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:22px}
+  .eq-tile__specs li{display:flex;align-items:center;gap:8px;font-size:.77rem;color:rgba(255,255,255,.5);font-weight:500;transition:color .25s}
+  .eq-tile:hover .eq-tile__specs li{color:rgba(255,255,255,.82)}
+  .eq-dot{display:block;width:5px;height:5px;border-radius:50%;flex-shrink:0}
+  .eq-dot--amber{background:#FCD34D;box-shadow:0 0 7px rgba(253,186,26,.9)}
+  .eq-dot--blue{background:#93C5FD;box-shadow:0 0 7px rgba(147,197,253,.9)}
+  .eq-dot--green{background:#4ADE80;box-shadow:0 0 7px rgba(74,222,128,.9)}
+  .eq-dot--purple{background:#C4B5FD;box-shadow:0 0 7px rgba(196,181,253,.9)}
+
+  /* Actions */
+  .eq-tile__actions{display:flex;align-items:center;gap:14px}
+  .eq-tile__actions--sm{gap:10px}
+
+  /* CTA buttons */
+  .eq-cta{display:inline-flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:.78rem;font-weight:800;padding:10px 20px;border-radius:9999px;border:1.5px solid transparent;text-decoration:none;letter-spacing:.02em;white-space:nowrap;cursor:pointer;position:relative;z-index:5;transition:all .28s cubic-bezier(.34,1.5,.64,1)}
+  .eq-cta--sm{font-size:.72rem;padding:8px 15px}
+  .eq-cta--amber{background:rgba(217,119,6,.14);border-color:rgba(253,186,26,.3);color:#FCD34D}
+  .eq-cta--blue{background:rgba(37,99,235,.14);border-color:rgba(147,197,253,.3);color:#BAE6FD}
+  .eq-cta--green{background:rgba(22,163,74,.14);border-color:rgba(74,222,128,.3);color:#4ADE80}
+  .eq-cta--purple{background:rgba(124,58,237,.14);border-color:rgba(196,181,253,.3);color:#C4B5FD}
+  .eq-tile:hover .eq-cta--amber{background:#D97706;border-color:#D97706;color:#fff;box-shadow:0 0 28px rgba(217,119,6,.6);transform:translateY(-2px)}
+  .eq-tile:hover .eq-cta--blue{background:#2563EB;border-color:#2563EB;color:#fff;box-shadow:0 0 28px rgba(37,99,235,.6);transform:translateY(-2px)}
+  .eq-tile:hover .eq-cta--green{background:#16A34A;border-color:#16A34A;color:#fff;box-shadow:0 0 28px rgba(22,163,74,.6);transform:translateY(-2px)}
+  .eq-tile:hover .eq-cta--purple{background:#7C3AED;border-color:#7C3AED;color:#fff;box-shadow:0 0 28px rgba(124,58,237,.6);transform:translateY(-2px)}
+  .eq-details{font-size:.78rem;font-weight:700;color:rgba(255,255,255,.35);text-decoration:none;position:relative;z-index:5;transition:color .2s;white-space:nowrap}
+  .eq-details--sm{font-size:.72rem}
+  .eq-tile:hover .eq-details{color:rgba(255,255,255,.75)}
+
+  /* CTA banner */
+  .svc-cta-banner{background:#0F0F0F;border-top:1px solid rgba(255,255,255,.04);padding:72px 0;position:relative;overflow:hidden}
+  .svc-cta-banner__glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:350px;background:radial-gradient(ellipse,rgba(22,163,74,.07) 0%,transparent 70%);pointer-events:none;animation:cg 7s ease-in-out infinite alternate}
+  @keyframes cg{0%{opacity:.6;transform:translate(-50%,-50%) scale(1)}100%{opacity:1;transform:translate(-50%,-50%) scale(1.14)}}
+  .svc-cta-banner__inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap}
+  .svc-cta-banner h2{font-size:1.625rem;margin-bottom:6px;font-weight:800}
+  .svc-cta-banner p{color:rgba(255,255,255,.55);font-size:.9375rem}
+
+  /* Responsive */
+  @media(max-width:960px){
+    .eq-bento{grid-template-columns:1fr}
+    .eq-tile--hero{min-height:400px}
+    .eq-tile__glass--row{flex-direction:column;align-items:flex-start;gap:14px}
+    .eq-glass__right{flex-direction:row;align-items:center}
+  }
+  @media(max-width:640px){
+    .eq-pair{grid-template-columns:1fr}
+    .eq-tile--mini{min-height:200px}
+    .svc-cta-banner__inner{flex-direction:column;align-items:flex-start}
+    .svc-hero__inner{padding:80px 0 40px}
+  }
+  </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════ NAVBAR ═══════════════════════════ -->
+<!-- NAVBAR — identical to main site, auth.js populates the buttons -->
 <nav class="navbar" id="navbar">
   <div class="container navbar__inner">
     <a href="../index.html" class="navbar__logo">
@@ -24,176 +158,186 @@
         <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
       </div>
     </a>
+    <!-- auth.js injects Log In / Sign Up here -->
     <div class="navbar__actions" id="navbarActions"></div>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
       </svg>
     </button>
   </div>
 </nav>
 
-<!-- ═══════════════════════════ PAGE HERO ═══════════════════════════ -->
+
+<!-- HERO — cinematic, no search, no filters -->
 <div class="svc-hero">
-  <div class="container">
+  <div class="svc-hero__bg">
+    <img src="../images/Generator.png" alt="" loading="eager"/>
+  </div>
+  <div class="svc-hero__overlay"></div>
+  <div class="svc-hero__glow"></div>
+  <div class="container svc-hero__inner">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="../index.html">Home</a>
       <span class="breadcrumb__sep">›</span>
       <span class="breadcrumb__current">Event Equipment</span>
     </nav>
-    <div class="eyebrow" style="margin-top:var(--s2)">Rental Services</div>
-    <h1 class="svc-hero__title">Event Equipment</h1>
-    <p class="svc-hero__sub">
-      Everything your event needs — delivered, set up, and collected.
-      Professional equipment, trusted suppliers, transparent pricing.
-    </p>
-
-    <!-- Search bar -->
-    <div class="svc-hero__search">
-      <div class="search-bar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="svcSearch" placeholder="Search equipment..." aria-label="Search services"/>
-      </div>
+    <div class="svc-hero__eyebrow">
+      <span class="svc-hero__dot"></span>
+      Rental Services
     </div>
+    <h1 class="svc-hero__title">Event Equipment</h1>
+    <p class="svc-hero__sub">Professional equipment delivered, set up and collected anywhere in South Africa. Request a quote from our team.</p>
   </div>
-
-  <!-- Decorative background -->
-  <div class="svc-hero__bg" aria-hidden="true"></div>
 </div>
 
 
-<!-- ═══════════════════════════ FILTER TAGS ═══════════════════════════ -->
-<div class="svc-filters container">
-  <button class="svc-filter active" data-filter="all">All Equipment</button>
-  <button class="svc-filter" data-filter="cooling">Cooling</button>
-  <button class="svc-filter" data-filter="sanitation">Sanitation</button>
-  <button class="svc-filter" data-filter="shelter">Shelter</button>
-  <button class="svc-filter" data-filter="power">Power</button>
-</div>
+<!-- APPLE BENTO GRID -->
+<main class="eq-main">
+  <div class="container">
 
+    <div class="eq-count-bar">
+      <span class="eq-count-label">4 Equipment Categories</span>
+    </div>
 
-<!-- ═══════════════════════════ SERVICES GRID ═══════════════════════════ -->
-<main class="container svc-grid-wrap">
-  <div class="svc-grid" id="svcGrid">
+    <div class="eq-bento">
 
-    <!-- MOBILE FREEZERS -->
-    <a href="service.html?id=mobile-freezers" class="svc-card" data-tags="cooling">
-      <div class="svc-card__img">
-        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="Mobile Freezers" loading="lazy"
-             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
-        <div class="svc-card__img-overlay"></div>
-        <span class="svc-card__tag">Cooling</span>
-      </div>
-      <div class="svc-card__body">
-        <div class="svc-card__icon">🧊</div>
-        <h3 class="svc-card__title">Mobile Freezers</h3>
-        <p class="svc-card__desc">Industrial-grade mobile chest freezers and upright units for beverages, food and medical supplies.</p>
-        <div class="svc-card__meta">
-          <span>📏 Various sizes</span>
-          <span>⚡ Plugs in or diesel-powered</span>
+      <!-- GENERATORS — tall hero tile -->
+      <div class="eq-tile eq-tile--hero" data-cat="power">
+        <div class="eq-tile__media">
+          <img src="../images/Generator.png" alt="Generators" loading="eager"/>
         </div>
-        <div class="svc-card__foot">
-          <span class="svc-price">From R 650<small>/day</small></span>
-          <span class="svc-card__cta">Request →</span>
+        <div class="eq-tile__glass">
+          <div class="eq-pill eq-pill--amber">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Power
+          </div>
+          <h2 class="eq-tile__name">Generators</h2>
+          <p class="eq-tile__desc">Silent diesel generators from 10 kVA to 500 kVA. Loadshedding-proof — your event never stops, no matter what.</p>
+          <ul class="eq-tile__specs">
+            <li><span class="eq-dot eq-dot--amber"></span>10 kVA – 500 kVA range</li>
+            <li><span class="eq-dot eq-dot--amber"></span>24hr on-site technician</li>
+            <li><span class="eq-dot eq-dot--amber"></span>Full fuel management</li>
+          </ul>
+          <div class="eq-tile__actions">
+            <a href="javascript:void(0)"
+              data-qhref="javascript:void(0)" class="eq-cta eq-cta--amber">
+              Request a Quote
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="service.html?id=generators" class="eq-details">View Details →</a>
+          </div>
         </div>
+        <div class="eq-tile__shine"></div>
+        <a href="service.html?id=generators" class="eq-tile__link" aria-label="Generators details"></a>
       </div>
-    </a>
 
-    <!-- Mobile Toilets -->
-    <a href="service.html?id=portable-toilets" class="svc-card" data-tags="sanitation">
-      <div class="svc-card__img">
-        <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&q=80" alt="Mobile Toilets" loading="lazy"
-             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
-        <div class="svc-card__img-overlay"></div>
-        <span class="svc-card__tag">Sanitation</span>
-      </div>
-      <div class="svc-card__body">
-        <div class="svc-card__icon">🚽</div>
-        <h3 class="svc-card__title">Mobile Toilets</h3>
-        <p class="svc-card__desc">Self-contained Mobile Toilets with hand sanitiser dispensers. Standard, VIP and accessible units available.</p>
-        <div class="svc-card__meta">
-          <span>♿ Accessible options</span>
-          <span>🧼 Daily servicing available</span>
-        </div>
-        <div class="svc-card__foot">
-          <span class="svc-price">From R 350<small>/day</small></span>
-          <span class="svc-card__cta">Request →</span>
-        </div>
-      </div>
-    </a>
+      <!-- RIGHT STACK -->
+      <div class="eq-stack">
 
-    <!-- MARQUEE TENTS -->
-    <a href="service.html?id=marquee-tents" class="svc-card" data-tags="shelter">
-      <div class="svc-card__img">
-        <img src="https://images.unsplash.com/photo-1478147427282-58a87a433128?w=600&q=80" alt="Marquee Tents" loading="lazy"
-             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
-        <div class="svc-card__img-overlay"></div>
-        <span class="svc-card__tag">Shelter</span>
-      </div>
-      <div class="svc-card__body">
-        <div class="svc-card__icon">⛺</div>
-        <h3 class="svc-card__title">Marquee Tents</h3>
-        <p class="svc-card__desc">Elegant frame and peg marquee tents for any event size. Includes installation and breakdown.</p>
-        <div class="svc-card__meta">
-          <span>📐 6m × 9m to 20m × 40m</span>
-          <span>🔧 Setup included</span>
+        <!-- Mobile Freezers — wide -->
+        <div class="eq-tile eq-tile--wide" data-cat="cooling">
+          <div class="eq-tile__media">
+            <img src="../images/mobileFreezer.jpeg" alt="Mobile Freezers" loading="lazy"/>
+          </div>
+          <div class="eq-tile__glass eq-tile__glass--row">
+            <div class="eq-glass__left">
+              <div class="eq-pill eq-pill--blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+                Cooling
+              </div>
+              <h2 class="eq-tile__name">Mobile Freezers</h2>
+              <p class="eq-tile__desc">100 L to 600 L — plug-in or diesel, pre-sanitised and delivered to site.</p>
+            </div>
+            <div class="eq-glass__right">
+              <a href="javascript:void(0)"
+                data-qhref="javascript:void(0)" class="eq-cta eq-cta--blue">
+                Request a Quote
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </a>
+              <a href="service.html?id=mobile-freezers" class="eq-details">View Details →</a>
+            </div>
+          </div>
+          <div class="eq-tile__shine"></div>
+          <a href="service.html?id=mobile-freezers" class="eq-tile__link" aria-label="Mobile Freezers details"></a>
         </div>
-        <div class="svc-card__foot">
-          <span class="svc-price">From R 2,800<small>/event</small></span>
-          <span class="svc-card__cta">Request →</span>
-        </div>
-      </div>
-    </a>
 
-    <!-- GENERATORS -->
-    <a href="service.html?id=generators" class="svc-card" data-tags="power">
-      <div class="svc-card__img">
-        <img src="https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=80" alt="Generators" loading="lazy"
-             onerror="this.src='https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=80'"/>
-        <div class="svc-card__img-overlay"></div>
-        <span class="svc-card__tag">Power</span>
-      </div>
-      <div class="svc-card__body">
-        <div class="svc-card__icon">⚡</div>
-        <h3 class="svc-card__title">Generators</h3>
-        <p class="svc-card__desc">Silent diesel generators from 10 kVA to 500 kVA. Load-shedding proof — keep your event running.</p>
-        <div class="svc-card__meta">
-          <span>🔇 Silent models available</span>
-          <span>⛽ Fuel management included</span>
-        </div>
-        <div class="svc-card__foot">
-          <span class="svc-price">From R 1,200<small>/day</small></span>
-          <span class="svc-card__cta">Request →</span>
-        </div>
-      </div>
-    </a>
+        <!-- Pair — Toilets + Tents -->
+        <div class="eq-pair">
 
+          <div class="eq-tile eq-tile--mini" data-cat="sanitation">
+            <div class="eq-tile__media">
+              <img src="../images/mobileToilets.jpeg" alt="Mobile Toilets" loading="lazy"/>
+            </div>
+            <div class="eq-tile__glass eq-tile__glass--mini">
+              <div class="eq-pill eq-pill--green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Sanitation
+              </div>
+              <h2 class="eq-tile__name eq-tile__name--sm">Mobile Toilets</h2>
+              <p class="eq-tile__desc eq-tile__desc--sm">Standard, VIP &amp; accessible. Stocked and serviced daily.</p>
+              <div class="eq-tile__actions eq-tile__actions--sm">
+                <a href="javascript:void(0)"
+                  data-qhref="javascript:void(0)" class="eq-cta eq-cta--green eq-cta--sm">
+                  Get Quote
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="service.html?id=portable-toilets" class="eq-details eq-details--sm">Details →</a>
+              </div>
+            </div>
+            <div class="eq-tile__shine"></div>
+            <a href="service.html?id=portable-toilets" class="eq-tile__link" aria-label="Mobile Toilets details"></a>
+          </div>
 
-  </div>
+          <div class="eq-tile eq-tile--mini" data-cat="shelter">
+            <div class="eq-tile__media">
+              <img src="../images/tent.png" alt="Marquee Tents" loading="lazy"/>
+            </div>
+            <div class="eq-tile__glass eq-tile__glass--mini">
+              <div class="eq-pill eq-pill--purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                Shelter
+              </div>
+              <h2 class="eq-tile__name eq-tile__name--sm">Marquee Tents</h2>
+              <p class="eq-tile__desc eq-tile__desc--sm">6m×9m to 20m×40m. Full setup &amp; breakdown included.</p>
+              <div class="eq-tile__actions eq-tile__actions--sm">
+                <a href="javascript:void(0)"
+                  data-qhref="javascript:void(0)" class="eq-cta eq-cta--purple eq-cta--sm">
+                  Get Quote
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="service.html?id=marquee-tents" class="eq-details eq-details--sm">Details →</a>
+              </div>
+            </div>
+            <div class="eq-tile__shine"></div>
+            <a href="service.html?id=marquee-tents" class="eq-tile__link" aria-label="Marquee Tents details"></a>
+          </div>
 
-  <!-- Empty state -->
-  <div class="svc-empty hidden" id="svcEmpty">
-    <div style="font-size:2.5rem;margin-bottom:12px">🔍</div>
-    <h3>No equipment found</h3>
-    <p>Try a different filter or search term.</p>
-    <button class="btn btn-secondary" style="margin-top:20px" onclick="resetFilters()">Show All</button>
+        </div><!-- /eq-pair -->
+      </div><!-- /eq-stack -->
+    </div><!-- /eq-bento -->
+
   </div>
 </main>
 
 
-<!-- ═══════════════════════════ CTA BANNER ═══════════════════════════ -->
+<!-- CTA BANNER -->
 <section class="svc-cta-banner">
+  <div class="svc-cta-banner__glow"></div>
   <div class="container svc-cta-banner__inner">
     <div>
       <h2>Can't find what you need?</h2>
-      <p>Tell us what equipment your event requires and we'll source it for you.</p>
+      <p>Tell us what your event requires and we'll source it for you.</p>
     </div>
-    <button class="btn btn-primary btn-lg" id="customRequestBtn">Make a Custom Request</button>
+    <a href="javascript:void(0)"
+      data-qhref="javascript:void(0)" class="btn btn-primary btn-lg">Make a Custom Request</a>
   </div>
 </section>
 
 
-<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<!-- FOOTER -->
 <footer class="footer">
   <div class="container">
     <div class="footer__grid">
@@ -201,14 +345,14 @@
         <div class="footer__logo">
           <div class="footer__wordmark"><span class="g">my</span><span class="w">ticket</span><span class="g">sa</span></div>
         </div>
-        <p class="footer__desc">South Africa's most trusted platform for events, travel, tours and event services.</p>
+        <p class="footer__desc">South Africa's most trusted platform for events and event services.</p>
       </div>
       <div>
         <p class="footer__heading">Equipment</p>
         <ul class="footer__links">
+          <li><a href="service.html?id=generators">Generators</a></li>
           <li><a href="service.html?id=mobile-freezers">Mobile Freezers</a></li>
           <li><a href="service.html?id=portable-toilets">Mobile Toilets</a></li>
-          <li><a href="service.html?id=generators">Generators</a></li>
           <li><a href="service.html?id=marquee-tents">Marquee Tents</a></li>
         </ul>
       </div>
@@ -216,85 +360,66 @@
         <p class="footer__heading">Platform</p>
         <ul class="footer__links">
           <li><a href="../index.html">Browse Events</a></li>
-          <li><a href="../organiser.html">List Your Event</a></li>
+          <li><a href="../index.html#travel-tours">Travel &amp; Tours</a></li>
           <li><a href="../dashboard.html">My Dashboard</a></li>
         </ul>
       </div>
       <div>
         <p class="footer__heading">Support</p>
         <ul class="footer__links">
-          <li><a href="mailto:support@myticketsa.co.za">Help Centre</a></li>
-          <li><a href="#">Contact Us</a></li>
-          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="javascript:void(0)">Help Centre</a></li>
+          <li><a href="javascript:void(0)">Get a Quote</a></li>
         </ul>
       </div>
     </div>
     <div class="footer__bottom">
       <p>© 2025 MyTicketSA. All rights reserved. Built in South Africa 🇿🇦</p>
-      <div class="footer__socials">
-        <a href="#" aria-label="Facebook">f</a>
-        <a href="#" aria-label="Instagram">in</a>
-        <a href="#" aria-label="Twitter">X</a>
-      </div>
     </div>
   </div>
 </footer>
 
+
+<!-- JS — same files as main site, correct relative paths from services/ folder -->
 <script src="../js/config.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/auth.js"></script>
 <script>
-  Utils.initMobileNav();
-
-  // Navbar scroll
-  window.addEventListener('scroll', () => {
+  /* Navbar scroll + mobile toggle */
+  window.addEventListener('scroll', function() {
     document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
   }, { passive: true });
 
-  // Filter tabs
-  document.querySelectorAll('.svc-filter').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.svc-filter').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      filterServices(btn.dataset.filter, document.getElementById('svcSearch').value);
-    });
-  });
+  if (typeof Utils !== 'undefined') Utils.initMobileNav();
 
-  // Search
-  document.getElementById('svcSearch').addEventListener('input', e => {
-    const activeFilter = document.querySelector('.svc-filter.active')?.dataset.filter || 'all';
-    filterServices(activeFilter, e.target.value);
-  });
+  /* Auth-gated custom request button already handled via mailto link above */
+</script>
 
-  function filterServices(category, query) {
-    const q = (query || '').toLowerCase();
-    let any = false;
-    document.querySelectorAll('.svc-card').forEach(card => {
-      const tags  = card.dataset.tags || '';
-      const text  = card.textContent.toLowerCase();
-      const catOk = category === 'all' || tags.includes(category);
-      const txtOk = !q || text.includes(q);
-      const show  = catOk && txtOk;
-      card.style.display = show ? '' : 'none';
-      if (show) any = true;
-    });
-    document.getElementById('svcEmpty').classList.toggle('hidden', any);
+<!-- ═══════════ AUTH GATE ═══════════ -->
+<script>
+(function () {
+  function loggedIn() {
+    return typeof Auth !== 'undefined' && Auth.isLoggedIn && Auth.isLoggedIn();
   }
-
-  function resetFilters() {
-    document.querySelectorAll('.svc-filter').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-filter="all"]').classList.add('active');
-    document.getElementById('svcSearch').value = '';
-    filterServices('all', '');
+  function openSignup(onSuccess, msg) {
+    if (typeof Auth !== 'undefined') {
+      Auth.requireAuth(onSuccess || function(){}, msg || 'Create a free account to continue');
+    }
   }
-
-  // Custom request — gated
-  document.getElementById('customRequestBtn').addEventListener('click', () => {
-    Auth.requireAuth(
-      () => window.location.href = '../dashboard.html?tab=service&custom=1',
-      '✏️ Sign in to submit a custom equipment request'
-    );
-  });
+  document.addEventListener('click', function (e) {
+    var quoteEl = e.target.closest('[data-qhref]');
+    if (!quoteEl) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    var mailto = quoteEl.getAttribute('data-qhref');
+    if (loggedIn()) {
+      window.location.href = mailto;
+    } else {
+      openSignup(function () {
+        window.location.href = mailto;
+      }, '💬 Sign in to request a quote');
+    }
+  }, true);
+})();
 </script>
 </body>
 </html>

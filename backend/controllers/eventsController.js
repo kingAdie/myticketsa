@@ -84,6 +84,7 @@ async function createEvent(req, res, next) {
       location, city, province,
       description, image, price,
       ticketTypes, tags,
+      address, paymentType, paymentLink, bankName, accountHolder, accountNumber, branchCode,
     } = req.body;
 
     const isAdmin = req.user.role === 'admin';
@@ -108,6 +109,13 @@ async function createEvent(req, res, next) {
       organiser:    req.user.organisationName || `${req.user.firstName} ${req.user.lastName}`,
       organiserId:  req.user.id,
       tags:         Array.isArray(tags) ? tags : [],
+      address:      (address || '').trim() || null,
+      paymentType:  paymentType || null,
+      paymentLink:  (paymentLink || '').trim() || null,
+      bankName:     (bankName || '').trim() || null,
+      accountHolder: (accountHolder || '').trim() || null,
+      accountNumber: (accountNumber || '').trim() || null,
+      branchCode:   (branchCode || '').trim() || null,
       createdAt:    new Date().toISOString(),
       updatedAt:    new Date().toISOString(),
     };
@@ -151,6 +159,13 @@ async function updateEvent(req, res, next) {
       price:        parseFloat(req.body.price),
       ticketTypes:  Array.isArray(req.body.ticketTypes) ? req.body.ticketTypes : existing.ticketTypes,
       tags:         Array.isArray(req.body.tags) ? req.body.tags : existing.tags,
+      address:        (req.body.address || '').trim() || existing.address,
+      paymentType:    req.body.paymentType || existing.paymentType,
+      paymentLink:    (req.body.paymentLink || '').trim() || existing.paymentLink,
+      bankName:       (req.body.bankName || '').trim() || existing.bankName,
+      accountHolder:  (req.body.accountHolder || '').trim() || existing.accountHolder,
+      accountNumber:  (req.body.accountNumber || '').trim() || existing.accountNumber,
+      branchCode:     (req.body.branchCode || '').trim() || existing.branchCode,
       updatedAt:    new Date().toISOString(),
     };
 
@@ -305,9 +320,15 @@ async function validateEventInput(body) {
   return errors;
 }
 
+// Used by admin enhance route
+async function getEventRaw(id) {
+  return dataStore.getEventById(id);
+}
+
 module.exports = {
   listEvents, getEvent,
   createEvent, updateEvent, updateEventStatus, deleteEvent,
   listUsers, updateUserRole,
   getStats,
+  getEventRaw,
 };

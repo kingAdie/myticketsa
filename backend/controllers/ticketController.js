@@ -47,4 +47,17 @@ async function getTicketQR(req, res, next) {
   }
 }
 
-module.exports = { getTicket, getTicketQR };
+/**
+ * GET /api/ticket/mine
+ * Returns all tickets for the currently authenticated user (matched by email).
+ */
+async function getMyTickets(req, res, next) {
+  try {
+    const tickets = await ticketService.findTicketsByEmail(req.user.email);
+    return res.json({ success: true, tickets });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getTicket, getTicketQR, getMyTickets };

@@ -212,7 +212,7 @@
                 <option>Cape Town</option><option>Johannesburg</option><option>Durban</option>
                 <option>Pretoria</option><option>Port Elizabeth</option><option>Bloemfontein</option>
                 <option>East London</option><option>George</option><option>Polokwane</option>
-                <option>Nelspruit</option><option>Kimberley</option><option>Other</option>
+                <option>Nelspruit</option><option>Kimberley</option><option>Thohoyandou</option><option>Other</option>
               </select>
               <div class="field-error" id="evCity-err"></div>
             </div>
@@ -577,16 +577,14 @@
       <div class="dash-step" id="svcPickerStep">
         <div class="dash-step-label"><span class="dash-step-num">1</span>Select Equipment</div>
         <div class="svc-picker-grid">
-          <button class="svc-pick-btn" data-svc="mobile-freezers">🧊 Mobile Freezers</button>
-          <button class="svc-pick-btn" data-svc="portable-toilets">🚽 Mobile Toilets</button>
-          <button class="svc-pick-btn" data-svc="marquee-tents">⛺ Marquee Tents</button>
           <button class="svc-pick-btn" data-svc="generators">⚡ Generators</button>
-          <button class="svc-pick-btn" data-svc="sound-systems">🔊 Sound Systems</button>
-          <button class="svc-pick-btn" data-svc="led-screens">🖥️ LED Screens &amp; Lighting</button>
-          <button class="svc-pick-btn" data-svc="crowd-barriers">🚧 Crowd Barriers</button>
-          <button class="svc-pick-btn" data-svc="hand-wash-stations">🧼 Hand Wash Stations</button>
-          <button class="svc-pick-btn" data-svc="mobile-bar">🍺 Mobile Bar Units</button>
-          <button class="svc-pick-btn" data-svc="custom">✏️ Custom / Other</button>
+          <button class="svc-pick-btn" data-svc="mobile-freezers">Mobile Freezers</button>
+          <button class="svc-pick-btn" data-svc="marquee-tents">Marquee Tents</button>
+          <button class="svc-pick-btn" data-svc="portable-toilets">Mobile Toilets</button>
+          <button class="svc-pick-btn" data-svc="tags">🏷 Tags &amp; Labels</button>
+          <button class="svc-pick-btn" data-svc="wristbands">🎗 Wristbands</button>
+          <button class="svc-pick-btn" data-svc="apparel">👕 Apparel &amp; Merch</button>
+          <button class="svc-pick-btn" data-svc="custom">Custom / Other</button>
         </div>
       </div>
 
@@ -686,7 +684,11 @@
           <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Overview</button>
         </div>
       </div>
-      <div class="dash-empty">
+      <div id="ticketsLoading" class="dash-empty" style="display:none">
+        <p style="color:var(--text-3)">Loading your tickets…</p>
+      </div>
+      <div id="ticketsList"></div>
+      <div id="ticketsEmpty" class="dash-empty" style="display:none">
         <div class="dash-empty-icon">🎟</div>
         <h3>No tickets yet</h3>
         <p>Once you book an event, your tickets will appear here.</p>
@@ -782,6 +784,9 @@ document.addEventListener('DOMContentLoaded', function() {
     showTab(tabParam);
     if (tabParam === 'service' && svcParam) {
       selectService(svcParam, nameParam || svcParam);
+    }
+    if (tabParam === 'bookings') {
+      loadMyTickets();
     }
   }
 
@@ -1197,6 +1202,72 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.svc-pick-btn').forEach(function(b) { b.classList.remove('selected'); });
     hideBanner('svcError');
   });
+
+  /* ==========================================================
+     MY TICKETS — load when tab is opened
+     ========================================================== */
+  var _ticketsLoaded = false;
+
+  async function loadMyTickets() {
+    if (_ticketsLoaded) return;
+    var loading = document.getElementById('ticketsLoading');
+    var empty   = document.getElementById('ticketsEmpty');
+    var list    = document.getElementById('ticketsList');
+
+    loading.style.display = 'flex';
+    empty.style.display   = 'none';
+    list.innerHTML        = '';
+
+    try {
+      var res  = await fetch(_API_BASE + '/api/ticket/mine', { headers: Auth.headers() });
+      var data = await res.json();
+
+      loading.style.display = 'none';
+
+      if (!res.ok || !data.success || !data.tickets.length) {
+        empty.style.display = 'flex';
+        return;
+      }
+
+      _ticketsLoaded = true;
+      list.innerHTML = data.tickets.map(function(t) {
+        var dateStr = t.event.date ? new Date(t.event.date).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' }) : '—';
+        var statusClass = t.status === 'confirmed' ? 'status-confirmed' : 'status-pending';
+        return [
+          '<div class="ticket-card">',
+            '<div class="ticket-card__head">',
+              '<div>',
+                '<div class="ticket-card__title">' + escHtml(t.event.title) + '</div>',
+                '<div class="ticket-card__meta">' + escHtml(t.event.location) + ' · ' + escHtml(t.event.city) + ' · ' + dateStr + '</div>',
+              '</div>',
+              '<span class="ticket-card__status ' + statusClass + '">' + t.status + '</span>',
+            '</div>',
+            '<div class="ticket-card__body">',
+              '<div class="ticket-card__field"><span>Ticket ID</span><strong>' + escHtml(t.id) + '</strong></div>',
+              '<div class="ticket-card__field"><span>Type</span><strong>' + escHtml(t.ticket.typeName) + ' × ' + t.ticket.quantity + '</strong></div>',
+              '<div class="ticket-card__field"><span>Total Paid</span><strong>R ' + parseFloat(t.pricing.total).toFixed(2) + '</strong></div>',
+            '</div>',
+          '</div>',
+        ].join('');
+      }).join('');
+
+    } catch (err) {
+      loading.style.display = 'none';
+      list.innerHTML = '<p style="color:var(--text-3);padding:24px">Could not load tickets. Please try again.</p>';
+    }
+  }
+
+  /* Load tickets when the bookings tab is activated */
+  document.querySelectorAll('.dash-nav-item[data-tab="bookings"]').forEach(function(btn) {
+    btn.addEventListener('click', loadMyTickets);
+  });
+  document.querySelectorAll('.dash-action-card[data-go="bookings"]').forEach(function(card) {
+    card.addEventListener('click', loadMyTickets);
+  });
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
 }); /* end DOMContentLoaded */
 </script>

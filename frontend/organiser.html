@@ -168,6 +168,53 @@
           </div>
 
           <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="evAddress">Full Address <span class="required">*</span></label>
+            <input type="text" id="evAddress" class="form-input" placeholder="e.g. 1 Convention Square, Cape Town, 8001" required/>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Payment Method</label>
+            <div style="display:flex;gap:12px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="radio" name="evPayType" id="evPayTypeLink" value="link" checked/>
+                <span>Payment Link</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="radio" name="evPayType" id="evPayTypeBank" value="bank"/>
+                <span>Bank Transfer</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="radio" name="evPayType" id="evPayTypeFree" value="free"/>
+                <span>Free Event</span>
+              </label>
+            </div>
+
+            <div id="payLinkGroup">
+              <label class="form-label" for="evPayLink">Payment Link (SnapScan, Yoco, etc.)</label>
+              <input type="url" id="evPayLink" class="form-input" placeholder="https://yoco.com/pay/..."/>
+            </div>
+
+            <div id="payBankGroup" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin:0">
+                <label class="form-label" for="evBankName">Bank Name</label>
+                <input type="text" id="evBankName" class="form-input" placeholder="e.g. FNB, Capitec"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label" for="evAccountHolder">Account Holder</label>
+                <input type="text" id="evAccountHolder" class="form-input" placeholder="e.g. Thabo Nkosi Events"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label" for="evAccountNumber">Account Number</label>
+                <input type="text" id="evAccountNumber" class="form-input" placeholder="e.g. 62345678910"/>
+              </div>
+              <div class="form-group" style="margin:0">
+                <label class="form-label" for="evBranchCode">Branch Code</label>
+                <input type="text" id="evBranchCode" class="form-input" placeholder="e.g. 250655"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
             <label class="form-label" for="evDescription">Description <span class="required">*</span></label>
             <textarea id="evDescription" class="form-textarea" rows="4" placeholder="Describe your event…" required style="min-height:110px;"></textarea>
           </div>

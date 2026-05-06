@@ -15,6 +15,7 @@ const { requireAuth, requireOrganiser } = require('../middleware/auth');
 router.use(requireAuth);
 
 // ── Events ────────────────────────────────────────────────────────────────────
+router.get('/events',          requireOrganiser, eventsCtrl.listEvents);      // own events only (filtered in controller)
 router.post('/events',         eventsCtrl.createEvent);               // any logged-in user may submit
 router.put('/events/:id',      requireOrganiser, eventsCtrl.updateEvent);
 router.delete('/events/:id',   requireOrganiser, eventsCtrl.deleteEvent);

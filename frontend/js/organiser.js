@@ -116,6 +116,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('editEventId').value = '';
     document.getElementById('ticketTypesContainer').innerHTML = '';
     document.getElementById('modalError').classList.add('hidden');
+    // Reset payment type visibility to default (link)
+    const payLinkGrp = document.getElementById('payLinkGroup');
+    const payBankGrp = document.getElementById('payBankGroup');
+    if (payLinkGrp) payLinkGrp.style.display = '';
+    if (payBankGrp) payBankGrp.style.display = 'none';
     ticketTypeCount = 1;
     Utils.setText('#modalTitle',  'Create New Event');
     Utils.setText('#saveBtnText', 'Create Event');
@@ -169,6 +174,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('evPrice')      .value = ev.price;
     document.getElementById('evTags')       .value = (ev.tags || []).join(', ');
 
+    // New payment / address fields
+    const addrEl = document.getElementById('evAddress');
+    if (addrEl) addrEl.value = ev.address || '';
+    const payType = ev.paymentType || 'free';
+    document.querySelectorAll('input[name="evPayType"]').forEach(r => { r.checked = r.value === payType; });
+    const payLinkGroupEl = document.getElementById('payLinkGroup');
+    const payBankGroupEl = document.getElementById('payBankGroup');
+    if (payLinkGroupEl) payLinkGroupEl.style.display = payType === 'link' ? '' : 'none';
+    if (payBankGroupEl) payBankGroupEl.style.display = payType === 'bank' ? 'grid' : 'none';
+    const evPayLinkEl = document.getElementById('evPayLink');
+    if (evPayLinkEl) evPayLinkEl.value = ev.paymentLink || '';
+    const evBankNameEl = document.getElementById('evBankName');
+    if (evBankNameEl) evBankNameEl.value = ev.bankName || '';
+    const evAccHolderEl = document.getElementById('evAccountHolder');
+    if (evAccHolderEl) evAccHolderEl.value = ev.accountHolder || '';
+    const evAccNumEl = document.getElementById('evAccountNumber');
+    if (evAccNumEl) evAccNumEl.value = ev.accountNumber || '';
+    const evBranchEl = document.getElementById('evBranchCode');
+    if (evBranchEl) evBranchEl.value = ev.branchCode || '';
+
     // Ticket types
     document.getElementById('ticketTypesContainer').innerHTML = '';
     ticketTypeCount = 1;
@@ -216,6 +241,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       price:       parseFloat(document.getElementById('evPrice').value) || 0,
       tags:        document.getElementById('evTags').value.split(',').map(t => t.trim()).filter(Boolean),
       ticketTypes,
+      address:       document.getElementById('evAddress')?.value.trim() || '',
+      paymentType:   document.querySelector('input[name="evPayType"]:checked')?.value || 'free',
+      paymentLink:   document.getElementById('evPayLink')?.value.trim() || '',
+      bankName:      document.getElementById('evBankName')?.value.trim() || '',
+      accountHolder: document.getElementById('evAccountHolder')?.value.trim() || '',
+      accountNumber: document.getElementById('evAccountNumber')?.value.trim() || '',
+      branchCode:    document.getElementById('evBranchCode')?.value.trim() || '',
     };
 
     saveBtn.disabled = true;
@@ -262,6 +294,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       Utils.showToast('Server error.', 'error');
     }
   }
+
+  // Payment type toggle
+  document.querySelectorAll('input[name="evPayType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      document.getElementById('payLinkGroup').style.display = this.value === 'link' ? '' : 'none';
+      document.getElementById('payBankGroup').style.display = this.value === 'bank' ? 'grid' : 'none';
+    });
+  });
 
   // ── Bootstrap ──────────────────────────────────────────────────────────
   await loadEvents();

@@ -63,6 +63,13 @@ CREATE TABLE events (
   organiser_id   VARCHAR(40)   NOT NULL,
   created_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  address        VARCHAR(500)  DEFAULT NULL,
+  payment_type   ENUM('link','bank','free') DEFAULT NULL,
+  payment_link   VARCHAR(1000) DEFAULT NULL,
+  bank_name      VARCHAR(100)  DEFAULT NULL,
+  account_holder VARCHAR(200)  DEFAULT NULL,
+  account_number VARCHAR(50)   DEFAULT NULL,
+  branch_code    VARCHAR(20)   DEFAULT NULL,
 
   PRIMARY KEY (id),
   KEY idx_events_status    (status),

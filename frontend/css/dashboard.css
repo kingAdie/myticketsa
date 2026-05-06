@@ -760,6 +760,85 @@ body { background: var(--bg-1); }
   line-height: 1.5;
 }
 
+/* ── Ticket cards (My Tickets tab) ────────────────────────────────────────── */
+.ticket-card {
+  border: 1px solid var(--b1);
+  border-radius: var(--r4);
+  background: var(--bg-2);
+  margin-bottom: var(--s3);
+  overflow: hidden;
+}
+
+.ticket-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--b1);
+}
+
+.ticket-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+
+.ticket-card__meta {
+  font-size: 0.8125rem;
+  color: var(--text-3);
+}
+
+.ticket-card__status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.status-confirmed {
+  background: rgba(22,163,74,.12);
+  color: var(--green);
+}
+
+.status-pending {
+  background: rgba(234,179,8,.12);
+  color: var(--gold-hi);
+}
+
+.ticket-card__body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 24px;
+}
+
+.ticket-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 24px 14px 0;
+  min-width: 160px;
+}
+
+.ticket-card__field span {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ticket-card__field strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-1);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
 /* ══════════════════════════════════════════════
    RESPONSIVE ADDITIONS
    ══════════════════════════════════════════════ */
@@ -768,4 +847,8 @@ body { background: var(--bg-1); }
   .tt-header-row    { display: none !important; }
   .tt-row           { grid-template-columns: 1fr 90px 36px !important; }
   .upload-url-row   { flex-direction: column; align-items: stretch; }
+  .ticket-card__head { flex-direction: column; }
+  .ticket-card__body { padding: 0 16px; }
+  .ticket-card__head { padding: 16px; }
 }
+

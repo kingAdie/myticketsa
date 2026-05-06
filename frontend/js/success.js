@@ -8,12 +8,9 @@
 
 /* global Utils */
 
-// Match the same logic as checkout.js — resolves to the backend URL
-const API_BASE = (() => {
-  const { port, protocol } = window.location;
-  if (port === '5500' && protocol !== 'file:') return '';
-  return 'http://localhost:5500';
-})();
+/* global _API_BASE */
+// Use the same API base as the rest of the app (defined in config.js)
+const API_BASE = typeof _API_BASE !== 'undefined' ? _API_BASE : '';
 
 document.addEventListener('DOMContentLoaded', () => {
 

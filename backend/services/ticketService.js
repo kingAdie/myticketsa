@@ -91,6 +91,16 @@ async function findTicketById(id) {
   return rows.length ? toTicketObject(rows[0]) : null;
 }
 
+// ── Find tickets by buyer email ───────────────────────────────────────────────
+
+async function findTicketsByEmail(email) {
+  const [rows] = await db.query(
+    'SELECT * FROM tickets WHERE buyer_email = ? ORDER BY booked_at DESC',
+    [email.trim().toLowerCase()]
+  );
+  return rows.map(toTicketObject);
+}
+
 // ── Find ticket by payment reference ─────────────────────────────────────────
 
 async function findTicketByPaymentRef(ref) {
@@ -130,4 +140,4 @@ function generateTicketId() {
   return `MTS-${random}-${ts}`;
 }
 
-module.exports = { createTicket, findTicketById, findTicketByPaymentRef, updateTicketStatus, generateTicketId };
+module.exports = { createTicket, findTicketById, findTicketsByEmail, findTicketByPaymentRef, updateTicketStatus, generateTicketId };
