@@ -59,34 +59,38 @@ app.use(helmet({
   originAgentCluster:        false,
 }));
 
-/* ── CORS ──────────────────────────────────────────────────────────────────
-   FRONTEND_URL env var controls which origins are allowed.
-   On Railway: set FRONTEND_URL=https://gentle-tanuki-1e3b74.netlify.app
-   Multiple origins: FRONTEND_URL=https://site1.netlify.app,https://site2.com
-────────────────────────────────────────────────────────────────────────── */
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Set FRONTEND_URL in Railway Variables to your Netlify URL.
+// Example: FRONTEND_URL=https://gentle-tanuki-1e3b74.netlify.app
+// Multiple origins: FRONTEND_URL=https://site1.netlify.app,https://site2.com
+// ─────────────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || '*')
   .split(',')
   .map(o => o.trim())
   .filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
-    // No origin = server-to-server or same-origin — always allow
+    // No origin = server-to-server, curl, Postman — always allow
     if (!origin) return cb(null, true);
-    // Wildcard = allow everything (dev / open API)
+    // Wildcard = allow everything (useful for open APIs / dev)
     if (ALLOWED_ORIGINS.includes('*')) return cb(null, true);
-    // Check if origin is in the allowed list
+    // Check against explicit whitelist
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    // Block anything else
-    cb(new Error('CORS: origin not allowed → ' + origin));
+    // Block anything not in the list
+    console.warn('[CORS] Blocked origin:', origin);
+    cb(new Error('CORS policy: origin not allowed'));
   },
   methods:        ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials:    false,
-}));
+};
 
-// Respond to preflight OPTIONS requests on every route
-app.options('*', cors());
+app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests for every route
+// This is required for browsers sending Auth headers (login, checkout, etc.)
+app.options('*', cors(corsOptions));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '12mb' }));       // 12mb for base64 image uploads
