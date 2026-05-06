@@ -45,8 +45,10 @@ const PORT        = config.port;
 const PROD        = config.isProd;
 const frontendDir = path.resolve(__dirname, '../frontend');
 const ticketsDir  = path.resolve(__dirname, config.ticketsDir);
+const uploadsDir  = path.resolve(__dirname, 'uploads');
 
 if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir, { recursive: true });
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({
@@ -57,24 +59,38 @@ app.use(helmet({
   originAgentCluster:        false,
 }));
 
+/* ── CORS ──────────────────────────────────────────────────────────────────
+   FRONTEND_URL env var controls which origins are allowed.
+   On Railway: set FRONTEND_URL=https://gentle-tanuki-1e3b74.netlify.app
+   Multiple origins: FRONTEND_URL=https://site1.netlify.app,https://site2.com
+────────────────────────────────────────────────────────────────────────── */
+const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || '*')
+  .split(',')
+  .map(o => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
   origin: (origin, cb) => {
-    const allowed = config.cors.origin;
-    // Allow all, or match explicit origin list
-    if (!origin || allowed === '*' || (Array.isArray(allowed) ? allowed.includes(origin) : origin === allowed)) {
-      cb(null, true);
-    } else {
-      cb(null, true); // still allow — tighten in production if needed
-    }
+    // No origin = server-to-server or same-origin — always allow
+    if (!origin) return cb(null, true);
+    // Wildcard = allow everything (dev / open API)
+    if (ALLOWED_ORIGINS.includes('*')) return cb(null, true);
+    // Check if origin is in the allowed list
+    if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    // Block anything else
+    cb(new Error('CORS: origin not allowed → ' + origin));
   },
-  methods:        ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods:        ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials:    false,
 }));
 
+// Respond to preflight OPTIONS requests on every route
+app.options('*', cors());
+
 // ── Body parsing ──────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '5mb' }));       // 5mb for base64 image uploads
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(express.json({ limit: '12mb' }));       // 12mb for base64 image uploads
+app.use(express.urlencoded({ extended: true, limit: '12mb' }));
 
 // ── Logging ───────────────────────────────────────────────────────────────────
 app.use(morgan(PROD ? 'combined' : 'dev'));
@@ -93,9 +109,34 @@ if (fs.existsSync(frontendDir)) {
   }));
 }
 app.use('/tickets', express.static(ticketsDir));
+app.use('/uploads', express.static(uploadsDir));
 
 // ── API rate limiter (after static — only hits API routes) ────────────────────
 app.use('/api', apiLimiter);
+
+// ── Upload route ──────────────────────────────────────────────────────────────
+app.post('/api/upload', async (req, res) => {
+  try {
+    const { data, filename, mimeType } = req.body;
+    if (!data || !filename) return res.status(400).json({ success: false, error: 'data and filename required' });
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (mimeType && !allowed.includes(mimeType)) {
+      return res.status(400).json({ success: false, error: 'Only JPG, PNG, WebP images allowed.' });
+    }
+    const base64Data = data.replace(/^data:[^;]+;base64,/, '');
+    const buf = Buffer.from(base64Data, 'base64');
+    if (buf.length > 10 * 1024 * 1024) return res.status(400).json({ success: false, error: 'Image must be under 10MB.' });
+    const ext = (mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg');
+    const fname = `evt_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const fpath = path.join(uploadsDir, fname);
+    require('fs').writeFileSync(fpath, buf);
+    const url = `/uploads/${fname}`;
+    return res.json({ success: true, url });
+  } catch (err) {
+    console.error('[UPLOAD]', err.message);
+    return res.status(500).json({ success: false, error: 'Upload failed.' });
+  }
+});
 
 // ── API routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth',       authRoutes);
@@ -139,6 +180,23 @@ app.use((req, res) => {
 // ── Centralised error handler (must be last) ──────────────────────────────────
 app.use(errorHandler);
 
+// ── DB Migrations ─────────────────────────────────────────────────────────────
+async function runMigrations(db) {
+  const migrations = [
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS address VARCHAR(500) DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS payment_type ENUM('link','bank','free') DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS payment_link VARCHAR(1000) DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100) DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS account_holder VARCHAR(200) DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS account_number VARCHAR(50) DEFAULT NULL`,
+    `ALTER TABLE events ADD COLUMN IF NOT EXISTS branch_code VARCHAR(20) DEFAULT NULL`,
+  ];
+  for (const sql of migrations) {
+    try { await db.query(sql); } catch (e) { /* column already exists */ }
+  }
+  console.log('[MIGRATE] ✅ Schema migrations applied');
+}
+
 // ── Startup ───────────────────────────────────────────────────────────────────
 async function start() {
   // 1. Bind the port FIRST so Railway sees a live process immediately
@@ -166,6 +224,9 @@ async function start() {
     const conn = await db.getConnection();
     console.log('[DB] ✅ Connected to MySQL —', config.db.name);
     conn.release();
+
+    // Run schema migrations (safe: adds columns only if missing)
+    await runMigrations(db);
 
     // 4. Seed admin account if the users table is empty
     const needsAdmin = await dataStore.seedAdminIfEmpty();
