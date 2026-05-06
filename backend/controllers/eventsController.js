@@ -16,58 +16,66 @@ const dataStore = require('../services/dataStore');
 
 // ── Public: list events ───────────────────────────────────────────────────────
 
-async function listEvents(req, res) {
-  const { category, featured, search, status } = req.query;
+async function listEvents(req, res, next) {
+  try {
+    const { category, featured, search, status } = req.query;
 
-  let events = await dataStore.getEvents();
+    let events = await dataStore.getEvents();
 
-  // Admins and organisers can see all statuses; public only sees published
-  const isPrivileged = req.user && ['admin', 'organiser'].includes(req.user.role);
-  if (!isPrivileged) {
-    events = events.filter(e => e.status === 'published');
-  } else if (status) {
-    events = events.filter(e => e.status === status);
+    // Admins and organisers can see all statuses; public only sees published
+    const isPrivileged = req.user && ['admin', 'organiser'].includes(req.user.role);
+    if (!isPrivileged) {
+      events = events.filter(e => e.status === 'published');
+    } else if (status) {
+      events = events.filter(e => e.status === status);
+    }
+
+    // Organisers only see their own events unless admin
+    if (req.user?.role === 'organiser') {
+      events = events.filter(e => e.organiserId === req.user.id);
+    }
+
+    if (category)            events = events.filter(e => e.category.toLowerCase() === category.toLowerCase());
+    if (featured === 'true') events = events.filter(e => e.featured);
+    if (search) {
+      const q = search.toLowerCase();
+      events = events.filter(e =>
+        e.title.toLowerCase().includes(q) ||
+        e.city.toLowerCase().includes(q)  ||
+        e.category.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort: featured first, then by date
+    events.sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    return res.json({ success: true, events, total: events.length });
+  } catch (err) {
+    next(err);
   }
-
-  // Organisers only see their own events unless admin
-  if (req.user?.role === 'organiser') {
-    events = events.filter(e => e.organiserId === req.user.id);
-  }
-
-  if (category)           events = events.filter(e => e.category.toLowerCase() === category.toLowerCase());
-  if (featured === 'true') events = events.filter(e => e.featured);
-  if (search) {
-    const q = search.toLowerCase();
-    events = events.filter(e =>
-      e.title.toLowerCase().includes(q) ||
-      e.city.toLowerCase().includes(q)  ||
-      e.category.toLowerCase().includes(q)
-    );
-  }
-
-  // Sort: featured first, then by date
-  events.sort((a, b) => {
-    if (a.featured && !b.featured) return -1;
-    if (!a.featured && b.featured) return 1;
-    return new Date(a.date) - new Date(b.date);
-  });
-
-  return res.json({ success: true, events, total: events.length });
 }
 
 // ── Public: get single event ──────────────────────────────────────────────────
 
-async function getEvent(req, res) {
-  const event = await dataStore.getEventById(req.params.id);
-  if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
+async function getEvent(req, res, next) {
+  try {
+    const event = await dataStore.getEventById(req.params.id);
+    if (!event) return res.status(404).json({ success: false, error: 'Event not found.' });
 
-  // Non-admin/organiser can only see published events
-  const isPrivileged = req.user && ['admin', 'organiser'].includes(req.user.role);
-  if (!isPrivileged && event.status !== 'published') {
-    return res.status(404).json({ success: false, error: 'Event not found.' });
+    // Non-admin/organiser can only see published events
+    const isPrivileged = req.user && ['admin', 'organiser'].includes(req.user.role);
+    if (!isPrivileged && event.status !== 'published') {
+      return res.status(404).json({ success: false, error: 'Event not found.' });
+    }
+
+    return res.json({ success: true, event });
+  } catch (err) {
+    next(err);
   }
-
-  return res.json({ success: true, event });
 }
 
 // ── Organiser/Admin: create event ─────────────────────────────────────────────
@@ -233,12 +241,17 @@ async function deleteEvent(req, res, next) {
 
 // ── Admin: list all users ─────────────────────────────────────────────────────
 
-async function listUsers(req, res) {
-  const users = await dataStore.getUsers().map(u => {
-    const { passwordHash, ...safe } = u;
-    return safe;
-  });
-  return res.json({ success: true, users, total: users.length });
+async function listUsers(req, res, next) {
+  try {
+    const all = await dataStore.getUsers();
+    const users = all.map(u => {
+      const { passwordHash, ...safe } = u;
+      return safe;
+    });
+    return res.json({ success: true, users, total: users.length });
+  } catch (err) {
+    next(err);
+  }
 }
 
 // ── Admin: update user role ───────────────────────────────────────────────────
@@ -266,46 +279,49 @@ async function updateUserRole(req, res, next) {
 
 // ── Admin: dashboard stats ────────────────────────────────────────────────────
 
-async function getStats(req, res) {
-  // Use the MySQL view for a single fast query
+async function getStats(req, res, next) {
   const pool = require('../services/db');
   try {
-    const [[stats]] = await pool.query('SELECT * FROM v_dashboard_stats');
-    return res.json({
-      success: true,
-      stats: {
-        totalEvents:     stats.total_events,
-        publishedEvents: stats.published_events,
-        pendingEvents:   stats.pending_events,
-        featuredEvents:  stats.featured_events,
-        totalUsers:      stats.total_users,
-        organisers:      stats.total_organisers,
-        ticketsSold:     stats.tickets_sold,
-        totalRevenue:    stats.total_revenue,
-      },
-    });
+    try {
+      const [[stats]] = await pool.query('SELECT * FROM v_dashboard_stats');
+      return res.json({
+        success: true,
+        stats: {
+          totalEvents:     stats.total_events,
+          publishedEvents: stats.published_events,
+          pendingEvents:   stats.pending_events,
+          featuredEvents:  stats.featured_events,
+          totalUsers:      stats.total_users,
+          organisers:      stats.total_organisers,
+          ticketsSold:     stats.tickets_sold,
+          totalRevenue:    stats.total_revenue,
+        },
+      });
+    } catch (_viewErr) {
+      // Fallback if the view doesn't exist yet
+      const events = await dataStore.getEvents();
+      const users  = await dataStore.getUsers();
+      return res.json({
+        success: true,
+        stats: {
+          totalEvents:     events.length,
+          publishedEvents: events.filter(e => e.status === 'published').length,
+          pendingEvents:   events.filter(e => e.status === 'pending').length,
+          featuredEvents:  events.filter(e => e.featured).length,
+          totalUsers:      users.length,
+          organisers:      users.filter(u => u.role === 'organiser').length,
+          ticketsSold:     0,
+        },
+      });
+    }
   } catch (err) {
-    // Fallback to in-memory calculation if view fails
-    const events = await dataStore.getEvents();
-    const users  = await dataStore.getUsers();
-    return res.json({
-      success: true,
-      stats: {
-        totalEvents:     events.length,
-        publishedEvents: events.filter(e => e.status === 'published').length,
-        pendingEvents:   events.filter(e => e.status === 'pending').length,
-        featuredEvents:  events.filter(e => e.featured).length,
-        totalUsers:      users.length,
-        organisers:      users.filter(u => u.role === 'organiser').length,
-        ticketsSold:     0,
-      },
-    });
+    next(err);
   }
 }
 
 // ── Validation helper ─────────────────────────────────────────────────────────
 
-async function validateEventInput(body) {
+function validateEventInput(body) {
   const errors = [];
   const { title, category, date, time, location, city, price } = body;
   if (!title    || title.trim().length < 3)    errors.push('Title must be at least 3 characters.');
