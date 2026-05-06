@@ -320,9 +320,8 @@
   margin-bottom: 12px;
 }
 .prov-card__price strong {
-  color: #EAB308;
-  font-weight: 800;
-  text-shadow: 0 0 12px rgba(234,179,8,.45);
+  color: rgba(255,255,255,.9);
+  font-weight: 700;
 }
 
 /* ── Explore button ── */
@@ -518,7 +517,7 @@
   color: var(--text-3);
   font-weight: 600;
   flex-shrink: 0;
-  min-width: 130px;
+  min-width: 80px;
 }
 .prov-modal__row span:last-child {
   color: var(--text);

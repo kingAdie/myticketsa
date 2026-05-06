@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login — MyTicketSA</title>
+  <link rel="stylesheet" href="../css/styles.css"/>
+  <style>
+    /* ── Page layout ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0B0B0B;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(22,163,74,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -200px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(59,130,246,.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Card ── */
+    .login-card {
+      background: #161616;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7);
+    }
+
+    /* Blue accent stripe */
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #3B82F6, #1D4ED8);
+      border-radius: 20px 20px 0 0;
+    }
+
+    /* ── Logo ── */
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .login-logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      box-shadow: 0 0 14px rgba(59,130,246,.4);
+    }
+
+    .login-logo-text {
+      font-family: 'Sora', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -.03em;
+    }
+    .login-logo-text .g { color: #16A34A; }
+    .login-logo-text .w { color: #fff; }
+
+    .login-subtitle {
+      font-size: .8125rem;
+      color: #52525B;
+      margin-bottom: 28px;
+      margin-left: 46px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ── Heading ── */
+    .login-heading {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.375rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.025em;
+      margin-bottom: 6px;
+    }
+
+    .login-desc {
+      font-size: .875rem;
+      color: #71717A;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ── Form ── */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: .875rem;
+      font-weight: 600;
+      color: #A1A1AA;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #141414;
+      border: 1.5px solid rgba(255,255,255,.09);
+      border-radius: 10px;
+      font-size: .9375rem;
+      font-family: inherit;
+      color: #fff;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .form-input::placeholder { color: #3F3F46; }
+
+    .form-input:hover { border-color: rgba(255,255,255,.15); }
+
+    .form-input:focus {
+      border-color: #16A34A;
+      box-shadow: 0 0 0 3px rgba(22,163,74,.15);
+    }
+
+    /* ── Button ── */
+    .btn-login {
+      width: 100%;
+      padding: 13px;
+      background: #16A34A;
+      color: #fff;
+      border: none;
+      border-radius: 99px;
+      font-family: 'Sora', sans-serif;
+      font-size: .9375rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1);
+      letter-spacing: .01em;
+    }
+
+    .btn-login:hover:not(:disabled) {
+      background: #22C55E;
+      box-shadow: 0 0 28px rgba(22,163,74,.4);
+      transform: translateY(-1px) scale(1.01);
+    }
+
+    .btn-login:active:not(:disabled) { transform: scale(.98); }
+
+    .btn-login:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Error ── */
+    .login-error {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: .875rem;
+      color: #EF4444;
+      margin-bottom: 16px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .login-error.visible { display: block; }
+
+    /* ── Back link ── */
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: .875rem;
+      color: #52525B;
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .back-link:hover { color: #A1A1AA; }
+
+    /* ── Admin info box ── */
+    .admin-hint {
+      margin-top: 20px;
+      padding: 12px 14px;
+      background: rgba(59,130,246,.07);
+      border: 1px solid rgba(59,130,246,.2);
+      border-radius: 10px;
+      font-size: .8125rem;
+      color: #60A5FA;
+      line-height: 1.6;
+    }
+
+    .admin-hint strong { color: #93C5FD; }
+  </style>
+</head>
+<body>
+
+  <div class="login-card">
+
+    <!-- Logo -->
+    <div class="login-logo">
+      <div class="login-logo-icon">🎟</div>
+      <div class="login-logo-text">
+        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+      </div>
+    </div>
+    <div class="login-subtitle">Admin Portal</div>
+
+    <!-- Heading -->
+    <h1 class="login-heading">Welcome back</h1>
+    <p class="login-desc">Sign in with your admin credentials to manage events, users and tickets.</p>
+
+    <!-- Error -->
+    <div class="login-error" id="loginError" role="alert"></div>
+
+    <!-- Form -->
+    <form id="adminLoginForm" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="adminEmail">Email Address</label>
+        <input
+          type="email"
+          id="adminEmail"
+          class="form-input"
+          placeholder="admin@myticketsa.co.za"
+          required
+          autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="adminPassword">Password</label>
+        <input
+          type="password"
+          id="adminPassword"
+          class="form-input"
+          placeholder="Your password"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        Sign In to Admin Portal
+      </button>
+    </form>
+
+    <!-- Default credentials hint (remove in production) -->
+    <div class="admin-hint">
+      <strong>Default credentials:</strong><br/>
+      Email: admin@myticketsa.co.za<br/>
+      Password: admin123
+    </div>
+
+  </div>
+
+  <!-- Shown only when opened as file:// -->
+  <div id="serverHint" style="display:none;max-width:400px;margin:16px auto 0;padding:14px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.35);border-radius:12px;font-size:.8125rem;color:#93C5FD;line-height:1.7;text-align:center;">
+    ⚠️ <strong>Open via the server, not as a file.</strong><br/>
+    In your terminal, run <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;">npm run dev</code> inside the <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;">backend</code> folder,<br/>
+    then visit <a href="http://localhost:5500/admin/login.html" style="color:#60A5FA;text-decoration:underline;">http://localhost:5500/admin/login.html</a>
+  </div>
+
+  <a href="../index.html" class="back-link">← Back to MyTicketSA</a>
+
+  <script>
+    // ── Resolve API base URL ─────────────────────────────────────────────
+    // Works whether opened via the Node server (http://localhost:5500)
+    // or directly as a file (file://) — always points to port 5500.
+    const API_BASE = (function () {
+      const p = window.location.protocol;
+      const port = window.location.port;
+      // Served by our Node server on port 5500 → use relative paths
+      if (p !== 'file:' && port === '5500') return '';
+      // Opened as a file:// OR any other port → point to backend explicitly
+      return 'http://localhost:5500';
+    })();
+
+    // ── If opened as a file, show a helpful instruction banner ───────────
+    if (window.location.protocol === 'file:') {
+      const hint = document.getElementById('serverHint');
+      if (hint) hint.style.display = 'block';
+    }
+
+    // ── Check if already logged in as admin ─────────────────────────────
+    (function () {
+      try {
+        const user  = JSON.parse(localStorage.getItem('mt_user') || 'null');
+        const token = localStorage.getItem('mt_token');
+        if (user && token && user.role === 'admin') {
+          window.location.href = API_BASE + '/admin/index.html';
+        }
+      } catch { /* ignore */ }
+    })();
+
+    // ── Login form submit ────────────────────────────────────────────────
+    document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const btn     = document.getElementById('loginBtn');
+      const errorEl = document.getElementById('loginError');
+      const email   = document.getElementById('adminEmail').value.trim();
+      const pass    = document.getElementById('adminPassword').value;
+
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+
+      if (!email || !pass) {
+        errorEl.textContent = 'Please enter your email and password.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Signing in…';
+
+      try {
+        const res  = await fetch(API_BASE + '/api/auth/login', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, password: pass }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          errorEl.textContent = data.error || 'Login failed. Check your credentials.';
+          errorEl.style.display = 'block';
+          btn.disabled    = false;
+          btn.textContent = 'Sign In to Admin Portal';
+          return;
+        }
+
+        if (data.user.role !== 'admin') {
+          errorEl.textContent = 'This portal is for admin accounts only.';
+          errorEl.style.display = 'block';
+          btn.disabled    = false;
+          btn.textContent = 'Sign In to Admin Portal';
+          return;
+        }
+
+        // Save session
+        localStorage.setItem('mt_token', data.token);
+        localStorage.setItem('mt_user',  JSON.stringify(data.user));
+
+        btn.textContent = 'Success! Redirecting…';
+
+        // Go to admin dashboard — use absolute path so it works from file:// too
+        window.location.href = API_BASE + '/admin/index.html';
+
+      } catch {
+        errorEl.innerHTML =
+          'Cannot connect to the server.<br>' +
+          'Make sure you have run: <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;">npm run dev</code> inside the <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;">backend</code> folder, then visit<br>' +
+          '<a href="http://localhost:5500/admin/login.html" style="color:#60A5FA;">http://localhost:5500/admin/login.html</a>';
+        errorEl.style.display = 'block';
+        btn.disabled    = false;
+        btn.textContent = 'Sign In to Admin Portal';
+      }
+    });
+
+    document.getElementById('adminEmail').focus();
+  </script>
+
+</body>
+</html>

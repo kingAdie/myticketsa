@@ -1,0 +1,28 @@
+[build]
+  publish = "frontend"
+
+# ── Cache headers ────────────────────────────────────────
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+# ── API proxy ────────────────────────────────────────────
+# Every /api/* request from the browser is handled by Netlify
+# and forwarded to Railway server-side — zero CORS issues.
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://myticketsa-production.up.railway.app/api/:splat"
+  status = 200
+  force  = true

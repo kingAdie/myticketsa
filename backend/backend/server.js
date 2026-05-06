@@ -37,6 +37,7 @@ const paymentRoutes   = require('./routes/payment');
 
 // ── Services ──────────────────────────────────────────────────────────────────
 const dataStore    = require('./services/dataStore');
+const { initSchema } = require('./services/initSchema');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
 
@@ -59,15 +60,10 @@ app.use(helmet({
   originAgentCluster:        false,
 }));
 
-app.use(cors(
-  {
-    origin: "https://gentle-tanuki-1e3b74.netlify.app/"
-  }
-))
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // Set FRONTEND_URL in Railway Variables to your Netlify URL.
-FRONTEND_URL= https://gentle-tanuki-1e3b74.netlify.app
-
+// Example: FRONTEND_URL=https://gentle-tanuki-1e3b74.netlify.app
+// Multiple origins: FRONTEND_URL=https://site1.netlify.app,https://site2.com
 // ─────────────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || '*')
   .split(',')
@@ -233,6 +229,9 @@ async function start() {
     const conn = await db.getConnection();
     console.log('[DB] ✅ Connected to MySQL —', config.db.name);
     conn.release();
+
+    // Create base tables if they don't exist yet (safe: IF NOT EXISTS)
+    await initSchema(db);
 
     // Run schema migrations (safe: adds columns only if missing)
     await runMigrations(db);
