@@ -66,8 +66,6 @@ app.use(cors(
 ))
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // Set FRONTEND_URL in Railway Variables to your Netlify URL.
-FRONTEND_URL= https://gentle-tanuki-1e3b74.netlify.app
-
 // ─────────────────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = (process.env.FRONTEND_URL || '*')
   .split(',')
