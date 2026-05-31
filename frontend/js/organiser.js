@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('evCity')       .value = ev.city;
     document.getElementById('evProvince')   .value = ev.province || '';
     document.getElementById('evDescription').value = ev.description;
-    document.getElementById('evImage')      .value = ev.image || '';
+    // image is managed by admin only — no field for organisers
     document.getElementById('evPrice')      .value = ev.price;
     document.getElementById('evTags')       .value = (ev.tags || []).join(', ');
 
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       city:        document.getElementById('evCity')       .value.trim(),
       province:    document.getElementById('evProvince')   .value,
       description: document.getElementById('evDescription').value.trim(),
-      image:       document.getElementById('evImage')      .value.trim(),
+      // image omitted — backend will keep existing image or use default
       price:       parseFloat(document.getElementById('evPrice').value) || 0,
       tags:        document.getElementById('evTags').value.split(',').map(t => t.trim()).filter(Boolean),
       ticketTypes,
