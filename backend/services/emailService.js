@@ -16,8 +16,6 @@
 'use strict';
 
 const nodemailer = require('nodemailer');
-const path       = require('path');
-const fs         = require('fs');
 const { formatDate, formatTime, formatCurrency } = require('./formatters');
 
 // ── Transporter Factory ───────────────────────────────────────────────────────
@@ -53,7 +51,7 @@ function getTransporter() {
  * @param {Object} ticket - Full ticket record from ticketService
  */
 async function sendConfirmation(ticket) {
-  const { buyer, event, ticket: tkt, pricing, id, qrCodeAbsPath } = ticket;
+  const { buyer, event, ticket: tkt, pricing, id, qrCodeBuffer } = ticket;
 
   const subject = `Your ticket for ${event.title} – ${id}`;
   const html    = buildConfirmationHTML(ticket);
@@ -61,12 +59,12 @@ async function sendConfirmation(ticket) {
 
   const attachments = [];
 
-  // Attach QR code image if it exists
-  if (qrCodeAbsPath && fs.existsSync(qrCodeAbsPath)) {
+  // Attach QR code from the in-memory buffer (no local disk required)
+  if (qrCodeBuffer) {
     attachments.push({
-      filename:    `ticket-${id}.png`,
-      path:        qrCodeAbsPath,
-      cid:         'qrcode@myticketsa',  // use this cid in the HTML: <img src="cid:qrcode@myticketsa">
+      filename: `ticket-${id}.png`,
+      content:  qrCodeBuffer,
+      cid:      'qrcode@myticketsa',
     });
   }
 
@@ -87,7 +85,7 @@ async function sendConfirmation(ticket) {
     console.log('[EMAIL PREVIEW] Ticket ID:', id);
     console.log('[EMAIL PREVIEW] Event:', event.title);
     console.log('[EMAIL PREVIEW] Total Paid:', formatCurrency(pricing.total));
-    console.log('[EMAIL PREVIEW] QR Code:', qrCodeAbsPath || 'none');
+    console.log('[EMAIL PREVIEW] QR Buffer size:', qrCodeBuffer ? `${qrCodeBuffer.length} bytes` : 'none');
     console.log('='.repeat(60) + '\n');
     return { success: true, preview: true };
   }

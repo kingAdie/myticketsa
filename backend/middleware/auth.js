@@ -1,29 +1,36 @@
-/**
- * middleware/auth.js
- * JWT verification + role guards.
- */
 'use strict';
 
 const jwt    = require('jsonwebtoken');
 const config = require('../config');
 
-const SECRET = config.jwt.secret;
+// Supabase signs its JWTs with the project's JWT secret (HS256).
+// Verifying locally avoids an HTTP call to Supabase on every request.
+const SECRET = config.supabase.jwtSecret;
 
-/**
- * requireAuth — verify Bearer token, attach req.user.
- * Returns 401 if missing or expired.
- */
-function requireAuth(req, res, next) {
+function extractToken(req) {
   const header = req.headers.authorization || '';
-  const token  = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  return header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+}
 
+function buildUser(payload) {
+  return {
+    id:               payload.sub,
+    email:            payload.email,
+    // role is stored in app_metadata (server-side only, cannot be set by clients)
+    role:             payload.app_metadata?.role || 'attendee',
+    firstName:        payload.user_metadata?.firstName        || '',
+    lastName:         payload.user_metadata?.lastName         || '',
+    organisationName: payload.user_metadata?.organisationName || null,
+  };
+}
+
+function requireAuth(req, res, next) {
+  const token = extractToken(req);
   if (!token) {
     return res.status(401).json({ success: false, error: 'Authentication required.' });
   }
-
   try {
-    const payload = jwt.verify(token, SECRET);
-    req.user = payload; // { id, email, role, firstName, lastName, iat, exp }
+    req.user = buildUser(jwt.verify(token, SECRET));
     next();
   } catch (err) {
     const msg = err.name === 'TokenExpiredError'
@@ -33,9 +40,6 @@ function requireAuth(req, res, next) {
   }
 }
 
-/**
- * requireAdmin — must run AFTER requireAuth.
- */
 function requireAdmin(req, res, next) {
   if (req.user?.role !== 'admin') {
     return res.status(403).json({ success: false, error: 'Admin access required.' });
@@ -43,9 +47,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-/**
- * requireOrganiser — organiser OR admin.
- */
 function requireOrganiser(req, res, next) {
   if (!['admin', 'organiser'].includes(req.user?.role)) {
     return res.status(403).json({ success: false, error: 'Organiser access required.' });
@@ -53,35 +54,13 @@ function requireOrganiser(req, res, next) {
   next();
 }
 
-/**
- * optionalAuth — attach user if token present, never fail.
- * Used on public routes that behave differently for logged-in users.
- */
 function optionalAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const token  = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  const token = extractToken(req);
   if (!token) return next();
   try {
-    req.user = jwt.verify(token, SECRET);
-  } catch { /* ignore invalid/expired tokens on public routes */ }
+    req.user = buildUser(jwt.verify(token, SECRET));
+  } catch { /* ignore invalid/expired on public routes */ }
   next();
 }
 
-/**
- * signToken — create a signed JWT for a user record.
- */
-function signToken(user) {
-  return jwt.sign(
-    {
-      id:        user.id,
-      email:     user.email,
-      role:      user.role,
-      firstName: user.firstName,
-      lastName:  user.lastName,
-    },
-    SECRET,
-    { expiresIn: config.jwt.expiresIn }
-  );
-}
-
-module.exports = { requireAuth, requireAdmin, requireOrganiser, optionalAuth, signToken };
+module.exports = { requireAuth, requireAdmin, requireOrganiser, optionalAuth };

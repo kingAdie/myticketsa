@@ -243,11 +243,7 @@ async function deleteEvent(req, res, next) {
 
 async function listUsers(req, res, next) {
   try {
-    const all = await dataStore.getUsers();
-    const users = all.map(u => {
-      const { passwordHash, ...safe } = u;
-      return safe;
-    });
+    const users = await dataStore.getUsers();
     return res.json({ success: true, users, total: users.length });
   } catch (err) {
     next(err);
@@ -267,11 +263,9 @@ async function updateUserRole(req, res, next) {
     }
 
     user.role = req.body.role;
-    user.updatedAt = new Date().toISOString();
     await dataStore.saveUser(user);
 
-    const { passwordHash, ...safe } = user;
-    return res.json({ success: true, user: safe });
+    return res.json({ success: true, user });
   } catch (err) {
     next(err);
   }
@@ -280,40 +274,54 @@ async function updateUserRole(req, res, next) {
 // ── Admin: dashboard stats ────────────────────────────────────────────────────
 
 async function getStats(req, res, next) {
-  const pool = require('../services/db');
+  const { supabaseAdmin } = require('../services/supabase');
   try {
-    try {
-      const [[stats]] = await pool.query('SELECT * FROM v_dashboard_stats');
+    // Try the view first
+    const { data: viewData, error: viewErr } = await supabaseAdmin
+      .from('v_dashboard_stats')
+      .select('*')
+      .maybeSingle();
+
+    if (!viewErr && viewData) {
       return res.json({
         success: true,
         stats: {
-          totalEvents:     stats.total_events,
-          publishedEvents: stats.published_events,
-          pendingEvents:   stats.pending_events,
-          featuredEvents:  stats.featured_events,
-          totalUsers:      stats.total_users,
-          organisers:      stats.total_organisers,
-          ticketsSold:     stats.tickets_sold,
-          totalRevenue:    stats.total_revenue,
-        },
-      });
-    } catch (_viewErr) {
-      // Fallback if the view doesn't exist yet
-      const events = await dataStore.getEvents();
-      const users  = await dataStore.getUsers();
-      return res.json({
-        success: true,
-        stats: {
-          totalEvents:     events.length,
-          publishedEvents: events.filter(e => e.status === 'published').length,
-          pendingEvents:   events.filter(e => e.status === 'pending').length,
-          featuredEvents:  events.filter(e => e.featured).length,
-          totalUsers:      users.length,
-          organisers:      users.filter(u => u.role === 'organiser').length,
-          ticketsSold:     0,
+          totalEvents:     Number(viewData.total_events),
+          publishedEvents: Number(viewData.published_events),
+          pendingEvents:   Number(viewData.pending_events),
+          featuredEvents:  Number(viewData.featured_events),
+          totalUsers:      Number(viewData.total_users),
+          organisers:      Number(viewData.total_organisers),
+          ticketsSold:     Number(viewData.tickets_sold),
+          totalRevenue:    Number(viewData.total_revenue),
         },
       });
     }
+
+    // Fallback: individual queries
+    const [eventsRes, profilesRes, ticketsRes] = await Promise.all([
+      supabaseAdmin.from('events').select('status, featured'),
+      supabaseAdmin.from('profiles').select('role'),
+      supabaseAdmin.from('tickets').select('quantity, total').in('status', ['confirmed', 'used']),
+    ]);
+
+    const evts  = eventsRes.data   || [];
+    const profs = profilesRes.data || [];
+    const tkts  = ticketsRes.data  || [];
+
+    return res.json({
+      success: true,
+      stats: {
+        totalEvents:     evts.length,
+        publishedEvents: evts.filter(e => e.status === 'published').length,
+        pendingEvents:   evts.filter(e => e.status === 'pending').length,
+        featuredEvents:  evts.filter(e => e.featured).length,
+        totalUsers:      profs.length,
+        organisers:      profs.filter(u => u.role === 'organiser').length,
+        ticketsSold:     tkts.reduce((s, t) => s + (t.quantity || 0), 0),
+        totalRevenue:    tkts.reduce((s, t) => s + parseFloat(t.total || 0), 0),
+      },
+    });
   } catch (err) {
     next(err);
   }

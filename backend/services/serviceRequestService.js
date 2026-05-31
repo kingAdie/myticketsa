@@ -1,10 +1,6 @@
-/**
- * services/serviceRequestService.js
- * CRUD for equipment / service rental requests.
- */
 'use strict';
 
-const db = require('./db');
+const { supabaseAdmin } = require('./supabase');
 
 async function createRequest(data) {
   const {
@@ -13,63 +9,70 @@ async function createRequest(data) {
     details, contactPhone, budgetRange,
   } = data;
 
-  const [result] = await db.query(`
-    INSERT INTO equipment_requests
-      (user_id, service_id, service_name, event_date, duration,
-       location, quantity, details, contact_phone, budget_range, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-  `, [
-    userId, serviceId, serviceName,
-    eventDate, duration || null,
-    location, parseInt(quantity) || 1,
-    details || null, contactPhone, budgetRange || null,
-  ]);
-
-  return getRequestById(result.insertId);
+  const { data: result, error } = await supabaseAdmin
+    .from('equipment_requests')
+    .insert({
+      user_id:       userId,
+      service_id:    serviceId,
+      service_name:  serviceName,
+      event_date:    eventDate,
+      duration:      duration      || null,
+      location,
+      quantity:      parseInt(quantity) || 1,
+      details:       details       || null,
+      contact_phone: contactPhone,
+      budget_range:  budgetRange   || null,
+      status:        'pending',
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return result;
 }
 
 async function getRequestById(id) {
-  const [rows] = await db.query(
-    'SELECT * FROM equipment_requests WHERE id = ?', [id]
-  );
-  return rows[0] || null;
+  const { data, error } = await supabaseAdmin
+    .from('equipment_requests')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
 }
 
 async function getRequestsByUser(userId) {
-  const [rows] = await db.query(
-    'SELECT * FROM equipment_requests WHERE user_id = ? ORDER BY created_at DESC',
-    [userId]
-  );
-  return rows;
+  const { data, error } = await supabaseAdmin
+    .from('equipment_requests')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
 }
 
 async function getAllRequests({ status } = {}) {
-  const where  = status ? 'WHERE status = ?' : '';
-  const params = status ? [status] : [];
-  const [rows] = await db.query(
-    `SELECT r.*, u.first_name, u.last_name, u.email
-     FROM equipment_requests r
-     JOIN users u ON r.user_id = u.id
-     ${where}
-     ORDER BY r.created_at DESC`,
-    params
-  );
-  return rows;
+  let query = supabaseAdmin
+    .from('equipment_requests')
+    .select('*, profiles(first_name, last_name, email)')
+    .order('created_at', { ascending: false });
+  if (status) query = query.eq('status', status);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(row => {
+    const { profiles: p, ...rest } = row;
+    return { ...rest, first_name: p?.first_name, last_name: p?.last_name, email: p?.email };
+  });
 }
 
 async function updateRequestStatus(id, status) {
   const allowed = ['pending', 'quoted', 'confirmed', 'cancelled'];
   if (!allowed.includes(status)) throw new Error(`Invalid status: ${status}`);
-  await db.query(
-    'UPDATE equipment_requests SET status = ? WHERE id = ?', [status, id]
-  );
+  const { error } = await supabaseAdmin
+    .from('equipment_requests')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
   return getRequestById(id);
 }
 
-module.exports = {
-  createRequest,
-  getRequestById,
-  getRequestsByUser,
-  getAllRequests,
-  updateRequestStatus,
-};
+module.exports = { createRequest, getRequestById, getRequestsByUser, getAllRequests, updateRequestStatus };
