@@ -325,6 +325,25 @@
       } catch { /* ignore */ }
     })();
 
+    // ── Supabase client (direct auth — no backend call needed) ───────────
+    const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+
+    let _sb = null;
+    async function getSB() {
+      if (_sb) return _sb;
+      if (!window.supabase) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+      _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      return _sb;
+    }
+
     // ── Login form submit ────────────────────────────────────────────────
     document.getElementById('adminLoginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -334,11 +353,11 @@
       const email   = document.getElementById('adminEmail').value.trim();
       const pass    = document.getElementById('adminPassword').value;
 
-      errorEl.textContent = '';
-      errorEl.style.display = 'none';
+      errorEl.textContent    = '';
+      errorEl.style.display  = 'none';
 
       if (!email || !pass) {
-        errorEl.textContent = 'Please enter your email and password.';
+        errorEl.textContent   = 'Please enter your email and password.';
         errorEl.style.display = 'block';
         return;
       }
@@ -347,43 +366,43 @@
       btn.textContent = 'Signing in…';
 
       try {
-        const res  = await fetch(API_BASE + '/api/auth/login', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ email, password: pass }),
-        });
-        const data = await res.json();
+        const sb = await getSB();
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
 
-        if (!res.ok || !data.success) {
-          errorEl.textContent = data.error || 'Login failed. Check your credentials.';
+        if (error || !data.session) {
+          errorEl.textContent   = error?.message === 'Invalid login credentials'
+            ? 'Incorrect email or password.'
+            : (error?.message || 'Login failed.');
           errorEl.style.display = 'block';
           btn.disabled    = false;
           btn.textContent = 'Sign In to Admin Portal';
           return;
         }
 
-        if (data.user.role !== 'admin') {
-          errorEl.textContent = 'This portal is for admin accounts only.';
+        const u = data.user;
+        const role = u.app_metadata?.role || u.user_metadata?.role || 'attendee';
+
+        if (role !== 'admin') {
+          await sb.auth.signOut();
+          errorEl.textContent   = 'This portal is for admin accounts only.';
           errorEl.style.display = 'block';
           btn.disabled    = false;
           btn.textContent = 'Sign In to Admin Portal';
           return;
         }
 
-        // Save session
-        localStorage.setItem('mt_token', data.token);
-        localStorage.setItem('mt_user',  JSON.stringify(data.user));
+        localStorage.setItem('mt_token', data.session.access_token);
+        localStorage.setItem('mt_user', JSON.stringify({
+          id: u.id, email: u.email, role,
+          firstName: u.user_metadata?.firstName || '',
+          lastName:  u.user_metadata?.lastName  || '',
+        }));
 
         btn.textContent = 'Success! Redirecting…';
+        window.location.href = 'index.html';
 
-        // Go to admin dashboard — use absolute path so it works from file:// too
-        window.location.href = API_BASE + '/admin/index.html';
-
-      } catch {
-        errorEl.innerHTML =
-          'Cannot connect to the server.<br>' +
-          'Make sure you have run: <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;">npm run dev</code> inside the <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;">backend</code> folder, then visit<br>' +
-          '<a href="http://localhost:5500/admin/login.html" style="color:#60A5FA;">http://localhost:5500/admin/login.html</a>';
+      } catch (err) {
+        errorEl.textContent   = 'Authentication service unavailable. Please try again.';
         errorEl.style.display = 'block';
         btn.disabled    = false;
         btn.textContent = 'Sign In to Admin Portal';

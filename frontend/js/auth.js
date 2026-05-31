@@ -1,11 +1,10 @@
 
 /* ================================================
-   MyTicketSA — Auth Module v5
-   Changes:
-   - Admin button removed from public navbar
-   - requireAuth(callback) gating helper
-   - Post-login redirects to /dashboard.html
-   - Clean Login / Sign Up buttons always visible
+   MyTicketSA — Auth Module v6
+   Auth calls go DIRECTLY to Supabase — no backend
+   needed for login / signup / logout.
+   Backend is only called (best-effort) after signup
+   to set up the profile row with the correct role.
    ================================================ */
 
 const Auth = (() => {
@@ -13,9 +12,29 @@ const Auth = (() => {
   const TOKEN_KEY = 'mt_token';
   const USER_KEY  = 'mt_user';
 
-  /* ── Helpers ─────────────────────────────────────── */
-  function getToken()    { return localStorage.getItem(TOKEN_KEY); }
-  function getUser()     { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; } }
+  // ── Supabase client (lazy-loaded on first use) ───────────────────────────
+  const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+
+  let _sb = null;
+  async function getSupabase() {
+    if (_sb) return _sb;
+    if (!window.supabase) {
+      await new Promise((resolve, reject) => {
+        const s   = document.createElement('script');
+        s.src     = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+        s.onload  = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return _sb;
+  }
+
+  // ── Session helpers ───────────────────────────────────────────────────────
+  function getToken()  { return localStorage.getItem(TOKEN_KEY); }
+  function getUser()   { try { return JSON.parse(localStorage.getItem(USER_KEY)); } catch { return null; } }
   function isLoggedIn() {
     const token = getToken();
     if (!token) return false;
@@ -37,7 +56,21 @@ const Auth = (() => {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 
+  function formatUser(authUser) {
+    // Role: prefer app_metadata (server-set) then user_metadata (set at signup)
+    return {
+      id:               authUser.id,
+      email:            authUser.email,
+      role:             authUser.app_metadata?.role || authUser.user_metadata?.role || 'attendee',
+      firstName:        authUser.user_metadata?.firstName        || '',
+      lastName:         authUser.user_metadata?.lastName         || '',
+      organisationName: authUser.user_metadata?.organisationName || null,
+      createdAt:        authUser.created_at,
+    };
+  }
+
   function logout() {
+    getSupabase().then(sb => sb.auth.signOut()).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     window.location.href = 'index.html';
@@ -50,12 +83,7 @@ const Auth = (() => {
       : { 'Content-Type': 'application/json' };
   }
 
-  /* ── requireAuth — gate any action behind login ──────
-     Usage:
-       Auth.requireAuth(() => window.location.href = 'organiser.html')
-     If logged in → runs callback immediately.
-     If not → opens login modal; on success → runs callback.
-  ────────────────────────────────────────────────────── */
+  /* ── requireAuth ──────────────────────────────────────────────────────── */
   let _pendingCallback = null;
 
   function requireAuth(callback, message) {
@@ -67,7 +95,6 @@ const Auth = (() => {
     }
   }
 
-  /* Run the pending callback after successful auth */
   function _runPending() {
     if (_pendingCallback) {
       const cb = _pendingCallback;
@@ -76,7 +103,7 @@ const Auth = (() => {
     }
   }
 
-  /* ── Navbar ──────────────────────────────────────── */
+  /* ── Navbar ───────────────────────────────────────────────────────────── */
   function updateNavbar() {
     const actions = document.querySelector('.navbar__actions');
     if (!actions) return;
@@ -84,7 +111,6 @@ const Auth = (() => {
     const user = getUser();
 
     if (user) {
-      /* Logged in — show user menu. No Admin button exposed publicly. */
       const adm = isAdmin();
       const org = isOrganiser();
 
@@ -121,7 +147,6 @@ const Auth = (() => {
       });
 
     } else {
-      /* Logged out — clean Login + Sign Up */
       actions.innerHTML = `
         <button class="btn btn-ghost btn-sm" id="navLoginBtn">Log In</button>
         <button class="btn btn-primary btn-sm" id="navSignupBtn">Sign Up</button>`;
@@ -131,7 +156,7 @@ const Auth = (() => {
     }
   }
 
-  /* ── Modal ───────────────────────────────────────── */
+  /* ── Modal ────────────────────────────────────────────────────────────── */
   let _modalMessage = null;
 
   function buildModal() {
@@ -147,15 +172,11 @@ const Auth = (() => {
     overlay.innerHTML = `
       <div class="auth-modal">
         <button class="auth-modal__close" id="authModalClose" aria-label="Close">✕</button>
-
-        <!-- Context message (shown when gating a specific action) -->
         <div class="auth-context-msg hidden" id="authContextMsg"></div>
-
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="login">Log In</button>
           <button class="auth-tab"        data-tab="signup">Sign Up</button>
         </div>
-
         <div class="auth-error hidden" id="authError" role="alert"></div>
 
         <!-- LOGIN -->
@@ -215,7 +236,6 @@ const Auth = (() => {
 
     document.getElementById('authModalClose').addEventListener('click', closeModal);
     overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-
     overlay.querySelectorAll('.auth-tab, .auth-switch-btn').forEach(el => {
       el.addEventListener('click', () => switchTab(el.dataset.tab || el.dataset.switch));
     });
@@ -223,7 +243,6 @@ const Auth = (() => {
     document.getElementById('loginForm') .addEventListener('submit', handleLogin);
     document.getElementById('signupForm').addEventListener('submit', handleSignup);
 
-    // Role toggle buttons
     overlay.querySelectorAll('.auth-role-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         overlay.querySelectorAll('.auth-role-btn').forEach(b => {
@@ -246,18 +265,11 @@ const Auth = (() => {
   function openModal(tab = 'login', contextMessage = null) {
     buildModal();
     switchTab(tab);
-
-    // Show context message if provided (e.g. "Sign in to request this service")
     const ctxEl = document.getElementById('authContextMsg');
     if (ctxEl) {
-      if (contextMessage) {
-        ctxEl.textContent = contextMessage;
-        ctxEl.classList.remove('hidden');
-      } else {
-        ctxEl.classList.add('hidden');
-      }
+      if (contextMessage) { ctxEl.textContent = contextMessage; ctxEl.classList.remove('hidden'); }
+      else                { ctxEl.classList.add('hidden'); }
     }
-
     document.getElementById('authModal').classList.add('open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
@@ -268,7 +280,7 @@ const Auth = (() => {
   function closeModal() {
     document.getElementById('authModal')?.classList.remove('open');
     document.body.style.overflow = '';
-    _pendingCallback = null; // clear pending if user closes without logging in
+    _pendingCallback = null;
   }
 
   function showError(msg) {
@@ -280,7 +292,7 @@ const Auth = (() => {
     document.getElementById('authError')?.classList.add('hidden');
   }
 
-  /* ── Login handler ───────────────────────────────── */
+  /* ── Login — direct Supabase call, no backend needed ─────────────────── */
   async function handleLogin(e) {
     e.preventDefault();
     clearError();
@@ -294,85 +306,106 @@ const Auth = (() => {
     btn.disabled = true; btn.textContent = 'Logging in…';
 
     try {
-      const res  = await fetch(_API_BASE + '/api/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass }),
-      });
-      const data = await res.json();
+      const sb = await getSupabase();
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
 
-      if (!res.ok || !data.success) {
-        showError(data.error || 'Incorrect email or password.');
+      if (error || !data.session) {
+        showError(error?.message === 'Invalid login credentials'
+          ? 'Incorrect email or password.'
+          : (error?.message || 'Login failed. Please try again.'));
         btn.disabled = false; btn.textContent = 'Log In';
         return;
       }
 
-      saveSession(data.token, data.user);
+      const user = formatUser(data.user);
+      saveSession(data.session.access_token, user);
       closeModal();
       updateNavbar();
-      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome back, ${data.user.firstName}! 👋`, 'success');
+      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome back, ${user.firstName}!`, 'success');
 
-      // If there was a pending gated action, run it, otherwise go to dashboard
       if (_pendingCallback) {
         _runPending();
       } else {
         setTimeout(() => window.location.href = 'dashboard.html', 800);
       }
 
-    } catch {
-      showError('Unable to reach the server. Please try again in a moment.');
+    } catch (err) {
+      showError('Unable to reach authentication service. Please try again.');
       btn.disabled = false; btn.textContent = 'Log In';
     }
   }
 
-  /* ── Signup handler ──────────────────────────────── */
+  /* ── Signup — direct Supabase call, no backend needed ────────────────── */
   async function handleSignup(e) {
     e.preventDefault();
     clearError();
 
     const btn = document.getElementById('signupSubmitBtn');
 
-    const body = {
-      firstName: document.getElementById('signupFirst')?.value.trim(),
-      lastName:  document.getElementById('signupLast')?.value.trim(),
-      email:     document.getElementById('signupEmail')?.value.trim(),
-      password:  document.getElementById('signupPassword')?.value,
-      role:      document.getElementById('signupRole')?.value || 'attendee',
-    };
+    const firstName        = document.getElementById('signupFirst')?.value.trim();
+    const lastName         = document.getElementById('signupLast')?.value.trim();
+    const email            = document.getElementById('signupEmail')?.value.trim();
+    const password         = document.getElementById('signupPassword')?.value;
+    const role             = document.getElementById('signupRole')?.value || 'attendee';
+    const organisationName = document.getElementById('signupOrgName')?.value?.trim() || null;
+
+    if (!firstName || firstName.length < 2) { showError('First name must be at least 2 characters.'); return; }
+    if (!lastName  || lastName.length  < 2) { showError('Last name must be at least 2 characters.'); return; }
+    if (!email)                             { showError('A valid email address is required.'); return; }
+    if (!password  || password.length  < 6) { showError('Password must be at least 6 characters.'); return; }
 
     btn.disabled = true; btn.textContent = 'Creating account…';
 
     try {
-      const res  = await fetch(_API_BASE + '/api/auth/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      const sb = await getSupabase();
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { firstName, lastName, role, organisationName },
+        },
       });
-      const data = await res.json();
 
-      if (!res.ok || !data.success) {
-        showError((data.errors || [data.error]).join(' '));
+      if (error) {
+        showError(error.message.includes('already registered')
+          ? 'An account with this email already exists.'
+          : (error.message || 'Registration failed. Please try again.'));
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }
 
-      if (data.token) {
-        saveSession(data.token, data.user);
+      if (!data.session) {
+        // Email confirmation is enabled — ask user to check their inbox
         closeModal();
-        updateNavbar();
-        if (typeof Utils !== 'undefined') Utils.showToast(`Welcome, ${data.user.firstName}! 🎉`, 'success', 3500);
-        if (_pendingCallback) {
-          _runPending();
-        } else {
-          setTimeout(() => window.location.href = 'dashboard.html', 800);
-        }
-      } else {
-        // Account created but auto-login didn't return a token — ask user to log in
-        closeModal();
-        if (typeof Utils !== 'undefined') Utils.showToast('Account created! Please log in.', 'success', 3500);
-        setTimeout(() => openModal('login'), 900);
+        if (typeof Utils !== 'undefined')
+          Utils.showToast('Account created! Check your email to confirm before logging in.', 'success', 5000);
+        btn.disabled = false; btn.textContent = 'Create Account';
+        return;
       }
 
-    } catch {
-      showError('Cannot connect to the server. Please try again.');
+      const user = formatUser(data.user);
+      saveSession(data.session.access_token, user);
+
+      // Best-effort: tell backend to set role in profiles table + app_metadata
+      // If this fails the user is still logged in — role updates on next login
+      fetch(_API_BASE + '/api/auth/setup-profile', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.session.access_token}` },
+        body:    JSON.stringify({ firstName, lastName, role, organisationName }),
+      }).catch(() => {});
+
+      closeModal();
+      updateNavbar();
+      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome, ${user.firstName}!`, 'success', 3500);
+
+      if (_pendingCallback) {
+        _runPending();
+      } else {
+        setTimeout(() => window.location.href = 'dashboard.html', 800);
+      }
+
+    } catch (err) {
+      showError('Registration failed. Please try again.');
       btn.disabled = false; btn.textContent = 'Create Account';
     }
   }
@@ -383,7 +416,7 @@ const Auth = (() => {
 
   return {
     getToken, getUser, isLoggedIn, isAdmin, isOrganiser,
-    saveSession, logout, headers,
+    saveSession, logout, headers, formatUser,
     openModal, closeModal, updateNavbar,
     requireAuth,
   };

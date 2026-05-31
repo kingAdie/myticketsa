@@ -12,8 +12,9 @@ const ctrl    = require('../controllers/authController');
 const { requireAuth }              = require('../middleware/auth');
 const { authLimiter }              = require('../middleware/rateLimiter');
 
-router.post('/register', authLimiter, ctrl.register);
-router.post('/login',    authLimiter, ctrl.login);
-router.get('/me',        requireAuth, ctrl.getMe);   // ← used by frontend to validate token on load
+router.post('/register',      authLimiter, ctrl.register);
+router.post('/login',         authLimiter, ctrl.login);
+router.post('/setup-profile', requireAuth, ctrl.setupProfile);  // called after client-side Supabase signup
+router.get('/me',             requireAuth, ctrl.getMe);
 
 module.exports = router;

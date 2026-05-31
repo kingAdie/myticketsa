@@ -16,8 +16,8 @@ function buildUser(payload) {
   return {
     id:               payload.sub,
     email:            payload.email,
-    // role is stored in app_metadata (server-side only, cannot be set by clients)
-    role:             payload.app_metadata?.role || 'attendee',
+    // prefer app_metadata.role (server-set, secure) then user_metadata.role (set at signup)
+    role:             payload.app_metadata?.role || payload.user_metadata?.role || 'attendee',
     firstName:        payload.user_metadata?.firstName        || '',
     lastName:         payload.user_metadata?.lastName         || '',
     organisationName: payload.user_metadata?.organisationName || null,

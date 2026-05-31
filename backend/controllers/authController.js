@@ -112,6 +112,35 @@ async function login(req, res, next) {
   }
 }
 
+// ── Setup profile after Supabase client-side signup ───────────────────────
+async function setupProfile(req, res, next) {
+  try {
+    const { firstName, lastName, role, organisationName } = req.body;
+    const userId   = req.user.id;
+    const email    = req.user.email;
+    const userRole = ['attendee', 'organiser'].includes(role) ? role : 'attendee';
+
+    await supabaseAdmin.from('profiles').upsert({
+      id:                userId,
+      email,
+      first_name:        (firstName || '').trim(),
+      last_name:         (lastName  || '').trim(),
+      role:              userRole,
+      organisation_name: userRole === 'organiser' ? (organisationName || '').trim() || null : null,
+    }, { onConflict: 'id' });
+
+    await supabaseAdmin.from('profiles').update({ role: userRole }).eq('id', userId);
+
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      app_metadata: { role: userRole },
+    });
+
+    return res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ── Get current user ───────────────────────────────────────────────────────────
 async function getMe(req, res, next) {
   try {
@@ -138,4 +167,4 @@ function sanitiseUser(authUser) {
   };
 }
 
-module.exports = { register, login, getMe };
+module.exports = { register, login, getMe, setupProfile };
