@@ -354,20 +354,25 @@ const Auth = (() => {
         return;
       }
 
-      saveSession(data.token, data.user);
-      closeModal();
-      updateNavbar();
-      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome, ${data.user.firstName}! 🎉`, 'success', 3500);
-
-      // Run any pending gated action, otherwise go to dashboard
-      if (_pendingCallback) {
-        _runPending();
+      if (data.token) {
+        saveSession(data.token, data.user);
+        closeModal();
+        updateNavbar();
+        if (typeof Utils !== 'undefined') Utils.showToast(`Welcome, ${data.user.firstName}! 🎉`, 'success', 3500);
+        if (_pendingCallback) {
+          _runPending();
+        } else {
+          setTimeout(() => window.location.href = 'dashboard.html', 800);
+        }
       } else {
-        setTimeout(() => window.location.href = 'dashboard.html', 800);
+        // Account created but auto-login didn't return a token — ask user to log in
+        closeModal();
+        if (typeof Utils !== 'undefined') Utils.showToast('Account created! Please log in.', 'success', 3500);
+        setTimeout(() => openModal('login'), 900);
       }
 
     } catch {
-      showError('Cannot connect to the server. Is the backend running?');
+      showError('Cannot connect to the server. Please try again.');
       btn.disabled = false; btn.textContent = 'Create Account';
     }
   }

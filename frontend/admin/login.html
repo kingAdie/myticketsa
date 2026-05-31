@@ -302,12 +302,10 @@
     // Works whether opened via the Node server (http://localhost:5500)
     // or directly as a file (file://) — always points to port 5500.
     const API_BASE = (function () {
-      const p = window.location.protocol;
-      const port = window.location.port;
-      // Served by our Node server on port 5500 → use relative paths
-      if (p !== 'file:' && port === '5500') return '';
-      // Opened as a file:// OR any other port → point to backend explicitly
-      return 'http://localhost:5500';
+      // file:// protocol → always point to local backend
+      if (window.location.protocol === 'file:') return 'http://localhost:5500';
+      // Served from any real server (local dev, Netlify, etc.) → use relative URLs
+      return '';
     })();
 
     // ── If opened as a file, show a helpful instruction banner ───────────

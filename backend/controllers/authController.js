@@ -1,7 +1,6 @@
 'use strict';
 
 const { supabase, supabaseAdmin } = require('../services/supabase');
-const dataStore = require('../services/dataStore');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,12 +40,35 @@ async function register(req, res, next) {
       return next(createErr);
     }
 
+    // The DB trigger creates the profile row but may write role='attendee' regardless
+    // of app_metadata (timing issue). Force the correct role explicitly.
+    const profileData = {
+      id:                created.user.id,
+      email:             email.trim().toLowerCase(),
+      first_name:        firstName.trim(),
+      last_name:         lastName.trim(),
+      role:              userRole,
+      organisation_name: userRole === 'organiser' ? (organisationName || '').trim() || null : null,
+    };
+    await supabaseAdmin.from('profiles').upsert(profileData, { onConflict: 'id' });
+    await supabaseAdmin.from('profiles').update({ role: userRole }).eq('id', created.user.id);
+
     // Sign in immediately to return a session token
     const { data: session, error: signInErr } = await supabase.auth.signInWithPassword({
       email:    email.trim().toLowerCase(),
       password,
     });
-    if (signInErr) return next(signInErr);
+
+    if (signInErr || !session?.session?.access_token) {
+      // Account created but sign-in failed — return partial success so the
+      // frontend can redirect the user to log in manually
+      return res.status(201).json({
+        success:  true,
+        token:    null,
+        user:     sanitiseUser(created.user),
+        message:  'Account created. Please log in.',
+      });
+    }
 
     console.log(`[AUTH] Registered: ${created.user.email} (${userRole})`);
 
