@@ -9,22 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'index.html';
     return;
   }
-  // Validate token server-side (catches expired tokens)
-  try {
-    const meRes = await fetch(_API_BASE + '/api/auth/me', { headers: Auth.headers() });
-    if (!meRes.ok) { Auth.logout(); return; }
-    const meData = await meRes.json();
-    if (!meData.success) { Auth.logout(); return; }
-    // Refresh stored user
-    localStorage.setItem('mt_user', JSON.stringify(meData.user));
-    // Enforce organiser/admin role
-    if (!['organiser', 'admin'].includes(meData.user.role)) {
-      window.location.href = 'index.html';
-      return;
-    }
-  } catch {
-    if (!Auth.isOrganiser()) { window.location.href = 'index.html'; return; }
-  }
+  // Enforce organiser/admin role from stored session
+  if (!Auth.isOrganiser()) { window.location.href = 'index.html'; return; }
 
   const user = Auth.getUser();
   Utils.setText('#orgWelcome', `Welcome, ${user.firstName}`);
@@ -37,14 +23,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadEvents() {
     document.getElementById('orgLoading').style.display = 'flex';
     try {
-      const res  = await fetch(_ORGANISER_API + '/events', { headers: Auth.headers() });
-      const data = await res.json();
-      allEvents  = data.events || [];
+      allEvents = await SupabaseAPI.getEvents({ organiserId: user.id });
       renderStats(allEvents);
       renderTable(allEvents);
     } catch (err) {
       document.getElementById('eventsTableBody').innerHTML =
-        `<div class="org-empty"><p>Could not load events. Is the server running?</p></div>`;
+        `<div class="org-empty"><p>Could not load events. Please refresh the page.</p></div>`;
     }
   }
 
@@ -254,26 +238,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     Utils.setText('#saveBtnText', isEdit ? 'Saving…' : 'Creating…');
 
     try {
-      const url    = isEdit ? `${_ORGANISER_API}/events/${editId}` : `${_API_BASE}/api/events`;
-      const method = isEdit ? 'PUT' : 'POST';
-      const res    = await fetch(url, { method, headers: Auth.headers(), body: JSON.stringify(payload) });
-      const data   = await res.json();
-
-      if (!res.ok || !data.success) {
-        const errEl = document.getElementById('modalError');
-        errEl.textContent = (data.errors || [data.error]).join(' ');
-        errEl.classList.remove('hidden');
-        saveBtn.disabled = false;
-        Utils.setText('#saveBtnText', isEdit ? 'Save Changes' : 'Create Event');
-        return;
+      if (isEdit) {
+        await SupabaseAPI.updateEvent(editId, payload);
+      } else {
+        await SupabaseAPI.createEvent(payload);
       }
-
       closeModal();
       Utils.showToast(isEdit ? 'Event updated!' : 'Event created! Pending admin review.', 'success');
       await loadEvents();
-
     } catch (err) {
-      Utils.showToast('Server error. Please try again.', 'error');
+      const errEl = document.getElementById('modalError');
+      errEl.textContent = err.message || 'Could not save event. Please try again.';
+      errEl.classList.remove('hidden');
       saveBtn.disabled = false;
       Utils.setText('#saveBtnText', isEdit ? 'Save Changes' : 'Create Event');
     }
@@ -286,12 +262,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!confirm(`Delete "${ev.title}"? This cannot be undone.`)) return;
 
     try {
-      const res = await fetch(`${_ORGANISER_API}/events/${id}`, { method: 'DELETE', headers: Auth.headers() });
-      const data = await res.json();
-      if (data.success) { Utils.showToast('Event deleted.', 'success'); await loadEvents(); }
-      else Utils.showToast(data.error || 'Delete failed.', 'error');
-    } catch {
-      Utils.showToast('Server error.', 'error');
+      await SupabaseAPI.deleteEvent(id);
+      Utils.showToast('Event deleted.', 'success');
+      await loadEvents();
+    } catch (err) {
+      Utils.showToast(err.message || 'Delete failed.', 'error');
     }
   }
 

@@ -701,6 +701,7 @@
 
 
 <script src="js/config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
 <script>
@@ -974,24 +975,12 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Submitting…';
 
     try {
-      var res  = await fetch(_ORGANISER_API + '/events', {
-        method: 'POST', headers: Auth.headers(), body: JSON.stringify(payload),
-      });
-      var data = await res.json();
-
-      if (!res.ok || !data.success) {
-        showBanner('eventError', (data.errors || [data.error]).join(' ') || 'Something went wrong. Please try again.');
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Submit Event for Review';
-        return;
-      }
-
+      await SupabaseAPI.createEvent(payload);
       document.getElementById('eventForm').classList.add('hidden');
       document.getElementById('eventSuccess').classList.remove('hidden');
       if (typeof Utils !== 'undefined') Utils.showToast('Event submitted! Pending review.', 'success');
-
     } catch(err) {
-      showBanner('eventError', 'Could not connect to the server. Make sure the backend is running on port 5500.');
+      showBanner('eventError', err.message || 'Could not submit event. Please try again.');
       btn.disabled = false;
       btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Submit Event for Review';
     }
@@ -1085,23 +1074,12 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true; btn.textContent = 'Submitting…';
 
     try {
-      var res  = await fetch(_ORGANISER_API + '/events', {
-        method: 'POST', headers: Auth.headers(), body: JSON.stringify(payload),
-      });
-      var data = await res.json();
-
-      if (!res.ok || !data.success) {
-        showBanner('travelError', (data.errors || [data.error]).join(' ') || 'Something went wrong.');
-        btn.disabled = false; btn.textContent = 'Submit Listing for Review';
-        return;
-      }
-
+      await SupabaseAPI.createEvent(payload);
       document.getElementById('travelForm').classList.add('hidden');
       document.getElementById('travelSuccess').classList.remove('hidden');
       if (typeof Utils !== 'undefined') Utils.showToast('Travel listing submitted!', 'success');
-
     } catch(err) {
-      showBanner('travelError', 'Could not connect to the server.');
+      showBanner('travelError', err.message || 'Could not submit. Please try again.');
       btn.disabled = false; btn.textContent = 'Submit Listing for Review';
     }
   });
@@ -1163,25 +1141,17 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true; btn.textContent = 'Submitting…';
 
     try {
-      var svcRes = await fetch(_ORGANISER_API + '/requests', {
-        method: 'POST',
-        headers: Auth.headers(),
-        body: JSON.stringify({
-          serviceId:    document.getElementById('svcId').value,
-          serviceName:  document.getElementById('svcSelectedName').textContent.trim(),
-          eventDate:    document.getElementById('svcEventDate').value,
-          duration:     document.getElementById('svcDuration').value,
-          location:     document.getElementById('svcLocation').value,
-          quantity:     document.getElementById('svcQty').value || 1,
-          details:      document.getElementById('svcDetails').value,
-          contactPhone: document.getElementById('svcPhone').value,
-          budgetRange:  document.getElementById('svcBudget').value,
-        }),
+      await SupabaseAPI.submitServiceRequest({
+        serviceId:    document.getElementById('svcId').value,
+        serviceName:  document.getElementById('svcSelectedName').textContent.trim(),
+        eventDate:    document.getElementById('svcEventDate').value,
+        duration:     document.getElementById('svcDuration').value,
+        location:     document.getElementById('svcLocation').value,
+        quantity:     document.getElementById('svcQty').value || 1,
+        details:      document.getElementById('svcDetails').value,
+        contactPhone: document.getElementById('svcPhone').value,
+        budgetRange:  document.getElementById('svcBudget').value,
       });
-      var svcData = await svcRes.json();
-      if (!svcRes.ok || !svcData.success) {
-        throw new Error(svcData.errors ? svcData.errors.join(' ') : (svcData.error || 'Submission failed.'));
-      }
       document.getElementById('serviceForm').classList.add('hidden');
       document.getElementById('svcPickerStep').classList.add('hidden');
       document.getElementById('svcSuccess').classList.remove('hidden');
@@ -1219,18 +1189,17 @@ document.addEventListener('DOMContentLoaded', function() {
     list.innerHTML        = '';
 
     try {
-      var res  = await fetch(_API_BASE + '/api/ticket/mine', { headers: Auth.headers() });
-      var data = await res.json();
+      var tickets = await SupabaseAPI.getMyTickets();
 
       loading.style.display = 'none';
 
-      if (!res.ok || !data.success || !data.tickets.length) {
+      if (!tickets.length) {
         empty.style.display = 'flex';
         return;
       }
 
       _ticketsLoaded = true;
-      list.innerHTML = data.tickets.map(function(t) {
+      list.innerHTML = tickets.map(function(t) {
         var dateStr = t.event.date ? new Date(t.event.date).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' }) : '—';
         var statusClass = t.status === 'confirmed' ? 'status-confirmed' : 'status-pending';
         return [

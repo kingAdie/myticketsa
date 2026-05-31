@@ -18,20 +18,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const eventId = Utils.getParam('id');
   if (!eventId) { showError('No event specified.'); return; }
 
-  /* ── Fetch single event directly from API (most reliable) ─────────── */
+  /* ── Fetch single event directly from Supabase ─────────────────────── */
   try {
-    const res  = await fetch(`${_API_BASE}/api/events/${eventId}`);
-    const data = await res.json();
-    if (!res.ok || !data.success || !data.event) {
+    currentEvent = await SupabaseAPI.getEvent(eventId);
+    if (!currentEvent) {
       showError('Event not found. It may have been removed or the link is incorrect.');
       return;
     }
-    currentEvent = data.event;
   } catch (err) {
-    // Network error – try the local cache as fallback
-    await EventsData.init();
-    currentEvent = EventsData.getById(eventId);
-    if (!currentEvent) { showError('Could not load event. Please check your connection.'); return; }
+    showError('Could not load event. Please check your connection.');
+    return;
   }
 
   renderEventPage(currentEvent);
