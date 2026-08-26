@@ -1,0 +1,1148 @@
+﻿/* ================================================
+   TicketsSA Accommodations & Detail Pages
+   Dark theme. Covers both accommodations.html
+   (listing/filter) and accommodation.html (detail).
+   ================================================ */
+
+/* ── Shared page scaffold ─────────────────────────────────────────────── */
+body { background: var(--bg-1); }
+
+/* ── Hero listings page ─────────────────────────────────────────────── */
+.acc-hero {
+  position: relative;
+  padding: 72px 0 52px;
+  background: var(--bg-1);
+  overflow: hidden;
+  border-bottom: 1px solid var(--b1);
+}
+.acc-hero::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 500px;
+  background: radial-gradient(ellipse at center, rgba(37,99,235,.13) 0%, rgba(37,99,235,.04) 40%, transparent 70%);
+  pointer-events: none;
+}
+.acc-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--blue-hi);
+  margin-bottom: 16px;
+}
+.acc-hero__eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  background: var(--blue-hi);
+  border-radius: 2px;
+}
+.acc-hero h1 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.875rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.12;
+  letter-spacing: -.03em;
+  margin-bottom: 14px;
+}
+.acc-hero h1 span { color: var(--blue-hi); }
+.acc-hero__sub {
+  font-size: 1.0625rem;
+  color: var(--text-2);
+  max-width: 560px;
+  line-height: 1.7;
+}
+
+/* ── Province filter pill bar ─────────────────────────────────────────── */
+.province-filter {
+  position: sticky;
+  top: 72px;
+  z-index: 200;
+  background: rgba(15,15,15,.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--b1);
+  padding: 0;
+}
+.province-filter__inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.province-filter__inner::-webkit-scrollbar { display: none; }
+
+.province-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1.5px solid var(--b1);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .18s cubic-bezier(.4,0,.2,1);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  user-select: none;
+}
+.province-pill:hover {
+  color: var(--text);
+  border-color: var(--b2);
+  background: var(--bg-4);
+}
+.province-pill.active {
+  color: #fff;
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 20px rgba(37,99,235,.35);
+}
+.province-pill__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .6;
+  flex-shrink: 0;
+}
+.province-pill.active .province-pill__dot { opacity: 1; }
+
+/* ── Main content area ────────────────────────────────────────────────── */
+.acc-content {
+  padding: 48px 0 80px;
+  min-height: 60vh;
+}
+
+/* Loading state */
+.acc-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 24px;
+  color: var(--text-3);
+  font-size: .9375rem;
+}
+
+/* ── Spinner ──────────────────────────────────────────────────────────── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid rgba(255,255,255,.08);
+  border-top-color: var(--blue-hi);
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+  flex-shrink: 0;
+}
+.spinner--sm {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+/* ── Province / city section block ───────────────────────────────────── */
+.dest-section {
+  margin-bottom: 56px;
+}
+.dest-section:last-child { margin-bottom: 0; }
+
+.dest-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--b1);
+}
+.dest-section__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dest-section__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+.dest-section__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.02em;
+  margin: 0;
+  line-height: 1.2;
+}
+.dest-section__sub {
+  font-size: .875rem;
+  color: var(--text-3);
+  margin-top: 3px;
+  font-style: italic;
+}
+.dest-section__view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--blue-hi);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: gap .18s, opacity .18s;
+  flex-shrink: 0;
+}
+.dest-section__view-all:hover { gap: 9px; opacity: .8; }
+
+/* City sub-section (within province view) */
+.city-section {
+  margin-bottom: 40px;
+}
+.city-section__head {
+  margin-bottom: 20px;
+}
+.city-section__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -.015em;
+  margin-bottom: 3px;
+}
+.city-section__sub {
+  font-size: .8125rem;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+/* ── Accommodation card grid ──────────────────────────────────────────── */
+.acc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ── Accommodation card ───────────────────────────────────────────────── */
+.acc-card {
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .22s cubic-bezier(.4,0,.2,1), border-color .22s, box-shadow .22s;
+  cursor: pointer;
+}
+.acc-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--b2);
+  box-shadow: 0 16px 48px rgba(0,0,0,.45), 0 0 0 1px var(--b2);
+}
+
+/* Image wrapper */
+.acc-card__img-wrap {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  overflow: hidden;
+  background: var(--bg-3);
+  flex-shrink: 0;
+}
+.acc-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .4s cubic-bezier(.4,0,.2,1);
+}
+.acc-card:hover .acc-card__img { transform: scale(1.05); }
+
+/* Star rating overlay top left */
+.acc-card__stars {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 9px;
+  background: rgba(10,10,10,.78);
+  backdrop-filter: blur(6px);
+  border-radius: 99px;
+  font-size: .7rem;
+  font-weight: 700;
+  color: #F59E0B;
+  line-height: 1;
+}
+.acc-card__stars svg { width: 11px; height: 11px; fill: #F59E0B; flex-shrink: 0; }
+
+/* Price badge top right */
+.acc-card__price-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  background: rgba(10,10,10,.78);
+  backdrop-filter: blur(6px);
+  border-radius: 99px;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.acc-card__price-badge span { color: var(--green-hi); }
+
+/* Featured badge */
+.acc-card__featured {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding: 3px 10px;
+  background: rgba(234,179,8,.9);
+  color: #000;
+  font-size: .625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  border-radius: 99px;
+}
+
+/* Card body */
+.acc-card__body {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.acc-card__name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.0rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  margin: 0;
+}
+.acc-card__loc {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .7875rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 500;
+}
+.acc-card__loc svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--text-3);
+}
+
+/* Amenity tags */
+.acc-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+.acc-card__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: .6875rem;
+  font-weight: 600;
+  color: var(--text-2);
+  border: 1px solid var(--b2);
+  background: var(--bg-3);
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+/* Description snippet */
+.acc-card__desc {
+  font-size: .8125rem;
+  color: var(--text-3);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Card footer */
+.acc-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: auto;
+  border-top: 1px solid var(--b0);
+}
+.acc-card__book-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: .8125rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .18s, box-shadow .18s, transform .18s;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  white-space: nowrap;
+}
+.acc-card__book-btn:hover {
+  background: var(--green-hi);
+  box-shadow: 0 0 18px var(--green-glow);
+  transform: translateY(-1px);
+}
+
+/* ── Tourist destinations section ─────────────────────────────────────── */
+.td-section {
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1px solid var(--b1);
+}
+.td-section__head {
+  margin-bottom: 24px;
+}
+.td-section__eyebrow {
+  font-size: .6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--green-hi);
+  margin-bottom: 6px;
+}
+.td-section__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.td-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.td-card {
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform .2s, border-color .2s;
+}
+.td-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--b2);
+}
+.td-card__img {
+  width: 100%;
+  height: 148px;
+  object-fit: cover;
+  background: var(--bg-3);
+  display: block;
+}
+.td-card__body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.td-card__cat {
+  font-size: .625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--green-hi);
+}
+.td-card__name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .9375rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+}
+.td-card__desc {
+  font-size: .8125rem;
+  color: var(--text-3);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+.td-card__fee {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+.td-card__fee--free { color: var(--green-hi); }
+
+/* ── Empty state ──────────────────────────────────────────────────────── */
+.acc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--text-3);
+}
+.acc-empty-state__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-3);
+  opacity: .6;
+}
+.acc-empty-state p {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--text-2);
+  margin: 0;
+}
+.acc-empty-state small {
+  font-size: .8125rem;
+  color: var(--text-3);
+}
+
+/* ════════════════════════════════════════════════
+   DETAIL PAGE accommodation.html
+   ════════════════════════════════════════════════ */
+
+/* ── Sticky top bar ───────────────────────────────────────────────────── */
+.acc-topbar {
+  position: sticky;
+  top: 72px;
+  z-index: 190;
+  background: rgba(15,15,15,.96);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--b1);
+}
+.acc-topbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 52px;
+  flex-wrap: wrap;
+}
+.acc-topbar__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .875rem;
+  color: var(--text-3);
+}
+.acc-topbar__breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--blue-hi);
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.acc-topbar__breadcrumb a:hover { opacity: .75; }
+.acc-topbar__breadcrumb svg { width: 14px; height: 14px; }
+.acc-topbar__sep { color: var(--b3); }
+.acc-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.acc-topbar__price {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--green-hi);
+  white-space: nowrap;
+}
+.acc-topbar__price small {
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-3);
+}
+.acc-topbar__share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--b1);
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.acc-topbar__share:hover { color: var(--text); border-color: var(--b2); }
+
+/* Booking success state */
+.acc-booking-success {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 20px;
+  text-align: center;
+}
+.acc-booking-success.visible { display: flex; }
+.acc-booking-success__icon { font-size: 2.5rem; }
+.acc-booking-success__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.125rem; font-weight: 800;
+  color: var(--text);
+}
+.acc-booking-success__body { font-size: .875rem; color: var(--text-3); max-width: 280px; line-height: 1.6; }
+.acc-booking-success__ext {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 99px;
+  background: var(--green); color: #fff;
+  font-weight: 700; font-size: .875rem;
+  text-decoration: none; transition: background .18s;
+}
+.acc-booking-success__ext:hover { background: var(--green-hi); }
+
+.acc-topbar__book {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 99px;
+  font-size: .875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .18s, box-shadow .18s, transform .18s;
+  white-space: nowrap;
+}
+.acc-topbar__book:hover {
+  background: var(--green-hi);
+  box-shadow: 0 0 20px var(--green-glow);
+  transform: translateY(-1px);
+}
+
+/* ── Gallery ──────────────────────────────────────────────────────────── */
+.acc-detail__gallery {
+  background: var(--bg);
+}
+.acc-detail__main-img-wrap {
+  position: relative;
+  width: 100%;
+  height: clamp(260px, 42vw, 480px);
+  overflow: hidden;
+  background: var(--bg-3);
+}
+.acc-detail__main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .25s;
+}
+.acc-detail__main-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(8,8,8,.65) 0%, transparent 50%);
+  pointer-events: none;
+}
+.acc-detail__img-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-3);
+  font-size: .9375rem;
+}
+.acc-detail__img-placeholder svg { width: 40px; height: 40px; opacity: .4; }
+
+/* Thumbnail strip */
+.acc-detail__thumb-strip {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--b2) transparent;
+}
+.acc-detail__thumb-strip::-webkit-scrollbar { height: 4px; }
+.acc-detail__thumb-strip::-webkit-scrollbar-track { background: transparent; }
+.acc-detail__thumb-strip::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 2px; }
+.acc-detail__thumb {
+  width: 88px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 2px solid transparent;
+  opacity: .6;
+  transition: opacity .18s, border-color .18s;
+  display: block;
+}
+.acc-detail__thumb:hover { opacity: .9; }
+.acc-detail__thumb.active { border-color: var(--blue-hi); opacity: 1; }
+
+/* ── Two-column layout ────────────────────────────────────────────────── */
+.acc-detail {
+  padding: 40px 0 80px;
+}
+.acc-detail__cols {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+}
+.acc-detail__info { min-width: 0; }
+
+/* Name + location block */
+.acc-detail__name {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.025em;
+  margin: 0 0 10px;
+  line-height: 1.15;
+}
+.acc-detail__loc {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .9rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.acc-detail__loc svg { width: 14px; height: 14px; flex-shrink: 0; }
+.acc-detail__stars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 20px;
+}
+.acc-detail__stars svg {
+  width: 16px;
+  height: 16px;
+  fill: #F59E0B;
+  color: #F59E0B;
+}
+.acc-detail__stars span {
+  font-size: .8125rem;
+  color: var(--text-3);
+  margin-left: 5px;
+}
+
+/* Description */
+.acc-detail__desc {
+  font-size: .9375rem;
+  color: var(--text-2);
+  line-height: 1.75;
+  margin-bottom: 32px;
+}
+
+/* Section sub-headings within info */
+.acc-info-heading {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.acc-info-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--b1);
+}
+
+/* Amenities grid */
+.acc-amenities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.acc-amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: 10px;
+  font-size: .8125rem;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.acc-amenity-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--blue-hi);
+  opacity: .8;
+}
+
+/* Space types table */
+.acc-spaces-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 32px;
+  font-size: .875rem;
+}
+.acc-spaces-table th {
+  text-align: left;
+  padding: 10px 14px;
+  color: var(--text-3);
+  font-weight: 700;
+  font-size: .6875rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--b1);
+}
+.acc-spaces-table th:first-child { border-radius: 8px 0 0 0; }
+.acc-spaces-table th:last-child  { border-radius: 0 8px 0 0; }
+.acc-spaces-table td {
+  padding: 11px 14px;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--b0);
+}
+.acc-spaces-table tr:last-child td { border-bottom: none; }
+.acc-spaces-table tr:hover td { background: rgba(255,255,255,.015); }
+.acc-spaces-table td:first-child { font-weight: 600; color: var(--text); }
+.acc-spaces-table td:last-child { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: var(--green-hi); }
+
+/* Check-in/out row */
+.acc-times-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.acc-time-block {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+.acc-time-block__label {
+  font-size: .6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.acc-time-block__value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Contact */
+.acc-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.acc-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .9rem;
+  color: var(--text-2);
+}
+.acc-contact-item svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-3); }
+.acc-contact-item a { color: var(--blue-hi); text-decoration: none; }
+.acc-contact-item a:hover { text-decoration: underline; }
+
+/* ── Booking card (right column) ──────────────────────────────────────── */
+.acc-booking-card {
+  background: var(--bg-2);
+  border: 1px solid var(--b1);
+  border-radius: 20px;
+  padding: 24px;
+  position: sticky;
+  top: calc(72px + 52px + 20px); /* navbar + topbar + gap */
+}
+.acc-booking-card__price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.acc-booking-card__amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--green-hi);
+}
+.acc-booking-card__per {
+  font-size: .875rem;
+  color: var(--text-3);
+}
+.acc-booking-card__from {
+  font-size: .75rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+/* Form within card */
+.acc-booking-card .form-group { margin-bottom: 14px; }
+.acc-booking-card .form-label {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 5px;
+  display: block;
+}
+.acc-booking-card .form-input,
+.acc-booking-card .form-select,
+.acc-booking-card .form-textarea {
+  background: var(--bg-3);
+  border-color: var(--b1);
+  font-size: .875rem;
+  padding: 10px 13px;
+}
+.acc-booking-card .form-input:focus,
+.acc-booking-card .form-select:focus,
+.acc-booking-card .form-textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(22,163,74,.1);
+}
+
+.acc-booking-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Live price calc */
+.acc-booking-calc {
+  background: rgba(22,163,74,.07);
+  border: 1px solid rgba(22,163,74,.2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  display: none;
+}
+.acc-booking-calc.visible { display: block; }
+.acc-booking-calc__line {
+  font-size: .8125rem;
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+.acc-booking-calc__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(22,163,74,.15);
+}
+.acc-booking-calc__total-label { font-size: .875rem; font-weight: 600; color: var(--text); }
+.acc-booking-calc__total-amount {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--green-hi);
+}
+
+.acc-booking-submit {
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  font-size: .9375rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  transition: background .18s, box-shadow .18s, transform .18s;
+  margin-bottom: 10px;
+}
+.acc-booking-submit:hover:not(:disabled) {
+  background: var(--green-hi);
+  box-shadow: 0 0 24px var(--green-glow);
+  transform: translateY(-1px);
+}
+.acc-booking-submit:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.acc-booking-fine {
+  font-size: .75rem;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Error banner inside card */
+.acc-bk-error {
+  background: rgba(239,68,68,.08);
+  border: 1px solid rgba(239,68,68,.25);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: .8125rem;
+  color: #FCA5A5;
+  margin-bottom: 14px;
+  display: none;
+}
+.acc-bk-error.visible { display: block; }
+
+/* ── Error / 404 state (detail page) ─────────────────────────────────── */
+.acc-detail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 96px 24px;
+  text-align: center;
+}
+.acc-detail-error__icon { font-size: 3rem; }
+.acc-detail-error h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+}
+.acc-detail-error p { font-size: .9375rem; color: var(--text-3); max-width: 400px; margin: 0 auto; }
+
+/* ── Skeleton loader ──────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-3) 25%, var(--bg-4) 50%, var(--bg-3) 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .acc-detail__cols {
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .acc-detail__cols {
+    grid-template-columns: 1fr;
+  }
+  .acc-booking-card {
+    position: static;
+    order: -1; /* booking card above details on mobile */
+  }
+  .acc-amenities-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .td-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  /* Fixed navbar on mobile is 60px tall */
+  .province-filter { top: 60px; }
+  .acc-topbar { top: 60px; }
+}
+
+@media (max-width: 768px) {
+  .acc-hero { padding: 52px 0 36px; }
+  .acc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  .acc-topbar__inner { height: auto; padding: 10px 0; }
+  .acc-times-row { gap: 10px; }
+}
+
+@media (max-width: 600px) {
+  .acc-grid { grid-template-columns: 1fr; }
+  .td-grid { grid-template-columns: 1fr; }
+  .acc-amenities-grid { grid-template-columns: repeat(2, 1fr); }
+  .acc-booking-dates { grid-template-columns: 1fr; }
+  .province-filter__inner { padding: 10px 0; }
+}
+
+@media (max-width: 480px) {
+  .acc-hero h1 { font-size: 1.625rem; }
+  .acc-amenities-grid { grid-template-columns: 1fr 1fr; }
+  .acc-topbar__right { gap: 8px; }
+  .acc-topbar__price { display: none; }
+}

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Login — MyTicketSA</title>
+  <title>Admin Login TicketsSA</title>
   <link rel="stylesheet" href="../css/styles.css"/>
   <style>
     /* ── Page layout ── */
@@ -226,6 +226,14 @@
     }
 
     .admin-hint strong { color: #93C5FD; }
+
+    /* ── Turnstile CAPTCHA ── */
+    .admin-recaptcha-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0 16px;
+      min-height: 78px;
+    }
   </style>
 </head>
 <body>
@@ -236,7 +244,7 @@
     <div class="login-logo">
       <div class="login-logo-icon">🎟</div>
       <div class="login-logo-text">
-        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+        <span class="w">tickets</span><span class="g">sa</span>
       </div>
     </div>
     <div class="login-subtitle">Admin Portal</div>
@@ -256,7 +264,7 @@
           type="email"
           id="adminEmail"
           class="form-input"
-          placeholder="admin@myticketsa.co.za"
+          placeholder="admin@TicketsSA.co.za"
           required
           autocomplete="email"
         />
@@ -274,6 +282,10 @@
         />
       </div>
 
+      <div class="admin-recaptcha-wrap" id="rcAdminWrap">
+        <div id="rcAdmin"></div>
+      </div>
+
       <button type="submit" class="btn-login" id="loginBtn">
         Sign In to Admin Portal
       </button>
@@ -282,7 +294,7 @@
     <!-- Default credentials hint (remove in production) -->
     <div class="admin-hint">
       <strong>Default credentials:</strong><br/>
-      Email: admin@myticketsa.co.za<br/>
+      Email: admin@TicketsSA.co.za<br/>
       Password: admin123
     </div>
 
@@ -295,12 +307,12 @@
     then visit <a href="http://localhost:5500/admin/login.html" style="color:#60A5FA;text-decoration:underline;">http://localhost:5500/admin/login.html</a>
   </div>
 
-  <a href="../index.html" class="back-link">← Back to MyTicketSA</a>
+  <a href="../index.html" class="back-link">← Back to TicketsSA</a>
 
   <script>
     // ── Resolve API base URL ─────────────────────────────────────────────
     // Works whether opened via the Node server (http://localhost:5500)
-    // or directly as a file (file://) — always points to port 5500.
+    // or directly as a file (file://) always points to port 5500.
     const API_BASE = (function () {
       // file:// protocol → always point to local backend
       if (window.location.protocol === 'file:') return 'http://localhost:5500';
@@ -325,9 +337,60 @@
       } catch { /* ignore */ }
     })();
 
-    // ── Supabase client (direct auth — no backend call needed) ───────────
+    // ── Supabase client (direct auth no backend call needed) ───────────
     const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+
+    // ── Cloudflare Turnstile CAPTCHA (must match the site key configured
+    //    in Supabase Dashboard → Authentication → Bot and Abuse Protection) ──
+    const TURNSTILE_SITE_KEY = '0x4AAAAAADrXDvUXgmgxhbAx';
+    const RC_ENABLED = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('YOUR_');
+    let _rcWidget = null;
+    let _rcReady  = false; // true only while a fresh, unused token is available
+
+    function _updateSubmitState() {
+      const btn = document.getElementById('loginBtn');
+      if (btn) btn.disabled = RC_ENABLED && !_rcReady;
+    }
+
+    function _initTurnstile() {
+      if (!RC_ENABLED) return;
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=_renderTurnstile';
+      s.async = true; s.defer = true;
+      document.head.appendChild(s);
+    }
+
+    window._renderTurnstile = function () {
+      if (!RC_ENABLED || !window.turnstile) return;
+      const el = document.getElementById('rcAdmin');
+      if (el && _rcWidget === null) {
+        _rcWidget = window.turnstile.render('#rcAdmin', {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: 'dark',
+          callback:         () => { _rcReady = true;  _updateSubmitState(); },
+          'expired-callback': () => { _rcReady = false; _updateSubmitState(); },
+          'error-callback':   () => { _rcReady = false; _updateSubmitState(); },
+        });
+      }
+    };
+
+    function _getRcToken() {
+      if (!RC_ENABLED) return null;
+      try { return window.turnstile?.getResponse(_rcWidget) || null; } catch { return null; }
+    }
+
+    function _resetRc() {
+      if (!RC_ENABLED) return;
+      try { window.turnstile?.reset(_rcWidget); } catch { /* ignore */ }
+      _rcReady = false;
+      _updateSubmitState();
+    }
+
+    if (!RC_ENABLED) document.getElementById('rcAdminWrap').style.display = 'none';
+    else _initTurnstile();
+
+    _updateSubmitState(); // disables submit up front when RC_ENABLED, until solved
 
     let _sb = null;
     async function getSB() {
@@ -362,19 +425,31 @@
         return;
       }
 
+      const captchaToken = _getRcToken();
+      if (RC_ENABLED && !captchaToken) {
+        errorEl.textContent   = 'Please complete the CAPTCHA check.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
       btn.disabled    = true;
       btn.textContent = 'Signing in…';
 
       try {
         const sb = await getSB();
-        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+        const { data, error } = await sb.auth.signInWithPassword({
+          email,
+          password: pass,
+          ...(captchaToken ? { options: { captchaToken } } : {}),
+        });
 
         if (error || !data.session) {
+          _resetRc();
           errorEl.textContent   = error?.message === 'Invalid login credentials'
             ? 'Incorrect email or password.'
             : (error?.message || 'Login failed.');
           errorEl.style.display = 'block';
-          btn.disabled    = false;
+          _updateSubmitState();
           btn.textContent = 'Sign In to Admin Portal';
           return;
         }
@@ -384,9 +459,10 @@
 
         if (role !== 'admin') {
           await sb.auth.signOut();
+          _resetRc();
           errorEl.textContent   = 'This portal is for admin accounts only.';
           errorEl.style.display = 'block';
-          btn.disabled    = false;
+          _updateSubmitState();
           btn.textContent = 'Sign In to Admin Portal';
           return;
         }
@@ -402,9 +478,10 @@
         window.location.href = 'index.html';
 
       } catch (err) {
+        _resetRc();
         errorEl.textContent   = 'Authentication service unavailable. Please try again.';
         errorEl.style.display = 'block';
-        btn.disabled    = false;
+        _updateSubmitState();
         btn.textContent = 'Sign In to Admin Portal';
       }
     });

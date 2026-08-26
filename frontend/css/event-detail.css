@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Event Detail Page
+﻿/* ================================================
+   TicketsSA Event Detail Page
    ================================================ */
 
 /* ── Hero Banner ─────────────────────────────────── */
@@ -84,7 +84,7 @@
 /* ── Main Layout ─────────────────────────────────── */
 .ev-detail-main {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 40px;
   padding-top: 48px;
   padding-bottom: 80px;
@@ -154,6 +154,7 @@
   display: flex; align-items: center; justify-content: center;
   color: var(--green); flex-shrink: 0;
 }
+.ev-organiser-card__info { flex: 1; min-width: 0; }
 .ev-organiser-card__info strong {
   display: block; font-size: .9375rem; font-weight: 700;
   color: var(--text); margin-bottom: 6px;
@@ -187,7 +188,10 @@
   text-transform: uppercase; color: var(--text-3);
   white-space: nowrap; min-width: 110px; flex-shrink: 0;
 }
-.ev-detail-spec__val { font-size: .9rem; font-weight: 500; color: var(--text); }
+.ev-detail-spec__val {
+  font-size: .9rem; font-weight: 500; color: var(--text);
+  min-width: 0; overflow-wrap: break-word; word-break: break-word;
+}
 .ev-detail-spec__val--tbc { color: var(--gold-hi); font-style: italic; }
 
 
@@ -275,9 +279,14 @@
 
 /* ── Responsive ──────────────────────────────────── */
 @media(max-width:1024px) {
-  .ev-detail-main { grid-template-columns: 1fr; }
+  .ev-detail-main { grid-template-columns: minmax(0, 1fr); }
   .ev-detail-sidebar { position: static; }
   .ev-ticket-card { max-width: 480px; }
+}
+@media(max-width:768px) {
+  /* Ticket/registration CTA first on mobile don't bury it below the full write-up */
+  .ev-detail-sidebar { order: -1; margin-bottom: 32px; }
+  .ev-ticket-card { max-width: none; }
 }
 @media(max-width:768px) {
   .ev-detail-hero { height: 420px; }

@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Checkout Page v2.0 (checkout.css)
+﻿/* ================================================
+   TicketsSA Checkout Page v2.0 (checkout.css)
    ================================================ */
 
 .checkout-page { background: var(--bg-page); min-height: 80vh; }
@@ -87,6 +87,37 @@
 .summary-thumb img { width: 72px; height: 56px; object-fit: cover; border-radius: var(--r-md); flex-shrink: 0; }
 .summary-thumb__date { font-size: .875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
 .summary-thumb__loc  { font-size: .8125rem; color: var(--text-muted); }
+
+/* ---- Payment method box ---- */
+.pay-method-box{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--r3);padding:16px 18px;
+}
+.pay-method-box__icon{
+  flex-shrink:0;width:40px;height:40px;border-radius:var(--r2);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--green-tint);border:1px solid var(--green-border);color:var(--green);
+}
+.pay-method-box__title{font-size:.9375rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.pay-method-box__sub{font-size:.8438rem;color:var(--text-2);line-height:1.6}
+
+.pay-method-box--link .pay-method-box__icon{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);color:var(--blue-hi,#60A5FA)}
+.pay-method-box--bank .pay-method-box__icon{background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.3);color:#EAB308}
+
+.pay-link-btn{
+  display:inline-flex;align-items:center;gap:8px;margin-top:12px;
+  background:var(--green);color:#fff;font-weight:700;font-size:.875rem;
+  padding:10px 20px;border-radius:var(--r2);text-decoration:none;
+  transition:box-shadow .2s,transform .2s;
+}
+.pay-link-btn:hover{box-shadow:0 0 16px var(--green-glow);transform:translateY(-1px)}
+
+.pay-bank-table{margin-top:12px;background:var(--bg-3);border:1px solid var(--b0);border-radius:var(--r2);overflow:hidden}
+.pay-bank-row{display:flex;justify-content:space-between;gap:12px;padding:9px 14px;font-size:.875rem}
+.pay-bank-row+.pay-bank-row{border-top:1px solid var(--b0)}
+.pay-bank-row__label{color:var(--text-3)}
+.pay-bank-row__value{color:var(--text);font-weight:600}
 
 /* ---- Responsive ---- */
 @media (max-width: 900px) {

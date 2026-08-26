@@ -213,7 +213,7 @@
 
 
 /* ────────────────────────────────────────────────────────
-   3. PROVINCE CARDS — 3×3 GRID
+   3. PROVINCE CARDS 3×3 GRID
    ──────────────────────────────────────────────────────── */
 
 /* ── Section wrapper ── */
@@ -567,7 +567,7 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   EVENT EQUIPMENT — Apple-style Bento Grid
+   EVENT EQUIPMENT Apple-style Bento Grid
    ════════════════════════════════════════════════════════════ */
 
 /* ── Section ── */
@@ -836,13 +836,13 @@
 }
 .eq-cta--sm { font-size: .72rem; padding: 7px 14px; }
 
-/* Resting — tinted outline */
+/* Resting tinted outline */
 .eq-cta--amber  { background: rgba(217,119,6,.14);  border-color: rgba(253,186,26,.3);  color: #FCD34D; }
 .eq-cta--blue   { background: rgba(37,99,235,.14);  border-color: rgba(147,197,253,.3); color: #BAE6FD; }
 .eq-cta--green  { background: rgba(22,163,74,.14);  border-color: rgba(74,222,128,.3);  color: #4ADE80; }
 .eq-cta--purple { background: rgba(124,58,237,.14); border-color: rgba(196,181,253,.3); color: #C4B5FD; }
 
-/* Hover — fully filled, glowing */
+/* Hover fully filled, glowing */
 .eq-tile:hover .eq-cta--amber  { background: #D97706; border-color: #D97706; color: #fff;  box-shadow: 0 0 28px rgba(217,119,6,.55);  transform: translateY(-2px); }
 .eq-tile:hover .eq-cta--blue   { background: #2563EB; border-color: #2563EB; color: #fff;  box-shadow: 0 0 28px rgba(37,99,235,.55);  transform: translateY(-2px); }
 .eq-tile:hover .eq-cta--green  { background: #16A34A; border-color: #16A34A; color: #fff;  box-shadow: 0 0 28px rgba(22,163,74,.55);  transform: translateY(-2px); }

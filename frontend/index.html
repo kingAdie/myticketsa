@@ -1,11 +1,78 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MyTicketSA — South Africa's #1 Ticket-Selling Platform</title>
-  <meta name="description" content="South Africa's #1 ticket-selling platform. Sell tickets online, discover events, plan travel and rent event equipment."/>
+  <title>TicketsSA Buy Event Tickets Online South Africa | Concerts, Sport & Festivals</title>
+  <meta name="description" content="TicketsSA is South Africa's #1 ticket-selling platform. Buy tickets to concerts, sport events, festivals and shows. Sell tickets online and discover local events across SA."/>
+  <meta name="keywords" content="buy tickets online South Africa, event tickets South Africa, concerts South Africa, sport tickets SA, festival tickets, sell tickets online SA, ticket platform South Africa, TicketsSA"/>
+  <meta name="author" content="TicketsSA"/>
+  <meta name="robots" content="index, follow"/>
   <meta name="theme-color" content="#080808"/>
+  <link rel="canonical" href="https://www.ticketssa.co.za/"/>
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website"/>
+  <meta property="og:site_name"   content="TicketsSA"/>
+  <meta property="og:title"       content="TicketsSA Buy Event Tickets Online South Africa"/>
+  <meta property="og:description" content="South Africa's #1 ticket-selling platform. Buy tickets to concerts, sport, festivals and shows. Sell tickets and discover events all in one place."/>
+  <meta property="og:url"         content="https://www.ticketssa.co.za/"/>
+  <meta property="og:image"       content="https://www.ticketssa.co.za/images/og-home.jpg"/>
+  <meta property="og:locale"      content="en_ZA"/>
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image"/>
+  <meta name="twitter:site"        content="@TicketsSA"/>
+  <meta name="twitter:title"       content="TicketsSA Buy Event Tickets Online South Africa"/>
+  <meta name="twitter:description" content="Buy tickets to the best South African events. Concerts, sport, festivals, shows and more secure checkout, instant eTicket delivery."/>
+  <meta name="twitter:image"       content="https://www.ticketssa.co.za/images/og-home.jpg"/>
+
+  <!-- JSON-LD: Website + Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://www.ticketssa.co.za/#website",
+        "name": "TicketsSA",
+        "url": "https://www.ticketssa.co.za",
+        "description": "South Africa's #1 ticket-selling platform for events.",
+        "inLanguage": "en-ZA",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://www.ticketssa.co.za/events.html?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://www.ticketssa.co.za/#organization",
+        "name": "TicketsSA",
+        "url": "https://www.ticketssa.co.za",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.ticketssa.co.za/images/logo.png"
+        },
+        "description": "South Africa's #1 ticket-selling platform. Buy and sell event tickets and discover local events.",
+        "address": {
+          "@type": "PostalAddress",
+          "addressCountry": "ZA"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "email": "support@www.ticketssa.co.za",
+          "availableLanguage": "English"
+        },
+        "sameAs": []
+      }
+    ]
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
@@ -32,18 +99,19 @@
   <div class="container navbar__inner">
     <a href="index.html" class="navbar__logo">
       <div class="navbar__logo-wordmark">
-        <span class="g">my</span><span class="w">ticket</span><span class="g">sa</span>
+        <span class="w">tickets</span><span class="g">sa</span>
       </div>
     </a>
 
+    <!-- Category picker hidden, preserved for future use single-category (Events) sites don't need it
     <nav class="navbar__cats" id="navCats" aria-label="Categories">
       <button class="navbar__cat active" data-cat="events">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
         Events
       </button>
-      <button class="navbar__cat" data-cat="travel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 15h0"/></svg>
-        Travel &amp; Tours
+      <button class="navbar__cat" data-cat="travel" onclick="window.location.href='accommodations.html'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Travel &amp; Stay
       </button>
       <button class="navbar__cat" data-cat="equipment" onclick="window.location.href='services/index.html'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -54,11 +122,17 @@
         Tags &amp; Merch
       </button>
     </nav>
+    -->
 
     <div class="navbar__actions" id="navbarActions"></div>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <!-- hamburger -->
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <!-- close X -->
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
   </div>
@@ -68,6 +142,7 @@
 <!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
   <div class="hero__grid" aria-hidden="true"></div>
+  <div class="hero__bg-logo" aria-hidden="true"><span class="w">tickets</span><span class="g">sa</span></div>
 
   <div class="container hero__inner">
 
@@ -84,11 +159,11 @@
       </h1>
 
       <p class="hero__sub">
-        Tickets, accommodation packages, rentable event equipment and more — everything you need for unforgettable South African experiences, all in one place.
+        Tickets to the best concerts, sport, festivals and shows across South Africa all in one place.
       </p>
 
       <div class="hero__cta">
-        <a href="#discover" class="btn btn-primary btn-lg">
+        <a href="#events" class="btn btn-primary btn-lg">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           Explore Events
         </a>
@@ -97,75 +172,146 @@
       <div class="hero__search" role="search">
         <div class="search-bar search-bar--hero">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" id="heroSearch" placeholder="Search events, tours, cities..." aria-label="Search"/>
+          <input type="text" id="heroSearch" placeholder="Search events, cities..." aria-label="Search"/>
           <button class="btn btn-primary btn-sm" id="heroSearchBtn">Search</button>
         </div>
       </div>
-
-      <div class="hero__stats">
-        <div class="hero__stat"><strong>500+</strong><span>Events Listed</span></div>
-        <div class="hero__stat-sep" aria-hidden="true"></div>
-        <div class="hero__stat"><strong>200+</strong><span>Verified Vendors</span></div>
-        <div class="hero__stat-sep" aria-hidden="true"></div>
-        <div class="hero__stat"><strong>50+</strong><span>Cities Covered</span></div>
-      </div>
     </div>
 
-    <!-- RIGHT: Featured Event Card -->
+    <!-- RIGHT: Featured Event -->
     <div class="hero__visual reveal reveal-delay-2">
-      <div class="featured-event-card">
-        <div class="featured-event-card__bg">
-          <img src="images/hero.jpeg" alt="Top 32 Tournament" class="featured-event-card__bg-img"/>
+      <div class="hero-slider" id="heroSlider">
+
+        <!-- Empire Lifestyle Travels -->
+        <div class="hero-slide active" id="heroSlide0">
+          <div class="featured-event-card">
+            <div class="featured-event-card__bg">
+              <img src="images/Empire Event.png" alt="Empire Lifestyle Travels" class="featured-event-card__bg-img" style="object-position:center center;"/>
+            </div>
+            <div class="featured-event-card__overlay"></div>
+            <div class="featured-event-card__inner">
+
+              <div class="featured-event-card__top">
+                <span class="featured-event-badge--price">From R200 Deposit</span>
+                <span class="featured-event-region">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Mpumalanga Only
+                </span>
+              </div>
+
+              <h2 class="featured-event-title">EMPIRE<br>LIFESTYLE<br>TRAVELS</h2>
+
+              <div class="hero-slide-countdown">
+                <div class="hero-countdown-unit">
+                  <span class="hero-countdown-num" id="h0Days">—</span>
+                  <span class="hero-countdown-lbl">Days</span>
+                </div>
+                <div class="hero-countdown-unit">
+                  <span class="hero-countdown-num" id="h0Hours">—</span>
+                  <span class="hero-countdown-lbl">Hrs</span>
+                </div>
+                <div class="hero-countdown-unit">
+                  <span class="hero-countdown-num" id="h0Mins">—</span>
+                  <span class="hero-countdown-lbl">Mins</span>
+                </div>
+                <div class="hero-countdown-unit">
+                  <span class="hero-countdown-num" id="h0Secs">—</span>
+                  <span class="hero-countdown-lbl">Secs</span>
+                </div>
+              </div>
+
+              <div class="featured-event-details">
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Route</span>
+                  <span class="featured-event-value">Panorama Route, Mpumalanga</span>
+                </div>
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Date</span>
+                  <span class="featured-event-value">05 September 2026</span>
+                </div>
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Departs</span>
+                  <span class="featured-event-value">Nelspruit / Whiteriver</span>
+                </div>
+              </div>
+
+              <div class="featured-event-actions">
+                <a href="empire-travel.html" class="btn btn-primary btn-lg">🌿 Book Now →</a>
+                <a href="tel:0820689533" class="btn btn-ghost" style="font-size:.8125rem;padding:8px 16px;">📞 082 068 9533</a>
+              </div>
+
+            </div>
+          </div>
         </div>
-        <div class="featured-event-card__overlay"></div>
-        <div class="featured-event-card__inner">
 
-          <div class="featured-event-card__top">
-            <span class="featured-event-badge">Featured Event</span>
-            <span class="featured-event-upcoming">
-              <span class="featured-event-upcoming-dot"></span>
-              Upcoming
-            </span>
+        <!-- Mbombela VIP Hospitality -->
+        <div class="hero-slide" id="heroSlide1">
+          <div class="featured-event-card">
+            <div class="featured-event-card__bg">
+              <img src="images/mbombela2.jpeg" alt="Mbombela VIP Hospitality" class="featured-event-card__bg-img" style="object-position:center 35%;"/>
+            </div>
+            <div class="featured-event-card__overlay"></div>
+            <div class="featured-event-card__inner">
+
+              <div class="featured-event-card__top">
+                <span class="featured-event-badge--price">From R7,500</span>
+                <span class="featured-event-region">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  Mpumalanga Only
+                </span>
+              </div>
+
+              <h2 class="featured-event-title">MBOMBELA<br>VIP<br>HOSPITALITY</h2>
+
+              <div class="featured-event-details">
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Venue</span>
+                  <span class="featured-event-value">Mbombela Stadium</span>
+                </div>
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Season</span>
+                  <span class="featured-event-value">2026/2027 · All Games</span>
+                </div>
+                <div class="featured-event-row">
+                  <span class="featured-event-label">Includes</span>
+                  <span class="featured-event-value">Suite, Buffet &amp; Premium Bar</span>
+                </div>
+              </div>
+
+              <div class="featured-event-actions">
+                <a href="mbombela-hospitality.html" class="btn btn-primary btn-lg">🏟️ Book Now →</a>
+                <a href="tel:0827003664" class="btn btn-ghost" style="font-size:.8125rem;padding:8px 16px;">📞 082 700 3664</a>
+              </div>
+
+            </div>
           </div>
+        </div>
 
-          <h2 class="featured-event-title">TOP 32<br>TOURNAMENT</h2>
+      </div><!-- /.hero-slider -->
 
-          <div class="featured-event-details">
-            <div class="featured-event-row">
-              <span class="featured-event-label">Organiser</span>
-              <span class="featured-event-value">Ramarumo Azwinndini Divine Foundation</span>
-            </div>
-            <div class="featured-event-row">
-              <span class="featured-event-label">Supported</span>
-              <span class="featured-event-value">TS Galaxy FC</span>
-            </div>
-            <div class="featured-event-row">
-              <span class="featured-event-label">Location</span>
-              <span class="featured-event-value">Venda, Limpopo</span>
-            </div>
-            <div class="featured-event-row">
-              <span class="featured-event-label">Date</span>
-              <span class="featured-event-value">July 2026</span>
-            </div>
-            <div class="featured-event-row">
-              <span class="featured-event-label">Status</span>
-              <span class="featured-event-value featured-event-value--tbc">Launch Date &amp; Venue TBC</span>
-            </div>
-          </div>
-
-          <div class="featured-event-actions">
-            <button class="btn btn-primary btn-lg" data-auth-buy>🎟 Buy Tickets</button>
-          </div>
-
+      <div class="hero-slider-nav">
+        <div class="hero-slider-dots" id="heroDots">
+          <button type="button" class="hero-slider-dot active" data-slide="0" aria-label="Show Empire Lifestyle Travels"></button>
+          <button type="button" class="hero-slider-dot" data-slide="1" aria-label="Show Mbombela VIP Hospitality"></button>
+        </div>
+        <div class="hero-slider-arrows">
+          <button type="button" class="hero-slider-arrow" id="heroPrevBtn" aria-label="Previous slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button type="button" class="hero-slider-arrow" id="heroNextBtn" aria-label="Next slide">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
         </div>
       </div>
-    </div>
+      <div class="hero-slide-progress"><div class="hero-slide-progress__bar" id="heroProgressBar"></div></div>
+
+    </div><!-- /.hero__visual -->
 
   </div>
 </section>
 
 
-<!-- ═══════════ CATEGORIES ═══════════ -->
+<!-- ═══════════ CATEGORIES hidden, preserved for future use single-category (Events) sites don't need a category picker ═══════════
 <section class="categories-section" id="discover">
   <div class="container">
     <div class="categories-row">
@@ -182,15 +328,15 @@
         </div>
       </div>
 
-      <div class="cat-card cat-card--blue" tabindex="0" role="button" aria-label="Travel & Tours" onclick="document.getElementById('travel-tours')?.scrollIntoView({behavior:'smooth'})">
+      <div class="cat-card cat-card--blue" tabindex="0" role="button" aria-label="Travel & Accommodation" onclick="window.location.href='accommodations.html'">
         <div class="cat-glow"></div>
         <div class="cat-icon-wrap cat-icon-wrap--blue">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1018 0A9 9 0 003 12z"/><path d="M12 3s-4 4-4 9 4 9 4 9"/><path d="M12 3s4 4 4 9-4 9-4 9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
         <div class="cat-body">
-          <div class="cat-name">Travel &amp; Tours</div>
-          <div class="cat-desc">Day trips, getaways &amp; packages</div>
-          <div class="cat-cta">Explore packages →</div>
+          <div class="cat-name">Travel &amp; Stay</div>
+          <div class="cat-desc">Accommodation &amp; tourist destinations by province</div>
+          <div class="cat-cta">Browse provinces →</div>
         </div>
       </div>
 
@@ -204,12 +350,8 @@
           <div class="cat-desc">Generators, freezers, tents, toilets</div>
           <div class="cat-cta">View equipment →</div>
         </div>
-        <div class="cat-arrow">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </div>
       </div>
 
-      <!-- VENUES & SPACES CATEGORY CARD — hidden, venues section commented out below
       <div class="cat-card cat-card--gold" tabindex="0" role="button" aria-label="Venues & Spaces" onclick="document.getElementById('venues')?.scrollIntoView({behavior:'smooth'})">
         <div class="cat-glow"></div>
         <div class="cat-icon-wrap cat-icon-wrap--gold">
@@ -221,7 +363,6 @@
           <div class="cat-cta">Find a venue →</div>
         </div>
       </div>
-      -->
 
       <div class="cat-card cat-card--purple" tabindex="0" role="button" aria-label="Tags & Merchandise" onclick="document.getElementById('merch')?.scrollIntoView({behavior:'smooth'})">
         <div class="cat-glow"></div>
@@ -238,6 +379,7 @@
     </div>
   </div>
 </section>
+-->
 
 
 <!-- ═══════════ TRUST MARQUEE ═══════════ -->
@@ -299,7 +441,143 @@
 </div>
 
 
-<!-- ═══════════ EQUIPMENT BENTO ═══════════ -->
+<!-- ═══════════ EVENTS SHOWCASE ═══════════ -->
+<section class="ev-showcase-section" id="events">
+  <div class="ev-showcase__ambient"></div>
+  <div class="container">
+
+    <div class="ev-showcase__head reveal">
+      <div class="ev-showcase__eyebrow">
+        <span class="ev-live-dot"></span>
+        Featured Events
+      </div>
+      <div class="ev-showcase__heading-row">
+        <h2 class="section-title">Upcoming <span class="accent">Events</span></h2>
+      </div>
+    </div>
+
+    <!-- Event Cards Grid -->
+    <div class="ev-grid">
+
+      <!-- EMPIRE LIFESTYLE TRAVELS -->
+      <article class="ev-card reveal" id="empireEventCard" onclick="window.location.href='empire-travel.html'">
+        <div class="ev-card__img-wrap">
+          <img src="images/Empire Event.png" alt="Empire Lifestyle Travels" class="ev-card__img"/>
+          <div class="ev-card__img-overlay"></div>
+          <div class="ev-card__img-top">
+            <span class="ev-card__pill ev-card__pill--live">
+              <span class="ev-card__pill-dot"></span>Booking Open
+            </span>
+            <span class="ev-card__pill ev-card__pill--region">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="9" height="9"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Mpumalanga
+            </span>
+          </div>
+          <div class="ev-card__img-bottom">
+            <div class="ev-card__cat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Travel · 05 Sep 2026
+            </div>
+            <h3 class="ev-card__title">EMPIRE<br>LIFESTYLE<br>TRAVELS</h3>
+          </div>
+        </div>
+        <div class="ev-card__body">
+          <div class="ev-card__meta-row">
+            <div class="ev-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Panorama Route, Mpumalanga
+            </div>
+            <div class="ev-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Departs Nelspruit / White River
+            </div>
+          </div>
+          <p class="ev-card__desc">Full-day Panorama Route tour God's Window, Bourke's Luck, Graskop Gorge Lift &amp; more. Round trip included.</p>
+          <div class="ev-card__foot" onclick="event.stopPropagation()">
+            <div class="ev-card__price-block">
+              <div class="ev-card__price-label">From</div>
+              <div class="ev-card__price-val">R200 <span class="ev-card__price-sub">/ R760 full</span></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <a href="tel:0820689533" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 011 1.18 2 2 0 012.98 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Call
+              </a>
+              <a href="empire-travel.html" class="btn btn-primary btn-sm">Book Now →</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- MBOMBELA VIP HOSPITALITY -->
+      <article class="ev-card reveal" id="mbombelaEventCard" onclick="window.location.href='mbombela-hospitality.html'">
+        <div class="ev-card__img-wrap">
+          <img src="images/mbombela2.jpeg" alt="Mbombela Stadium VIP Hospitality" class="ev-card__img"/>
+          <div class="ev-card__img-overlay"></div>
+          <div class="ev-card__img-top">
+            <span class="ev-card__pill ev-card__pill--live">
+              <span class="ev-card__pill-dot"></span>Booking Open
+            </span>
+            <span class="ev-card__pill ev-card__pill--region">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="9" height="9"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Mpumalanga
+            </span>
+          </div>
+          <div class="ev-card__img-bottom">
+            <div class="ev-card__cat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Sport · 2026/2027 Season
+            </div>
+            <h3 class="ev-card__title">MBOMBELA<br>VIP HOSPITALITY</h3>
+          </div>
+        </div>
+        <div class="ev-card__body">
+          <div class="ev-card__meta-row">
+            <div class="ev-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Mbombela Stadium, Mpumalanga
+            </div>
+            <div class="ev-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Valid for all 2026/2027 season games
+            </div>
+          </div>
+          <p class="ev-card__desc">Private suite, 3-course buffet &amp; premium bar for every game at Mbombela Stadium this season.</p>
+          <div class="ev-card__foot" onclick="event.stopPropagation()">
+            <div class="ev-card__price-block">
+              <div class="ev-card__price-label">From</div>
+              <div class="ev-card__price-val">R7,500 <span class="ev-card__price-sub">/ seat</span></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <a href="tel:0827003664" class="btn btn-ghost btn-sm" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 011 1.18 2 2 0 012.98 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+                Call
+              </a>
+              <a href="mbombela-hospitality.html" class="btn btn-primary btn-sm">Book Now →</a>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <div class="step-item ev-empty-cta reveal">
+        <div class="step-item__visual">
+          <div class="step-icon-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/></svg>
+          </div>
+        </div>
+        <div class="step-item__body">
+          <h3>Got an event of your own?</h3>
+          <p>Concert, sports fixture, festival or show coming up? List it on TicketsSA and start selling tickets in minutes.</p>
+          <a href="#" id="eventsEmptyListBtn" class="btn btn-primary" style="margin-top:18px;cursor:pointer;">List Your Event →</a>
+        </div>
+      </div>
+
+    </div><!-- /.ev-grid -->
+
+  </div>
+</section>
+
+
 <!-- ═══════════ EVENT EQUIPMENT ═══════════ -->
 <section class="eq-section" id="event-equipment">
   <div class="container">
@@ -308,7 +586,7 @@
       <div class="eq-header__left">
         <div class="eyebrow">Event Equipment Rentals</div>
         <h2 class="section-title">Everything Your Event <span class="accent">Needs</span></h2>
-        <p class="section-sub">Professional equipment — delivered, set up and collected anywhere in South Africa.</p>
+        <p class="section-sub">Professional equipment delivered, set up and collected anywhere in South Africa.</p>
       </div>
       <a href="services/index.html" class="eq-all-btn reveal">
         View All Equipment
@@ -319,7 +597,7 @@
     <!-- Apple-style asymmetric bento -->
     <div class="eq-bento reveal">
 
-      <!-- ── HERO: Generators (tall left) ── -->
+      <!-- HERO: Generators (tall left) -->
       <div class="eq-tile eq-tile--hero" onclick="window.location.href='services/service.html?id=generators'">
         <div class="eq-tile__media">
           <img src="images/Generator.png" alt="Generators" loading="lazy"/>
@@ -330,13 +608,13 @@
             Power
           </div>
           <h3 class="eq-tile__name">Generators</h3>
-          <p class="eq-tile__desc">Silent diesel generators from 10 kVA to 500 kVA. Loadshedding-proof — your event never stops.</p>
+          <p class="eq-tile__desc">Silent diesel generators from 10 kVA to 500 kVA. Loadshedding-proof your event never stops.</p>
           <ul class="eq-tile__specs">
             <li><span class="eq-spec-dot eq-dot--amber"></span>10 kVA – 500 kVA range</li>
             <li><span class="eq-spec-dot eq-dot--amber"></span>24hr on-site technician</li>
             <li><span class="eq-spec-dot eq-dot--amber"></span>Fuel management included</li>
           </ul>
-          <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="eq-cta eq-cta--amber">
+          <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=generators&name=Generators" class="eq-cta eq-cta--amber">
             Request a Quote
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
@@ -344,13 +622,13 @@
         <div class="eq-tile__shine"></div>
       </div>
 
-      <!-- ── RIGHT STACK ── -->
+      <!-- RIGHT STACK -->
       <div class="eq-stack">
 
         <!-- Mobile Freezers (wide top) -->
         <div class="eq-tile eq-tile--wide" onclick="window.location.href='services/service.html?id=mobile-freezers'">
           <div class="eq-tile__media">
-            <img src="images/mobileFreezer.jpeg" alt="Mobile Freezers" loading="lazy"/>
+            <img src="images/mobileFreezer.png" alt="Mobile Freezers" loading="lazy"/>
           </div>
           <div class="eq-tile__glass eq-tile__glass--wide">
             <div class="eq-tile__pill eq-pill--blue">
@@ -358,8 +636,8 @@
               Cooling
             </div>
             <h3 class="eq-tile__name">Mobile Freezers</h3>
-            <p class="eq-tile__desc">Industrial-grade mobile units — 100L to 600L, plug-in or diesel, delivered pre-sanitised.</p>
-            <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="eq-cta eq-cta--blue">
+            <p class="eq-tile__desc">Industrial-grade mobile units 100L to 600L, plug-in or diesel, delivered pre-sanitised.</p>
+            <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=mobile-freezers&name=Mobile%20Freezers" class="eq-cta eq-cta--blue">
               Request a Quote
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -373,7 +651,7 @@
           <!-- Mobile Toilets -->
           <div class="eq-tile eq-tile--mini" onclick="window.location.href='services/service.html?id=portable-toilets'">
             <div class="eq-tile__media">
-              <img src="images/mobileToilets.jpeg" alt="Mobile Toilets" loading="lazy"/>
+              <img src="images/mobileToilets.png" alt="Mobile Toilets" loading="lazy"/>
             </div>
             <div class="eq-tile__glass eq-tile__glass--mini">
               <div class="eq-tile__pill eq-pill--green">
@@ -381,7 +659,7 @@
                 Sanitation
               </div>
               <h3 class="eq-tile__name">Mobile Toilets</h3>
-              <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="eq-cta eq-cta--green eq-cta--sm">
+              <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=portable-toilets&name=Mobile%20Toilets" class="eq-cta eq-cta--green eq-cta--sm">
                 Get Quote <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>
             </div>
@@ -399,7 +677,7 @@
                 Shelter
               </div>
               <h3 class="eq-tile__name">Marquee Tents</h3>
-              <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="eq-cta eq-cta--purple eq-cta--sm">
+              <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=marquee-tents&name=Marquee%20Tents" class="eq-cta eq-cta--purple eq-cta--sm">
                 Get Quote <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </a>
             </div>
@@ -413,116 +691,9 @@
 </section>
 
 
-<!-- ═══════════ EVENTS SHOWCASE ═══════════ -->
-<section class="ev-showcase-section" id="events">
-  <div class="ev-showcase__ambient"></div>
-  <div class="container">
-
-    <div class="ev-showcase__head reveal">
-      <div class="ev-showcase__eyebrow">
-        <span class="ev-live-dot"></span>
-        Featured Events
-      </div>
-      <div class="ev-showcase__heading-row">
-        <h2 class="section-title">Upcoming <span class="accent">Events</span></h2>
-        <p class="ev-showcase__sub">Handpicked events from verified organisers. Secure your seat before they sell out.</p>
-      </div>
-    </div>
-
-    <!-- TOP 32 TOURNAMENT — Featured Event Card -->
-    <article class="ev-feature-card reveal" id="top32EventCard" onclick="window.location.href='event.html?id=top32'">
-      <div class="ev-feature-card__media">
-        <img src="images/hero.jpeg" alt="Top 32 Tournament" class="ev-feature-card__img"/>
-        <div class="ev-feature-card__media-fade"></div>
-      </div>
-      <div class="ev-feature-card__glow"></div>
-      <div class="ev-feature-card__content">
-        <div class="ev-feature-card__upper">
-          <div class="ev-feature-card__badges">
-            <span class="ev-pill ev-pill--red">
-              <span class="ev-pill-dot"></span>Featured
-            </span>
-            <span class="ev-pill ev-pill--outline">Football</span>
-          </div>
-          <h2 class="ev-feature-card__title">TOP 32<br>TOURNAMENT</h2>
-          <div class="ev-feature-card__meta">
-            <div class="ev-meta-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span>July 2026</span>
-            </div>
-            <div class="ev-meta-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Venda, Limpopo</span>
-            </div>
-            <div class="ev-meta-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>Supported by TS Galaxy FC</span>
-            </div>
-          </div>
-          <p class="ev-feature-card__org">Organised by <strong>Ramarumo Azwinndini Divine Foundation</strong></p>
-          <p class="ev-feature-card__desc">An elite football tournament bringing together the top 32 teams across South Africa. A landmark celebration of football, culture and community in the heart of Venda, Limpopo.</p>
-        </div>
-        <div class="ev-feature-card__footer" onclick="event.stopPropagation()">
-          <div class="ev-feature-card__ticket-block">
-            <div class="ev-ticket-label">Tickets</div>
-            <div class="ev-ticket-val">Coming Soon</div>
-          </div>
-          <div class="ev-feature-card__actions">
-            <a href="event.html?id=top32" class="btn btn-primary">View Event →</a>
-            <button class="btn btn-ghost" data-auth-buy>Buy Tickets</button>
-          </div>
-          <div class="ev-feature-card__status">Launch Date &amp; Venue — TBC</div>
-        </div>
-      </div>
-    </article>
-
-    <!-- More Events Coming Soon -->
-    <div class="ev-coming-soon reveal">
-      <div class="ev-coming-label">
-        <span>More events dropping soon</span>
-        <div class="ev-coming-divider"></div>
-      </div>
-      <div class="ev-coming-grid">
-        <div class="ev-coming-card">
-          <div class="ev-coming-card__inner">
-            <span class="ev-coming-card__badge">Coming Soon</span>
-            <div class="ev-coming-card__lines">
-              <div class="ev-ghost-line ev-ghost-line--lg"></div>
-              <div class="ev-ghost-line ev-ghost-line--md"></div>
-              <div class="ev-ghost-line ev-ghost-line--sm"></div>
-            </div>
-          </div>
-        </div>
-        <div class="ev-coming-card">
-          <div class="ev-coming-card__inner">
-            <span class="ev-coming-card__badge">Coming Soon</span>
-            <div class="ev-coming-card__lines">
-              <div class="ev-ghost-line ev-ghost-line--lg"></div>
-              <div class="ev-ghost-line ev-ghost-line--md"></div>
-              <div class="ev-ghost-line ev-ghost-line--sm"></div>
-            </div>
-          </div>
-        </div>
-        <div class="ev-list-cta-card" onclick="window.location.href='#'">
-          <div class="ev-list-cta-card__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-          </div>
-          <h3 class="ev-list-cta-card__title">List Your Event</h3>
-          <p class="ev-list-cta-card__sub">Reach thousands of South African event-goers.</p>
-          <a href="#" class="btn btn-secondary btn-sm" onclick="event.stopPropagation()">Get Started</a>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-
-<!-- ═══════════ TRAVEL & TOURS ═══════════ -->
 <!-- ═══════════ TRAVEL & TOURS ═══════════ -->
 <section class="travel-section section-lg" id="travel-tours">
 
-  <!-- MODAL — populated by JS, no broken data-attributes -->
   <div class="prov-modal" id="provModal">
     <div class="prov-modal__backdrop" onclick="closeProvModal()"></div>
     <div class="prov-modal__panel">
@@ -553,14 +724,14 @@
       <div>
         <div class="eyebrow">Travel, Tours &amp; Accommodation</div>
         <h2 class="section-title">Explore All <span class="accent">9 Provinces</span></h2>
-        <p class="section-sub">From the Cape Winelands to the Kruger bushveld — hand-picked accommodation and experiences across every corner of South Africa. Packages from <strong style="color:#EAB308">R 500</strong>.</p>
+        <p class="section-sub">From the Cape Winelands to the Kruger bushveld hand-picked accommodation and experiences across every corner of South Africa. Packages from <strong style="color:#EAB308">R 500</strong>.</p>
       </div>
       <a href="#" class="btn btn-secondary">View All Packages</a>
     </div>
 
     <div class="prov-grid reveal">
 
-      <div class="prov-card" data-id="gauteng" onclick="openProvModal('gauteng')">
+      <div class="prov-card" data-id="gauteng" onclick="window.location.href='accommodations.html?province=Gauteng'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1577948000111-9c970dfe3743?w=600&q=80&fit=crop&crop=center" alt="Gauteng" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -574,7 +745,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="western-cape" onclick="openProvModal('western-cape')">
+      <div class="prov-card" data-id="western-cape" onclick="window.location.href='accommodations.html?province=Western+Cape'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=600&q=80&fit=crop&crop=center" alt="Western Cape" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -588,7 +759,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="kwazulu-natal" onclick="openProvModal('kwazulu-natal')">
+      <div class="prov-card" data-id="kwazulu-natal" onclick="window.location.href='accommodations.html?province=KwaZulu-Natal'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&fit=crop&crop=center" alt="KwaZulu-Natal" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -602,7 +773,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="limpopo" onclick="openProvModal('limpopo')">
+      <div class="prov-card" data-id="limpopo" onclick="window.location.href='accommodations.html?province=Limpopo'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&q=80&fit=crop&crop=center" alt="Limpopo" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -616,7 +787,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="mpumalanga" onclick="openProvModal('mpumalanga')">
+      <div class="prov-card" data-id="mpumalanga" onclick="window.location.href='accommodations.html?province=Mpumalanga'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80&fit=crop&crop=center" alt="Mpumalanga" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -630,7 +801,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="eastern-cape" onclick="openProvModal('eastern-cape')">
+      <div class="prov-card" data-id="eastern-cape" onclick="window.location.href='accommodations.html?province=Eastern+Cape'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1493558103817-58b2924bce98?w=600&q=80&fit=crop&crop=center" alt="Eastern Cape" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -644,7 +815,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="north-west" onclick="openProvModal('north-west')">
+      <div class="prov-card" data-id="north-west" onclick="window.location.href='accommodations.html?province=North+West'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&q=80&fit=crop&crop=center" alt="North West" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -658,7 +829,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="free-state" onclick="openProvModal('free-state')">
+      <div class="prov-card" data-id="free-state" onclick="window.location.href='accommodations.html?province=Free+State'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=600&q=80&fit=crop&crop=center" alt="Free State" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -672,7 +843,7 @@
         </div>
       </div>
 
-      <div class="prov-card" data-id="northern-cape" onclick="openProvModal('northern-cape')">
+      <div class="prov-card" data-id="northern-cape" onclick="window.location.href='accommodations.html?province=Northern+Cape'">
         <div class="prov-card__img">
           <img src="https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=600&q=80&fit=crop&crop=center" alt="Northern Cape" loading="lazy"/>
           <div class="prov-card__overlay"></div>
@@ -690,11 +861,11 @@
   </div>
 
   <script>
-  /* All province data lives here — no HTML attributes, no escaping issues */
+  /* All province data lives here no HTML attributes, no escaping issues */
   var PROVINCES = {
     "gauteng": {
       img: "https://images.unsplash.com/photo-1577948000111-9c970dfe3743?w=900&q=85&fit=crop&crop=center",
-      title: "Gauteng — City of Gold",
+      title: "Gauteng City of Gold",
       loc: "Johannesburg & Pretoria, Gauteng",
       badge: "City & Culture", badgeCls: "prov-badge--purple",
       price: "From R 500",
@@ -708,7 +879,7 @@
     },
     "western-cape": {
       img: "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=900&q=85&fit=crop&crop=center",
-      title: "Western Cape — Cape of Beauty",
+      title: "Western Cape Cape of Beauty",
       loc: "Cape Town, Western Cape",
       badge: "Nature & Wine", badgeCls: "prov-badge--blue",
       price: "From R 500",
@@ -716,13 +887,13 @@
       rows: [
         ["Highlights", "Table Mountain, Cape Winelands, Garden Route"],
         ["Best For",   "Nature, wine, beaches & adventure"],
-        ["Climate",    "Mediterranean — warm dry summers"],
+        ["Climate",    "Mediterranean warm dry summers"],
         ["Accommodation from", "R 500"]
       ]
     },
     "kwazulu-natal": {
       img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85&fit=crop&crop=center",
-      title: "KwaZulu-Natal — Kingdom of the Zulu",
+      title: "KwaZulu-Natal Kingdom of the Zulu",
       loc: "Durban & Drakensberg, KwaZulu-Natal",
       badge: "Beach & Heritage", badgeCls: "prov-badge--green",
       price: "From R 500",
@@ -736,11 +907,11 @@
     },
     "limpopo": {
       img: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=900&q=85&fit=crop&crop=center",
-      title: "Limpopo — Land of the Baobab",
+      title: "Limpopo Land of the Baobab",
       loc: "Polokwane & Kruger, Limpopo",
       badge: "Safari", badgeCls: "prov-badge--amber",
       price: "From R 500",
-      desc: "Home to the iconic Kruger National Park, ancient Baobab trees, the Soutpansberg Mountains and the Tropic of Capricorn. Limpopo is South Africa's wildest frontier — raw, vast and unforgettable.",
+      desc: "Home to the iconic Kruger National Park, ancient Baobab trees, the Soutpansberg Mountains and the Tropic of Capricorn. Limpopo is South Africa's wildest frontier raw, vast and unforgettable.",
       rows: [
         ["Highlights", "Kruger NP, Baobab trees, Mapungubwe"],
         ["Best For",   "Big 5 safari & heritage sites"],
@@ -750,11 +921,11 @@
     },
     "mpumalanga": {
       img: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900&q=85&fit=crop&crop=center",
-      title: "Mpumalanga — Place of the Rising Sun",
+      title: "Mpumalanga Place of the Rising Sun",
       loc: "Nelspruit & Hazyview, Mpumalanga",
       badge: "Panorama Route", badgeCls: "prov-badge--green",
       price: "From R 500",
-      desc: "The Blyde River Canyon — third largest canyon on Earth — God's Window, Bourke's Luck Potholes and the Panorama Route make Mpumalanga one of South Africa's most dramatic destinations.",
+      desc: "The Blyde River Canyon third largest canyon on Earth God's Window, Bourke's Luck Potholes and the Panorama Route make Mpumalanga one of South Africa's most dramatic destinations.",
       rows: [
         ["Highlights", "Blyde River Canyon, God's Window, Kruger Gates"],
         ["Best For",   "Scenery, hiking & photography"],
@@ -764,7 +935,7 @@
     },
     "eastern-cape": {
       img: "https://images.unsplash.com/photo-1493558103817-58b2924bce98?w=900&q=85&fit=crop&crop=center",
-      title: "Eastern Cape — The Wild Coast",
+      title: "Eastern Cape The Wild Coast",
       loc: "Port Elizabeth & Wild Coast, Eastern Cape",
       badge: "Adventure", badgeCls: "prov-badge--blue",
       price: "From R 500",
@@ -778,7 +949,7 @@
     },
     "north-west": {
       img: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=900&q=85&fit=crop&crop=center",
-      title: "North West — Sun City & Pilanesberg",
+      title: "North West Sun City & Pilanesberg",
       loc: "Rustenburg & Sun City, North West",
       badge: "Resort & Safari", badgeCls: "prov-badge--amber",
       price: "From R 500",
@@ -792,7 +963,7 @@
     },
     "free-state": {
       img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900&q=85&fit=crop&crop=center",
-      title: "Free State — Heart of South Africa",
+      title: "Free State Heart of South Africa",
       loc: "Bloemfontein & Clarens, Free State",
       badge: "Landscapes", badgeCls: "prov-badge--purple",
       price: "From R 500",
@@ -806,7 +977,7 @@
     },
     "northern-cape": {
       img: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=900&q=85&fit=crop&crop=center",
-      title: "Northern Cape — Kalahari & Karoo",
+      title: "Northern Cape Kalahari & Karoo",
       loc: "Kimberley & Upington, Northern Cape",
       badge: "Wilderness", badgeCls: "prov-badge--green",
       price: "From R 500",
@@ -852,297 +1023,6 @@
 </section>
 
 
-<!-- ═══════════ VENUES & EVENT SPACES — hidden, preserved for future use ═══════════ -->
-<!--
-<section class="listings-section listings-section--alt section-lg" id="venues">
-  <div class="container">
-    <div class="listings-header reveal">
-      <div>
-        <div class="eyebrow">Venues &amp; Event Spaces</div>
-        <h2 class="section-title">Premium <span class="accent">Venues</span> Across South Africa</h2>
-        <p class="section-sub">Ballrooms, gardens, rooftops and unique spaces — for weddings, corporate events and private functions.</p>
-      </div>
-      <a href="#" class="btn btn-secondary">View All Venues</a>
-    </div>
-
-    <div class="listings-grid listings-grid--venues reveal">
-
-      <div class="listing-card listing-card--venue-1" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&q=80&fit=crop&crop=center" alt="Grand Ballroom" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--gold">Featured</span>
-          <span class="listing-price-tag">From R 18,000<small>/event</small></span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Sandton, Johannesburg
-          </div>
-          <h3>The Grand Ballroom</h3>
-          <p>South Africa's most iconic event space. Chandelier lighting, 500-guest capacity, and full in-house catering available.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              Up to 500 guests
-            </span>
-            <span class="listing-meta-pill">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-              Indoor &amp; Outdoor
-            </span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.9 <span>(38 reviews)</span>
-            </span>
-            <a href="#" class="btn btn-ghost btn-sm" style="cursor:pointer;">View Venue</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--venue-2" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=80&fit=crop&crop=center" alt="Waterfront Venue Cape Town" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--blue">Waterfront</span>
-          <span class="listing-price-tag">From R 12,500<small>/event</small></span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            V&amp;A Waterfront, Cape Town
-          </div>
-          <h3>Waterfront Pavilion</h3>
-          <p>Stunning harbour views and a flexible open-plan space ideal for product launches, gala dinners and private events.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Up to 300 guests
-            </span>
-            <span class="listing-meta-pill">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              Ocean Views
-            </span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.8 <span>(62 reviews)</span>
-            </span>
-            <a href="#" class="btn btn-ghost btn-sm" style="cursor:pointer;">View Venue</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--venue-3" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80&fit=crop&crop=center" alt="Botanical Gardens Estate" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--green">Estate</span>
-          <span class="listing-price-tag">From R 22,000<small>/event</small></span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Pretoria, Gauteng
-          </div>
-          <h3>Botanical Gardens Estate</h3>
-          <p>Breathtaking outdoor estate with manicured gardens, a stone chapel and sprawling lawns for large celebrations.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-              Up to 800 guests
-            </span>
-            <span class="listing-meta-pill">Outdoor</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.7 <span>(29 reviews)</span>
-            </span>
-            <a href="#" class="btn btn-ghost btn-sm" style="cursor:pointer;">View Venue</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--venue-4" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=600&q=80&fit=crop&crop=center" alt="Sky Lounge Rooftop Durban" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--purple">Rooftop</span>
-          <span class="listing-price-tag">From R 8,500<small>/event</small></span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Umhlanga, Durban
-          </div>
-          <h3>Sky Lounge Rooftop Venue</h3>
-          <p>Exclusive rooftop space with panoramic coastal views, built-in bar and a private lift. The ultimate VIP setting.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">Up to 150 guests</span>
-            <span class="listing-meta-pill">Private Bar</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              5.0 <span>(17 reviews)</span>
-            </span>
-            <a href="#" class="btn btn-ghost btn-sm" style="cursor:pointer;">View Venue</a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="vendor-cta-banner vendor-cta-banner--gold reveal">
-      <div class="vendor-cta-banner__content">
-        <div class="vendor-cta-banner__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </div>
-        <div>
-          <h3>Do you own or manage an event venue?</h3>
-          <p>List your space and connect with thousands of event planners, brides and corporate bookers — for free.</p>
-        </div>
-      </div>
-      <a href="#" class="btn btn-gold btn-lg" style="cursor:pointer;">List Your Venue →</a>
-    </div>
-  </div>
-</section>
--->
-
-
-<!-- ═══════════ CATERING PARTNERS — hidden, preserved for future use ═══════════ -->
-<!--
-<section class="listings-section section-lg" id="catering">
-  <div class="container">
-    <div class="listings-header reveal">
-      <div>
-        <div class="eyebrow">Catering Partners</div>
-        <h2 class="section-title">World-Class <span class="accent">Catering</span> for Every Event</h2>
-        <p class="section-sub">From intimate gatherings to large-scale functions, our verified catering partners deliver exceptional food experiences.</p>
-      </div>
-      <a href="#" class="btn btn-secondary">View All Caterers</a>
-    </div>
-
-    <div class="listings-grid reveal">
-
-      <div class="listing-card listing-card--cat-1" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1555244162-803834f70033?w=600&q=80&fit=crop&crop=center" alt="Urban Feast Catering" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--green">Verified Partner</span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Johannesburg &amp; Pretoria
-          </div>
-          <h3>Urban Feast Catering Co.</h3>
-          <p>Modern buffet and seated menus for corporate events, conferences and private parties. Minimum 50 guests.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">50–2,000 guests</span>
-            <span class="listing-meta-pill">Corporate</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.8 <span>(156 reviews)</span>
-            </span>
-            <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-ghost btn-sm" style="cursor:pointer;">Get Quote</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--cat-2" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80&fit=crop&crop=center" alt="The Harvest Table Fine Dining" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--amber">Top Rated</span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Cape Town &amp; Winelands
-          </div>
-          <h3>The Harvest Table</h3>
-          <p>Farm-to-table grazing tables, artisanal platters and full silver service for weddings and exclusive dinners.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">20–500 guests</span>
-            <span class="listing-meta-pill">Weddings</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.9 <span>(98 reviews)</span>
-            </span>
-            <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-ghost btn-sm" style="cursor:pointer;">Get Quote</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--cat-3" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80&fit=crop&crop=center" alt="Fire and Spice Braai" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--blue">BBQ Specialist</span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Johannesburg, Gauteng
-          </div>
-          <h3>Fire &amp; Spice Braai Catering</h3>
-          <p>Authentic South African braai experience with game meats, potjiekos, boerewors and live fire cooking stations.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">30–1,500 guests</span>
-            <span class="listing-meta-pill">Outdoor Events</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.7 <span>(203 reviews)</span>
-            </span>
-            <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-ghost btn-sm" style="cursor:pointer;">Get Quote</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-card listing-card--cat-4" tabindex="0">
-        <div class="listing-card__img">
-          <img src="https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&q=80&fit=crop&crop=center" alt="Premium Platter Charcuterie" loading="lazy" class="listing-card__photo"/>
-          <div class="listing-card__photo-overlay"></div>
-          <span class="listing-badge listing-badge--purple">Premium</span>
-        </div>
-        <div class="listing-card__body">
-          <div class="listing-location">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Pretoria, Gauteng
-          </div>
-          <h3>Premium Platter Co.</h3>
-          <p>Luxury charcuterie boards, cocktail canapés and gourmet station setups for high-end events and VIP functions.</p>
-          <div class="listing-meta-row">
-            <span class="listing-meta-pill">15–300 guests</span>
-            <span class="listing-meta-pill">VIP &amp; Corporate</span>
-          </div>
-          <div class="listing-footer">
-            <span class="listing-rating">
-              <svg viewBox="0 0 24 24" fill="#EAB308" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              4.9 <span>(74 reviews)</span>
-            </span>
-            <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-ghost btn-sm" style="cursor:pointer;">Get Quote</a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-</section>
--->
-
-
 <!-- ═══════════ TAGS & MERCH ═══════════ -->
 <section class="merch-section listings-section section-lg" id="merch">
   <div class="container">
@@ -1150,9 +1030,9 @@
       <div>
         <div class="eyebrow">Tags, Merch &amp; Printing</div>
         <h2 class="section-title">Custom Event <span class="accent">Merchandise</span> &amp; Printing</h2>
-        <p class="section-sub">Branded apparel, custom tags, wristbands and accessories — designed, printed and delivered for your event.</p>
+        <p class="section-sub">Branded apparel, custom tags, wristbands and accessories designed, printed and delivered for your event.</p>
       </div>
-      <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-secondary">Get a Quote</a>
+      <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%20Enquiry" class="btn btn-secondary">Get a Quote</a>
     </div>
 
     <div class="merch-grid merch-grid--v2 reveal">
@@ -1170,7 +1050,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="merch-cta merch-cta--green">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Custom%20Event%20ID%20Tags" class="merch-cta merch-cta--green">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--blue" tabindex="0">
@@ -1186,7 +1066,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="merch-cta merch-cta--blue">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20VIP%20Wristbands%20%26%20Access%20Tags" class="merch-cta merch-cta--blue">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--amber" tabindex="0">
@@ -1202,7 +1082,7 @@
             <span class="merch-stars">★★★★☆</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="merch-cta merch-cta--amber">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Branded%20Event%20Caps" class="merch-cta merch-cta--amber">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--purple" tabindex="0">
@@ -1218,7 +1098,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="merch-cta merch-cta--purple">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Custom%20Cups%20%26%20Mugs" class="merch-cta merch-cta--purple">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--coral" tabindex="0">
@@ -1234,7 +1114,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="merch-cta merch-cta--coral">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Printed%20Event%20T-Shirts" class="merch-cta merch-cta--coral">Get a Quote →</a>
       </div>
 
     </div>
@@ -1246,10 +1126,10 @@
         </div>
         <div>
           <h3>Need custom merch for your next event?</h3>
-          <p>Submit your design brief and we'll produce branded merchandise, tags and printed materials — delivered before your event date.</p>
+          <p>Submit your design brief and we'll produce branded merchandise, tags and printed materials delivered before your event date.</p>
         </div>
       </div>
-      <a href="javascript:void(0)" data-qhref="javascript:void(0)" class="btn btn-primary btn-lg" style="cursor:pointer;">Request a Quote →</a>
+      <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Custom%20Merch%20Design%20Brief" class="btn btn-primary btn-lg" style="cursor:pointer;">Request a Quote →</a>
     </div>
 
   </div>
@@ -1274,7 +1154,7 @@
         </div>
         <div class="step-item__body">
           <h3>Discover</h3>
-          <p>Browse events, tours, venues, catering and equipment from verified South African operators.</p>
+          <p>Browse concerts, sport, festivals and shows from verified South African organisers.</p>
         </div>
       </div>
 
@@ -1287,7 +1167,7 @@
         </div>
         <div class="step-item__body">
           <h3>Select &amp; Book</h3>
-          <p>Choose your experience or service. Create a free account in under 60 seconds.</p>
+          <p>Choose your tickets. Create a free account in under 60 seconds.</p>
         </div>
       </div>
 
@@ -1300,20 +1180,20 @@
         </div>
         <div class="step-item__body">
           <h3>Show Up &amp; Enjoy</h3>
-          <p>Your eTicket or booking confirmation arrives instantly. Show up and scan — done.</p>
+          <p>Your eTicket or booking confirmation arrives instantly. Show up and scan done.</p>
         </div>
       </div>
 
     </div>
   </div>
-</section></section>
+</section>
 
 
-<!-- ═══════════ WHY MYTICKETSA ═══════════ -->
+<!-- ═══════════ WHY TicketsSA ═══════════ -->
 <section class="proof-section">
   <div class="container">
     <div class="section-head center reveal" style="margin-bottom:var(--s4)">
-      <div class="eyebrow" style="justify-content:center">Why MyTicketSA</div>
+      <div class="eyebrow" style="justify-content:center">Why TicketsSA</div>
       <h2 class="section-title">Built for South <span class="accent">Africans</span></h2>
     </div>
     <div class="proof-grid">
@@ -1343,70 +1223,6 @@
 </section>
 
 
-<!-- ═══════════ PLATFORM PITCH — YOU EARN FIRST — hidden, preserved for future use ═══════════ -->
-<!--
-<section class="platform-pitch section-lg">
-  <div class="container">
-    <div class="platform-pitch__inner reveal">
-      <div class="platform-pitch__copy">
-        <div class="eyebrow">Our Business Model</div>
-        <h2>You Earn First.<br><span class="accent">We Take a Cut After.</span></h2>
-        <p>MyTicketSA is a facilitator marketplace. Customers book and pay through the platform, your service or venue is delivered, and we collect a platform commission only once the transaction is complete — never before.</p>
-        <ul class="pitch-list">
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-            Commission charged only on confirmed, completed bookings
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-            Your earnings are settled before our cut is deducted
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-            Full transparency — every transaction itemised clearly
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-            No monthly subscription or hidden admin fees
-          </li>
-        </ul>
-        <a href="#" class="btn btn-primary btn-lg" style="margin-top:var(--s3);cursor:pointer;">Apply to List Your Services</a>
-      </div>
-      <div class="platform-pitch__visual">
-        <div class="pitch-card pitch-card--1">
-          <div class="pitch-card__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <div>
-            <strong>Commission on completions</strong>
-            <small>Charged only after a booking closes</small>
-          </div>
-        </div>
-        <div class="pitch-card pitch-card--2">
-          <div class="pitch-card__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-          </div>
-          <div>
-            <strong>Settled on completion</strong>
-            <small>You deliver, we process, you earn</small>
-          </div>
-        </div>
-        <div class="pitch-card pitch-card--3">
-          <div class="pitch-card__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-          </div>
-          <div>
-            <strong>10,000+ customers</strong>
-            <small>Actively browsing now</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
--->
-
-
 <!-- ═══════════ NEWSLETTER ═══════════ -->
 <section class="newsletter-section section">
   <div class="container">
@@ -1423,7 +1239,7 @@
 
         <div class="eyebrow" style="justify-content:center;position:relative;z-index:2">Stay in the Loop</div>
         <h2 style="position:relative;z-index:2">Never Miss an Experience</h2>
-        <p style="position:relative;z-index:2">Early-bird offers, new listings and exclusive deals — straight to your inbox.</p>
+        <p style="position:relative;z-index:2">Early-bird offers, new listings and exclusive deals straight to your inbox.</p>
 
         <form class="newsletter-form" id="newsletterForm" novalidate style="position:relative;z-index:2">
           <div class="nl-input-wrap">
@@ -1449,14 +1265,16 @@
     <div class="footer__grid">
       <div>
         <div class="footer__logo">
-          <div class="footer__wordmark"><span class="g">my</span><span class="w">ticket</span><span class="g">sa</span></div>
+          <div class="footer__wordmark"><span class="w">tickets</span><span class="g">sa</span></div>
         </div>
-        <p class="footer__desc">South Africa's premier ticket-selling platform for events, travel and event services. Book confidently, every time.</p>
+        <p class="footer__desc">South Africa's premier ticket-selling platform for events. Book confidently, every time.</p>
       </div>
       <div>
         <p class="footer__heading">Explore</p>
         <ul class="footer__links">
           <li><a href="#events">Events</a></li>
+          <li><a href="empire-travel.html">Empire Lifestyle Travels</a></li>
+          <li><a href="mbombela-hospitality.html">Mbombela VIP Hospitality</a></li>
           <li><a href="#travel-tours">Travel &amp; Tours</a></li>
           <li><a href="services/index.html">Event Equipment</a></li>
           <li><a href="#merch">Tags &amp; Merch</a></li>
@@ -1473,7 +1291,7 @@
       <div>
         <p class="footer__heading">Support</p>
         <ul class="footer__links">
-          <li><a href="mailto:support@myticketsa.co.za">Help Centre</a></li>
+          <li><a href="mailto:support@TicketsSA.co.za">Help Centre</a></li>
           <li><a href="#">Contact Us</a></li>
           <li><a href="#">Refund Policy</a></li>
           <li><a href="#">Privacy Policy</a></li>
@@ -1482,7 +1300,7 @@
       </div>
     </div>
     <div class="footer__bottom">
-      <p>© 2026 MyTicketSA. All rights reserved. Built in South Africa
+      <p>© 2026 TicketsSA. All rights reserved. Built in South Africa
         &nbsp;·&nbsp;
         <a href="admin/login.html" style="color:var(--text-3);font-size:.8125rem;text-decoration:none;transition:color .2s"
            onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--text-3)'">Admin</a>
@@ -1520,11 +1338,6 @@
     document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
   }, { passive: true });
 
-  // Mobile toggle
-  document.getElementById('mobileToggle').addEventListener('click', () => {
-    document.getElementById('navbar').classList.toggle('navbar--open');
-  });
-
   // Scroll reveal
   const revealObs = new IntersectionObserver((entries) => {
     entries.forEach(e => {
@@ -1533,23 +1346,17 @@
   }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-  // Nav tabs
-  document.querySelectorAll('.navbar__cat:not([data-cat="equipment"])').forEach(btn => {
+  // Nav tabs travel navigates away; others scroll on-page
+  document.querySelectorAll('.navbar__cat[data-cat="events"], .navbar__cat[data-cat="marketing"]').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.navbar__cat').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      if (btn.dataset.cat === 'travel') {
-        document.getElementById('travel-tours')?.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
       if (btn.dataset.cat === 'marketing') {
         document.getElementById('merch')?.scrollIntoView({ behavior: 'smooth' });
         return;
       }
       document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
-      setTimeout(() => {
-        (document.querySelector('[data-filter="all"]'))?.click();
-      }, 400);
+      setTimeout(() => { document.querySelector('[data-filter="all"]')?.click(); }, 400);
     });
   });
 
@@ -1574,7 +1381,107 @@
     }
     document.getElementById('heroListEventBtn')?.addEventListener('click', handleListEvent);
     document.getElementById('footerListEvent')?.addEventListener('click', handleListEvent);
+    document.getElementById('eventsEmptyListBtn')?.addEventListener('click', handleListEvent);
   });
+</script>
+
+<!-- ═══════════ HERO COUNTDOWN ═══════════ -->
+<script>
+(function () {
+  /* Countdown target (SAST = UTC+2) */
+  const TARGET = new Date('2026-09-05T07:00:00+02:00').getTime(); /* Empire departs 07:00 */
+  const CD_IDS = ['h0Days','h0Hours','h0Mins','h0Secs'];
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function tick() {
+    const diff  = Math.max(0, TARGET - Date.now());
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000)  / 60000);
+    const secs  = Math.floor((diff % 60000)    / 1000);
+    const vals  = [pad(days), pad(hours), pad(mins), pad(secs)];
+    CD_IDS.forEach((id, j) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.textContent !== vals[j]) {
+        el.textContent = vals[j];
+        if (j === 3) { el.classList.add('tick'); setTimeout(() => el.classList.remove('tick'), 300); }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    tick();
+    setInterval(tick, 1000);
+  });
+})();
+</script>
+
+<!-- ═══════════ HERO SLIDER ═══════════ -->
+<script>
+(function () {
+  const slides  = Array.from(document.querySelectorAll('.hero-slide'));
+  const dots    = Array.from(document.querySelectorAll('.hero-slider-dot'));
+  const prevBtn = document.getElementById('heroPrevBtn');
+  const nextBtn = document.getElementById('heroNextBtn');
+  const bar     = document.getElementById('heroProgressBar');
+  if (slides.length < 2) return;
+
+  const AUTOPLAY_MS = 7000;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let idx = 0;
+  let timer = null;
+
+  function setDot(i) {
+    dots.forEach((d, j) => d.classList.toggle('active', j === i));
+  }
+
+  function runBar() {
+    if (!bar) return;
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+    void bar.offsetWidth; /* force reflow so the next transition actually runs */
+    bar.style.transition = `width ${AUTOPLAY_MS}ms linear`;
+    bar.style.width = '100%';
+  }
+
+  function scheduleNext() {
+    clearTimeout(timer);
+    if (reduceMotion) return;
+    timer = setTimeout(next, AUTOPLAY_MS);
+    runBar();
+  }
+
+  function goTo(newIdx) {
+    if (newIdx === idx) return;
+    const oldEl = slides[idx];
+    const newEl = slides[newIdx];
+    oldEl.classList.remove('active');
+    oldEl.classList.add('exit-left');
+    newEl.classList.remove('exit-left');
+    newEl.classList.add('active');
+    setTimeout(() => oldEl.classList.remove('exit-left'), 600);
+    idx = newIdx;
+    setDot(idx);
+    scheduleNext();
+  }
+
+  function next() { goTo((idx + 1) % slides.length); }
+  function prev() { goTo((idx - 1 + slides.length) % slides.length); }
+
+  dots.forEach((d, j) => d.addEventListener('click', () => goTo(j)));
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+  if (nextBtn) nextBtn.addEventListener('click', next);
+
+  const slider = document.getElementById('heroSlider');
+  if (slider) {
+    slider.addEventListener('mouseenter', () => clearTimeout(timer));
+    slider.addEventListener('mouseleave', scheduleNext);
+  }
+
+  scheduleNext();
+})();
 </script>
 
 <!-- ═══════════ GLOBAL AUTH GATE ═══════════ -->
@@ -1590,7 +1497,7 @@
     Auth.requireAuth(onSuccess || function(){}, msg || 'Create a free account to continue');
   }
 
-  /* Single capture-phase handler — fires before any onclick on the element */
+  /* Single capture-phase handler fires before any onclick on the element */
   document.addEventListener('click', function (e) {
     var el = e.target;
 
@@ -1607,10 +1514,10 @@
     if (bookBtn) {
       e.preventDefault(); e.stopImmediatePropagation();
       if (loggedIn()) {
-        window.location.href = 'mailto:quotes@myticketsa.co.za?subject=Tour%20Booking%20Enquiry';
+        window.location.href = 'mailto:quotes@TicketsSA.co.za?subject=Tour%20Booking%20Enquiry';
       } else {
         openSignup(function () {
-          window.location.href = 'mailto:quotes@myticketsa.co.za?subject=Tour%20Booking%20Enquiry';
+          window.location.href = 'mailto:quotes@TicketsSA.co.za?subject=Tour%20Booking%20Enquiry';
         }, '✈️ Sign in to book this tour');
       }
       return;

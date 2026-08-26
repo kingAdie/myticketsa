@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Travel &amp; Stay TicketsSA</title>
+  <meta name="description" content="Find the perfect place to stay across South Africa's nine provinces. Browse hotels, guesthouses, lodges and more on TicketsSA."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/accommodations.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+    <nav class="navbar__cats">
+      <a class="navbar__cat" href="index.html">Events</a>
+      <!-- <a class="navbar__cat active" href="accommodations.html">Travel &amp; Stay</a> -->
+      <a class="navbar__cat" href="services/index.html">Event Equipment</a>
+    </nav>
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="acc-hero">
+  <div class="container">
+    <div class="acc-hero__eyebrow">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Travel &amp; Accommodation
+    </div>
+    <h1>Find Your Perfect Stay<br/><span>in South Africa</span></h1>
+    <p class="acc-hero__sub">Browse hotels, lodges, guesthouses and unique stays across all nine provinces. Filter by province and discover your next escape.</p>
+  </div>
+</section>
+
+<!-- ═══════════ PROVINCE FILTER PILLS ═══════════ -->
+<div class="province-filter" id="provinceFilter">
+  <div class="container">
+    <div class="province-filter__inner" id="pillBar">
+      <!-- Pills rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONTENT ═══════════ -->
+<main class="acc-content" id="accContent">
+  <div class="container" id="accContainer">
+    <!-- Content rendered by JS -->
+    <div class="acc-loading" id="initLoader">
+      <div class="spinner"></div>
+      <span>Loading accommodations…</span>
+    </div>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   accommodations.html TicketsSA
+   Fetches all accommodations + tourist destinations once,
+   then filters client-side by province.
+═══════════════════════════════════════════════════════════════ */
+
+function escH(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ── Constants ──────────────────────────────────────────────── */
+const PROVINCES = [
+  'Western Cape', 'Gauteng', 'KwaZulu-Natal', 'Eastern Cape',
+  'Limpopo', 'Mpumalanga', 'North West', 'Free State', 'Northern Cape'
+];
+
+const PROVINCE_COLORS = {
+  'Western Cape':    '#3B82F6',
+  'Gauteng':         '#8B5CF6',
+  'KwaZulu-Natal':   '#14B8A6',
+  'Eastern Cape':    '#22C55E',
+  'Limpopo':         '#F59E0B',
+  'Mpumalanga':      '#10B981',
+  'North West':      '#F97316',
+  'Free State':      '#EAB308',
+  'Northern Cape':   '#EC4899',
+};
+
+const PROVINCE_DOTS = {
+  'Western Cape':    '🌊',
+  'Gauteng':         '🏙️',
+  'KwaZulu-Natal':   '🦁',
+  'Eastern Cape':    '🌿',
+  'Limpopo':         '🌳',
+  'Mpumalanga':      '💧',
+  'North West':      '🦒',
+  'Free State':      '🌾',
+  'Northern Cape':   '💎',
+};
+
+const CITY_TAGLINES = {
+  'Knysna':       'Misty Mornings, Forest Trails, and Lagoon Views.',
+  'Cape Town':    'Mountains, Ocean, and World-Class Culture.',
+  'Franschhoek':  'Wine Routes, French Heritage, and Fine Dining.',
+  'Stellenbosch': 'Oak-Lined Streets and Award-Winning Wineries.',
+  'Johannesburg': 'The City of Gold Vibrant, Bold, and Always Moving.',
+  'Pretoria':     'The Jacaranda City History and Government Heart.',
+  'Durban':       'Warm Beaches, Spicy Bunny Chows, and Surf Culture.',
+  'Drakensberg':  'Dramatic Peaks, Ancient Rock Art, and Alpine Air.',
+  'Hazyview':     'Gateway to Kruger Bushveld at Your Doorstep.',
+  'Sabie':        'Waterfalls, Forests, and Mountain Tranquility.',
+  'Sun City':     'Entertainment, Safari, and Luxury in the Bush.',
+};
+
+const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&q=70';
+const DEST_PLACEHOLDER = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&q=70';
+
+/* ── State ──────────────────────────────────────────────────── */
+let allAccommodations = [];
+let allDestinations   = [];
+let activeProvince    = 'All';
+
+/* ── Init ───────────────────────────────────────────────────── */
+(async function init() {
+  renderPills();
+
+  // Check URL param for pre-selected province
+  const urlProvince = new URLSearchParams(location.search).get('province');
+  if (urlProvince && (PROVINCES.includes(urlProvince) || urlProvince === 'All')) {
+    activeProvince = urlProvince;
+  }
+
+  try {
+    [allAccommodations, allDestinations] = await Promise.all([
+      SupabaseAPI.getAccommodations({ adminAll: false }),
+      SupabaseAPI.getTouristDestinations({ adminAll: false }),
+    ]);
+  } catch (err) {
+    document.getElementById('accContainer').innerHTML = `
+      <div class="acc-empty-state">
+        <div class="acc-empty-state__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p>Failed to load accommodations</p>
+        <small>${escH(err.message || 'Please check your connection and try again.')}</small>
+      </div>`;
+    return;
+  }
+
+  updateActivePill(activeProvince);
+  renderContent();
+})();
+
+/* ── Pill bar ───────────────────────────────────────────────── */
+function renderPills() {
+  const bar = document.getElementById('pillBar');
+  const pills = ['All', ...PROVINCES];
+  bar.innerHTML = pills.map(p => {
+    const color = PROVINCE_COLORS[p] || '#3B82F6';
+    const dotStyle = p !== 'All' ? `style="background:${color}"` : '';
+    return `
+      <button class="province-pill${p === activeProvince ? ' active' : ''}"
+              data-province="${escH(p)}"
+              onclick="selectProvince('${escH(p)}')">
+        ${p !== 'All' ? `<span class="province-pill__dot" ${dotStyle}></span>` : ''}
+        ${escH(p)}
+      </button>`;
+  }).join('');
+}
+
+function updateActivePill(province) {
+  document.querySelectorAll('.province-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.province === province);
+  });
+}
+
+/* ── Province selection ─────────────────────────────────────── */
+function selectProvince(province) {
+  activeProvince = province;
+  updateActivePill(province);
+
+  // Update URL without reload
+  const url = new URL(location.href);
+  if (province === 'All') url.searchParams.delete('province');
+  else url.searchParams.set('province', province);
+  history.replaceState(null, '', url);
+
+  renderContent();
+
+  // Scroll to content
+  document.getElementById('accContent').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Content renderer ───────────────────────────────────────── */
+function renderContent() {
+  const container = document.getElementById('accContainer');
+
+  if (activeProvince === 'All') {
+    renderAllProvinces(container);
+  } else {
+    renderSingleProvince(container, activeProvince);
+  }
+}
+
+/* ── "All" view one section per province, max 6 cards ─────── */
+function renderAllProvinces(container) {
+  const html = [];
+
+  // Group accommodations by province
+  const byProvince = {};
+  PROVINCES.forEach(p => { byProvince[p] = []; });
+  allAccommodations.forEach(a => {
+    if (byProvince[a.province]) byProvince[a.province].push(a);
+    else {
+      byProvince[a.province] = byProvince[a.province] || [];
+      byProvince[a.province].push(a);
+    }
+  });
+
+  // Only show provinces that have listings
+  let anyContent = false;
+  PROVINCES.forEach(province => {
+    const items = byProvince[province] || [];
+    if (!items.length) return;
+    anyContent = true;
+
+    const color = PROVINCE_COLORS[province] || '#3B82F6';
+    const icon  = PROVINCE_DOTS[province] || '📍';
+    const shown = items.slice(0, 6);
+    const extra = items.length - 6;
+    const viewAllLink = extra > 0
+      ? `<a href="#" class="dest-section__view-all" onclick="selectProvince('${escH(province)}');return false;">
+           View all ${items.length} in ${escH(province)}
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+         </a>`
+      : '';
+
+    html.push(`
+      <section class="dest-section">
+        <div class="dest-section__head">
+          <div class="dest-section__title-wrap">
+            <div class="dest-section__icon" style="background:${color}1a;">${icon}</div>
+            <div>
+              <h2 class="dest-section__title">${escH(province)}</h2>
+              <div class="dest-section__sub">${items.length} accommodation${items.length !== 1 ? 's' : ''} available</div>
+            </div>
+          </div>
+          ${viewAllLink}
+        </div>
+        <div class="acc-grid">
+          ${shown.map(a => renderAccCard(a)).join('')}
+        </div>
+      </section>`);
+  });
+
+  if (!anyContent) {
+    container.innerHTML = `
+      <div class="acc-empty-state">
+        <div class="acc-empty-state__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <p>No accommodations listed yet</p>
+        <small>Check back soon new listings are added regularly.</small>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = html.join('');
+}
+
+/* ── Single province view group by city ───────────────────── */
+function renderSingleProvince(container, province) {
+  const items = allAccommodations.filter(a => a.province === province);
+  const destinations = allDestinations.filter(d => d.province === province);
+  const color = PROVINCE_COLORS[province] || '#3B82F6';
+  const icon  = PROVINCE_DOTS[province] || '📍';
+
+  let html = '';
+
+  // Province header
+  html += `
+    <section class="dest-section">
+      <div class="dest-section__head">
+        <div class="dest-section__title-wrap">
+          <div class="dest-section__icon" style="background:${color}1a;">${icon}</div>
+          <div>
+            <h2 class="dest-section__title">${escH(province)}</h2>
+            <div class="dest-section__sub">${items.length ? `${items.length} accommodation${items.length !== 1 ? 's' : ''}` : 'Accommodations'}</div>
+          </div>
+        </div>
+      </div>`;
+
+  if (!items.length) {
+    html += `
+      <div class="acc-empty-state">
+        <div class="acc-empty-state__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <p>No accommodations listed yet for ${escH(province)}</p>
+        <small>Check back soon new listings are added regularly.</small>
+      </div>`;
+  } else {
+    // Group by city
+    const byCity = {};
+    items.forEach(a => {
+      const city = a.city || 'Other';
+      if (!byCity[city]) byCity[city] = [];
+      byCity[city].push(a);
+    });
+
+    const cities = Object.keys(byCity).sort();
+    cities.forEach(city => {
+      const cityItems = byCity[city];
+      const tagline = CITY_TAGLINES[city] || `Discover the Best of ${city}.`;
+      html += `
+        <div class="city-section">
+          <div class="city-section__head">
+            <h3 class="city-section__title">${escH(city)}</h3>
+            <div class="city-section__sub">${escH(tagline)}</div>
+          </div>
+          <div class="acc-grid">
+            ${cityItems.map(a => renderAccCard(a)).join('')}
+          </div>
+        </div>`;
+    });
+  }
+
+  html += `</section>`;
+
+  // Tourist destinations section
+  if (destinations.length) {
+    html += `
+      <section class="td-section">
+        <div class="td-section__head">
+          <div class="td-section__eyebrow">Tourist Spots</div>
+          <h2 class="td-section__title">Things to See &amp; Do in ${escH(province)}</h2>
+        </div>
+        <div class="td-grid">
+          ${destinations.map(d => renderDestCard(d)).join('')}
+        </div>
+      </section>`;
+  }
+
+  container.innerHTML = html;
+}
+
+/* ── Card renderers ─────────────────────────────────────────── */
+function renderAccCard(a) {
+  const rawImg = (a.images && a.images[0]) ? a.images[0] : PLACEHOLDER_IMG;
+  const img    = Utils.imgUrl(rawImg, 600);
+  const stars = renderStars(a.starRating || 0);
+  const price = a.priceFrom > 0
+    ? `From <span>R ${Math.round(a.priceFrom).toLocaleString('en-ZA')}</span>`
+    : `<span>Enquire</span>`;
+  const tags  = (a.amenities || []).slice(0, 3)
+    .map(am => `<span class="acc-card__tag">${escH(am)}</span>`).join('');
+  const desc  = a.description ? escH(a.description) : '';
+  const featBadge = a.featured
+    ? `<div class="acc-card__featured">Featured</div>` : '';
+  const city  = a.city ? escH(a.city).toUpperCase() : '';
+  const prov  = a.province ? escH(a.province) : '';
+  const locStr = [city, prov].filter(Boolean).join(', ');
+
+  return `
+    <a class="acc-card" href="accommodation.html?id=${escH(a.id)}" title="${escH(a.name)}">
+      <div class="acc-card__img-wrap">
+        <img class="acc-card__img"
+             src="${escH(img)}"
+             alt="${escH(a.name)}"
+             loading="lazy"
+             onerror="this.src='${PLACEHOLDER_IMG}'"/>
+        ${stars ? `<div class="acc-card__stars">${stars}</div>` : ''}
+        <div class="acc-card__price-badge">${price}</div>
+        ${featBadge}
+      </div>
+      <div class="acc-card__body">
+        <h3 class="acc-card__name">${escH(a.name)}</h3>
+        <div class="acc-card__loc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${locStr}
+        </div>
+        ${tags ? `<div class="acc-card__tags">${tags}</div>` : ''}
+        ${desc ? `<p class="acc-card__desc">${desc}</p>` : ''}
+        <div class="acc-card__footer">
+          <span class="acc-card__book-btn">
+            Book Now
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
+        </div>
+      </div>
+    </a>`;
+}
+
+function renderDestCard(d) {
+  const img = Utils.imgUrl(d.image || DEST_PLACEHOLDER, 500);
+  const fee = parseFloat(d.entry_fee) > 0
+    ? `<div class="td-card__fee">Entry: R ${parseFloat(d.entry_fee).toFixed(0)}</div>`
+    : `<div class="td-card__fee td-card__fee--free">Free entry</div>`;
+  return `
+    <div class="td-card">
+      <img class="td-card__img"
+           src="${escH(img)}"
+           alt="${escH(d.name)}"
+           loading="lazy"
+           onerror="this.src='${DEST_PLACEHOLDER}'"/>
+      <div class="td-card__body">
+        <div class="td-card__cat">${escH(d.category || 'Nature')}</div>
+        <div class="td-card__name">${escH(d.name)}</div>
+        <p class="td-card__desc">${escH(d.description || '')}</p>
+        ${fee}
+      </div>
+    </div>`;
+}
+
+function renderStars(rating) {
+  const r = Math.round(Math.min(5, Math.max(0, rating || 0)));
+  if (!r) return '';
+  const starSvg = `<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
+  return `${starSvg.repeat(r)}&nbsp;${r}.0`;
+}
+
+/* ── Navbar & mobile nav ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof Auth !== 'undefined') Auth.updateNavbar();
+  if (typeof Utils !== 'undefined') Utils.initMobileNav();
+});
+</script>
+</body>
+</html>

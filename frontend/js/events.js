@@ -1,6 +1,6 @@
-/* ================================================
-   MyTicketSA — Events Data (events.js)
-   Reads directly from Supabase — no backend needed.
+﻿/* ================================================
+   TicketsSA Events Data (events.js)
+   Reads directly from Supabase no backend needed.
    ================================================ */
 
 const EventsData = (() => {

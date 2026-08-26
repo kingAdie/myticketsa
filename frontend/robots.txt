@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Block private/user-specific pages from indexing
+Disallow: /dashboard.html
+Disallow: /success.html
+Disallow: /checkout.html
+Disallow: /admin/
+Disallow: /auth-callback.html
+
+# Allow all major crawlers access to CSS/JS for rendering
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Sitemap
+Sitemap: https://www.ticketssa.co.za/sitemap.xml

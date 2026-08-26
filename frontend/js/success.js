@@ -1,39 +1,40 @@
 /**
- * MyTicketSA — Success Page v3 (success.js)
+ * TicketsSA Success Page (success.js)
  *
- * Reads the booking from localStorage (set by checkout.js),
- * renders the full ticket receipt, and displays the QR code
- * from the backend URL (or falls back to a generated visual barcode).
+ * Reads the booking receipt from localStorage (set by checkout.js).
+ * The ticket is already confirmed by the time we land here — booking
+ * happens directly against Supabase, no payment webhook to wait on.
+ * TicketsSA doesn't process payment itself; if the event's organiser
+ * collects payment via their own link or bank details, we surface
+ * those instructions here too.
  */
 
 /* global Utils */
-
-/* global _API_BASE */
-// Use the same API base as the rest of the app (defined in config.js)
-const API_BASE = typeof _API_BASE !== 'undefined' ? _API_BASE : '';
 
 document.addEventListener('DOMContentLoaded', () => {
 
   Utils.initMobileNav();
 
   const booking = Utils.getStorage('mt_booking');
+  const ticketId = new URLSearchParams(window.location.search).get('ticket') || booking?.ticketId;
 
-  if (!booking) { showError(); return; }
+  if (!booking || !ticketId) { showError(); return; }
 
   renderTicket(booking);
+  renderPaymentInstructions(booking);
   renderQR(booking);
 
   /* ---- Render ticket receipt ---- */
   function renderTicket(b) {
-    document.title = `Booking Confirmed — ${b.event.title} — MyTicketSA`;
+    document.title = `Booking Confirmed ${b.event.title} TicketsSA`;
 
-    // Personalised subtitle
     Utils.setText('#successSubtitle',
       `Your eTicket has been sent to ${b.buyer.email}. See you there!`);
 
-    // Ticket ID
-    Utils.setText('#ticketId',        b.ticketId);
-    Utils.setText('#ticketBarcodeId', b.ticketId);
+    // Ticket ID (empire-travel uses paymentRef; regular checkout uses ticketId)
+    const displayId = b.ticketId || b.paymentRef || '—';
+    Utils.setText('#ticketId',        displayId);
+    Utils.setText('#ticketBarcodeId', displayId);
 
     // Banner image
     const img = document.getElementById('receiptEventImage');
@@ -51,25 +52,65 @@ document.addEventListener('DOMContentLoaded', () => {
     Utils.setText('#receiptTotal',      Utils.formatCurrency(b.pricing.total));
   }
 
+  /* ---- Payment instructions (organiser-provided; TicketsSA doesn't process payment) ---- */
+  function renderPaymentInstructions(b) {
+    const card = document.getElementById('paymentInstructions');
+    if (!card) return;
+
+    const payment = b.payment || {};
+    const isSafeUrl = (url) => /^https?:\/\//i.test(String(url || '').trim());
+
+    if (payment.type === 'link' && payment.link && isSafeUrl(payment.link)) {
+      card.innerHTML = `
+        <h3 class="payment-instructions__title">Complete Your Payment</h3>
+        <p class="payment-instructions__sub">Your ticket is reserved. Pay the organiser directly via their secure link to finalise your booking.</p>
+        <a href="${escHtml(payment.link)}" target="_blank" rel="noopener" class="pay-link-btn">
+          Open Payment Link
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M7 17L17 7M7 7h10v10"/></svg>
+        </a>`;
+      card.hidden = false;
+
+    } else if (payment.type === 'bank' && payment.bankName) {
+      card.innerHTML = `
+        <h3 class="payment-instructions__title">Complete Your Payment</h3>
+        <p class="payment-instructions__sub">Your ticket is reserved. Pay the organiser via EFT using the details below, with your ticket ID as reference.</p>
+        <div class="pay-bank-table">
+          <div class="pay-bank-row"><span class="pay-bank-row__label">Bank</span><span class="pay-bank-row__value">${escHtml(payment.bankName)}</span></div>
+          <div class="pay-bank-row"><span class="pay-bank-row__label">Account Holder</span><span class="pay-bank-row__value">${escHtml(payment.accountHolder || '—')}</span></div>
+          <div class="pay-bank-row"><span class="pay-bank-row__label">Account Number</span><span class="pay-bank-row__value">${escHtml(payment.accountNumber || '—')}</span></div>
+          <div class="pay-bank-row"><span class="pay-bank-row__label">Branch Code</span><span class="pay-bank-row__value">${escHtml(payment.branchCode || '—')}</span></div>
+          <div class="pay-bank-row"><span class="pay-bank-row__label">Reference</span><span class="pay-bank-row__value">${escHtml(b.ticketId || '')}</span></div>
+        </div>`;
+      card.hidden = false;
+    }
+    // 'free' (or unset) → nothing to show, card stays hidden
+  }
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   /* ---- QR code ---- */
   function renderQR(b) {
     const container = document.getElementById('ticketBarcode');
     if (!container) return;
 
-    // If backend returned a real QR image URL, show that
-    if (b.qrCodeUrl) {
+    /* Prefer the unique ticket QR (set by empire-travel.html or future flows),
+       then fall back to any backend-provided QR URL, then the visual barcode. */
+    const qrUrl = b.ticketQrUrl || b.qrCodeUrl || null;
+
+    if (qrUrl) {
       const img = document.createElement('img');
-      img.src   = `${API_BASE}${b.qrCodeUrl}`;
-      img.alt   = 'QR Code';
+      img.src   = qrUrl;
+      img.alt   = 'Ticket QR Code';
       img.style.cssText = [
-        'width:160px', 'height:160px', 'border-radius:12px',
+        'width:180px', 'height:180px', 'border-radius:12px',
         'background:#fff', 'padding:8px', 'display:block', 'margin:0 auto',
       ].join(';');
 
       img.onerror = () => {
-        // QR image failed to load — render the fallback barcode visual
         img.remove();
-        renderFallbackBarcode(container, b.ticketId);
+        renderFallbackBarcode(container, b.ticketId || b.paymentRef || 'TICKET');
       };
 
       container.innerHTML = '';
@@ -78,13 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // No backend QR — use the client-side visual barcode
-    renderFallbackBarcode(container, b.ticketId);
+    renderFallbackBarcode(container, b.ticketId || b.paymentRef || 'TICKET');
   }
 
   /* ---- Deterministic visual barcode (client-side fallback) ---- */
   function renderFallbackBarcode(container, ticketId) {
-    const seed    = ticketId.replace(/[^A-Z0-9]/g, '');
+    const seed    = (ticketId || 'TICKET').replace(/[^A-Z0-9]/g, '');
     const heights = [48,32,56,24,40,64,32,48,24,56,40,32,64,48,24,40,56,32,48,64,24,40,32,56,48,24];
     const widths  = [2,3,2,4,2,3,2,2,4,3,2,3,2,2,3,4,2,3,2,4,3,2,2,3,2,2];
 

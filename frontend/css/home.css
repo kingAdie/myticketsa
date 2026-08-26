@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Homepage — Professional Marketplace
+﻿/* ================================================
+   TicketsSA Homepage Professional Marketplace
    ================================================ */
 
 /* ── Design tokens ──────────────────────────────── */
@@ -88,6 +88,29 @@
   background-image: radial-gradient(circle, rgba(255,255,255,.02) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
+}
+
+/* Mobile-only brand watermark filling the empty space left when .hero__visual hides */
+.hero__bg-logo {
+  display: none;
+  position: absolute;
+  top: 60%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 20vw;
+  letter-spacing: -.05em;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  animation: heroLogoBreathe 6s ease-in-out infinite;
+}
+.hero__bg-logo .w { color: rgba(255,255,255,.028); }
+.hero__bg-logo .g { color: rgba(22,163,74,.07); }
+@keyframes heroLogoBreathe {
+  0%, 100% { opacity: .7; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;  transform: translate(-50%, -50%) scale(1.035); }
 }
 .hero__inner {
   display: grid;
@@ -429,50 +452,165 @@
   color: var(--text-2); line-height: 1.6; padding-bottom: 5px;
 }
 
-/* ── Featured Event Card ─────────────────────────── */
-.ev-feature-card {
-  position: relative; display: grid;
-  grid-template-columns: 55% 1fr;
-  min-height: 340px; border-radius: var(--r4); overflow: hidden;
+/* ── Event Cards Grid ────────────────────────────── */
+.ev-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   margin-bottom: var(--s4);
-  border: 1px solid rgba(22,163,74,.15);
+}
+
+/* Single featured card  avoid stretching it full-bleed or leaving an empty column */
+.ev-grid--single {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}
+
+/* CTA card always spans the full row, however many event cards precede it */
+.ev-empty-cta { grid-column: 1 / -1; }
+
+.ev-card {
   background: var(--bg-2);
-  box-shadow: 0 4px 60px rgba(0,0,0,.4);
-  transition: border-color .45s, box-shadow .45s, transform .45s;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 18px;
+  overflow: hidden;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .35s, box-shadow .35s, transform .35s;
 }
-.ev-feature-card:hover {
-  border-color: rgba(22,163,74,.45);
-  box-shadow: 0 8px 80px rgba(0,0,0,.55), 0 0 80px rgba(22,163,74,.1);
-  transform: translateY(-4px);
+.ev-card:hover {
+  border-color: rgba(22,163,74,.35);
+  box-shadow: 0 12px 60px rgba(0,0,0,.5), 0 0 60px rgba(22,163,74,.07);
+  transform: translateY(-5px);
 }
-.ev-feature-card__glow {
-  position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(ellipse at 28% 60%, rgba(22,163,74,.09) 0%, transparent 60%);
-  opacity: 0; transition: opacity .45s;
-}
-.ev-feature-card:hover .ev-feature-card__glow { opacity: 1; }
 
-.ev-feature-card__media { position: relative; overflow: hidden; }
-.ev-feature-card__img {
-  width: 100%; height: 100%; object-fit: cover; object-position: center 20%;
-  filter: brightness(.82) saturate(1.08);
-  transition: transform .85s cubic-bezier(.25,.46,.45,.94), filter .45s;
+/* Image block */
+.ev-card__img-wrap {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
-.ev-feature-card:hover .ev-feature-card__img {
-  transform: scale(1.06); filter: brightness(.92) saturate(1.12);
+.ev-card__img {
+  width: 100%; height: 100%; object-fit: cover;
+  object-position: center 25%;
+  filter: brightness(.75) saturate(1.1);
+  transition: transform .8s cubic-bezier(.25,.46,.45,.94), filter .4s;
 }
-.ev-feature-card__media-fade {
+.ev-card:hover .ev-card__img {
+  transform: scale(1.07); filter: brightness(.88) saturate(1.15);
+}
+.ev-card__img-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(to right, transparent 50%, var(--bg-2) 100%);
+  background:
+    linear-gradient(to top,  rgba(8,8,8,.97) 0%, rgba(8,8,8,.5) 38%, rgba(8,8,8,.05) 65%, transparent 100%),
+    linear-gradient(to bottom, rgba(0,0,0,.45) 0%, transparent 38%);
 }
 
-.ev-feature-card__content {
-  position: relative; z-index: 2; padding: var(--s4);
-  display: flex; flex-direction: column; justify-content: space-between;
-  background: var(--bg-2);
+/* Top row: pill badges */
+.ev-card__img-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 2;
 }
-.ev-feature-card__badges { display: flex; gap: 8px; margin-bottom: 14px; }
+.ev-card__pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .6rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; padding: 4px 10px;
+  border-radius: var(--rx); backdrop-filter: blur(12px);
+}
+.ev-card__pill--free {
+  background: rgba(22,163,74,.82); border: 1px solid rgba(22,163,74,.5);
+  color: #fff;
+}
+.ev-card__pill--live {
+  background: rgba(220,38,38,.8); border: 1px solid rgba(220,38,38,.5);
+  color: #fff;
+}
+.ev-card__pill--region {
+  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.8);
+}
+.ev-card__pill--price {
+  background: rgba(6,78,59,.85); border: 1px solid rgba(22,163,74,.4);
+  color: #fff;
+}
+.ev-card__pill-dot {
+  width: 5px; height: 5px; border-radius: 50%; background: currentColor;
+  animation: fePulse 2s ease-in-out infinite;
+}
+
+/* Bottom: title block over image */
+.ev-card__img-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 18px 20px;
+  z-index: 2;
+}
+.ev-card__cat {
+  display: flex; align-items: center; gap: 5px;
+  font-size: .6875rem; font-weight: 600; letter-spacing: .06em;
+  color: rgba(255,255,255,.45); margin-bottom: 7px;
+}
+.ev-card__cat svg { color: var(--green); flex-shrink: 0; }
+.ev-card__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 800; color: #fff;
+  letter-spacing: -.04em; line-height: 1.0;
+  text-transform: uppercase;
+  text-shadow: 0 2px 20px rgba(0,0,0,.6);
+  margin: 0;
+}
+
+/* Content body */
+.ev-card__body {
+  padding: 16px 20px 18px;
+  display: flex; flex-direction: column;
+  gap: 12px; flex: 1;
+}
+.ev-card__meta-row {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ev-card__meta-item {
+  display: flex; align-items: center; gap: 7px;
+  font-size: .8rem; color: rgba(255,255,255,.52);
+  line-height: 1.4;
+}
+.ev-card__meta-item svg { color: var(--green); flex-shrink: 0; }
+.ev-card__desc {
+  font-size: .8125rem; color: rgba(255,255,255,.42);
+  line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Footer row */
+.ev-card__foot {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  margin-top: auto;
+}
+.ev-card__price-block { min-width: 0; }
+.ev-card__price-label {
+  font-size: .6rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: rgba(255,255,255,.28);
+  margin-bottom: 3px;
+}
+.ev-card__price-val {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem; font-weight: 800; color: var(--gold-hi);
+  white-space: nowrap;
+}
+.ev-card__price-sub {
+  font-size: .75rem; font-weight: 500; opacity: .55;
+}
+
+/* keep old pill selectors alive for hero slider (they still reference them) */
 .ev-pill {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: .625rem; font-weight: 800; letter-spacing: .1em;
@@ -490,41 +628,6 @@
   background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12);
   color: rgba(255,255,255,.55);
 }
-.ev-feature-card__title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: clamp(1.6rem, 3vw, 2.5rem);
-  font-weight: 800; color: #fff; letter-spacing: -.04em;
-  line-height: 1; text-transform: uppercase;
-  margin-bottom: 16px; text-shadow: 0 2px 16px rgba(0,0,0,.25);
-}
-.ev-feature-card__meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.ev-meta-item {
-  display: flex; align-items: center; gap: 8px;
-  font-size: .8125rem; color: rgba(255,255,255,.7);
-}
-.ev-meta-item svg { color: var(--green); flex-shrink: 0; }
-.ev-feature-card__org { font-size: .8rem; color: rgba(255,255,255,.4); margin-bottom: 10px; }
-.ev-feature-card__org strong { color: rgba(255,255,255,.65); font-weight: 600; }
-.ev-feature-card__desc { font-size: .875rem; color: rgba(255,255,255,.52); line-height: 1.6; }
-
-.ev-feature-card__footer {
-  margin-top: 20px; padding-top: 18px;
-  border-top: 1px solid rgba(255,255,255,.07);
-}
-.ev-feature-card__ticket-block { margin-bottom: 14px; }
-.ev-ticket-label {
-  font-size: .6rem; font-weight: 800; letter-spacing: .1em;
-  text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 4px;
-}
-.ev-ticket-val {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 1.1rem; font-weight: 800; color: var(--gold-hi);
-}
-.ev-feature-card__actions { display: flex; gap: 10px; margin-bottom: 10px; }
-.ev-feature-card__actions .btn {
-  flex: 1; justify-content: center; text-align: center; text-decoration: none;
-}
-.ev-feature-card__status { font-size: .7rem; color: rgba(255,255,255,.28); font-style: italic; }
 
 /* ── Coming Soon Row ─────────────────────────────── */
 .ev-coming-label {
@@ -813,7 +916,7 @@
 
 
 /* ══════════════════════════════════════════════════
-   WHY MYTICKETSA (PROOF)
+   WHY TicketsSA (PROOF)
    ══════════════════════════════════════════════════ */
 .proof-section {
   background: var(--bg-1); padding: var(--s5) 0;
@@ -884,7 +987,7 @@
    NEWSLETTER
    ══════════════════════════════════════════════════ */
 /* ══════════════════════════════════════════════════
-   NEWSLETTER — Subtle Living Glow Card
+   NEWSLETTER Subtle Living Glow Card
    ══════════════════════════════════════════════════ */
 .newsletter-section {
   background: var(--bg);
@@ -895,6 +998,8 @@
   position: relative;
   max-width: 540px;
   margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px;
 }
 .nl-spin-ring {
   position: absolute;
@@ -1174,6 +1279,106 @@
   font-size: .875rem; padding: 10px 16px;
 }
 
+/* ══════════════════════════════════════════════════
+   HERO SLIDER (2-event carousel)
+   ══════════════════════════════════════════════════ */
+.hero-slider { position: relative; }
+
+/* slides stack via absolute; active one is static so the wrapper has height */
+.hero-slide {
+  opacity: 0; pointer-events: none;
+  transition: opacity .55s ease, transform .55s ease;
+  position: absolute; inset: 0;
+  transform: translateX(20px);
+}
+.hero-slide.active {
+  opacity: 1; pointer-events: auto;
+  position: relative; transform: translateX(0);
+}
+.hero-slide.exit-left  { transform: translateX(-20px); }
+.hero-slide.enter-right{ transform: translateX(20px); }
+
+/* nav row below the card */
+.hero-slider-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px; padding: 0 2px;
+}
+.hero-slider-dots { display: flex; gap: 7px; align-items: center; }
+.hero-slider-dot {
+  height: 4px; border-radius: 2px; border: none; cursor: pointer;
+  background: rgba(255,255,255,.18);
+  transition: background .3s, width .3s;
+  width: 24px;
+}
+.hero-slider-dot.active { background: var(--green); width: 40px; }
+
+.hero-slider-arrows { display: flex; gap: 6px; }
+.hero-slider-arrow {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.7); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, color .2s;
+  flex-shrink: 0;
+}
+.hero-slider-arrow:hover { background: rgba(22,163,74,.18); border-color: var(--green); color: var(--green); }
+
+/* per-slide countdown strip */
+.hero-slide-countdown {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 5px; margin-bottom: 11px;
+}
+.hero-countdown-unit {
+  background: rgba(0,0,0,.38); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px; padding: 8px 4px 6px; text-align: center;
+}
+.hero-countdown-num {
+  display: block; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.25rem; font-weight: 800; color: #fff;
+  line-height: 1; margin-bottom: 3px; letter-spacing: -.03em;
+  transition: color .3s;
+}
+.hero-countdown-num.tick { color: var(--green); }
+.hero-countdown-lbl {
+  display: block; font-size: .5rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: rgba(255,255,255,.35);
+}
+
+/* region badge (Limpopo / Mpumalanga) */
+.featured-event-region {
+  display: flex; align-items: center; gap: 5px;
+  font-size: .6875rem; font-weight: 700; color: rgba(255,255,255,.75);
+  background: rgba(0,0,0,.32); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: var(--rx); padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* free-entry pill */
+.featured-event-badge--free {
+  background: rgba(22,163,74,.85); border-color: rgba(22,163,74,.5);
+}
+/* price pill */
+.featured-event-badge--price {
+  background: rgba(6,78,59,.85); border: 1px solid rgba(22,163,74,.4);
+  color: #fff; font-size: .6rem; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 11px; border-radius: var(--rx);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+
+/* progress bar auto-advance indicator */
+.hero-slide-progress {
+  height: 2px; border-radius: 1px;
+  background: rgba(22,163,74,.18); overflow: hidden;
+  margin-top: 8px;
+}
+.hero-slide-progress__bar {
+  height: 100%; background: var(--green);
+  width: 0%; transition: width linear;
+}
+
 
 /* ══════════════════════════════════════════════════
    RESPONSIVE
@@ -1201,6 +1406,7 @@
   .listings-header       { flex-direction: column; align-items: flex-start; }
   .listings-header .btn  { display: none; }
   .vendor-cta-banner     { flex-direction: column; align-items: flex-start; }
+  .ev-card__img-wrap     { height: 230px; }
 }
 
 @media(max-width:768px) {
@@ -1210,6 +1416,7 @@
   .hero__cta      { justify-content: center; }
   .hero__search   { margin: 0 auto var(--s4); }
   .hero__stats    { justify-content: center; }
+  .hero__bg-logo  { display: block; }
   .proof-grid     { grid-template-columns: repeat(2,1fr); }
   .equip-bento    { grid-template-columns: 1fr; min-height: auto; }
   .bento-card--hero { height: 320px; }
@@ -1233,9 +1440,8 @@
   .newsletter-form { flex-direction: column; }
   .newsletter-form .btn { width: 100%; }
   .ev-showcase__heading-row { flex-direction: column; gap: var(--s2); }
-  .ev-feature-card { grid-template-columns: 1fr; }
-  .ev-feature-card__media { min-height: 240px; }
-  .ev-feature-card__media-fade { background: linear-gradient(to bottom, transparent 45%, var(--bg-2) 100%); }
+  .ev-grid        { grid-template-columns: 1fr; }
+  .ev-card__img-wrap { height: 220px; }
   .ev-coming-grid { grid-template-columns: repeat(2,1fr); }
   .bento-pair     { grid-template-columns: 1fr; }
   .bento-card--half { height: 180px; }
@@ -1255,4 +1461,5 @@
 @media(prefers-reduced-motion: reduce) {
   .reveal, .trust-bar__track { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
+  .hero__bg-logo { animation: none !important; }
 }

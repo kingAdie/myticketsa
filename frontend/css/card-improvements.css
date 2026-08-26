@@ -1,5 +1,5 @@
-/* ══════════════════════════════════════════════════
-   CATEGORIES SECTION — IMPROVED CARDS
+﻿/* ══════════════════════════════════════════════════
+   CATEGORIES SECTION IMPROVED CARDS
    Glow on hover, pop effect, centred layout
    ══════════════════════════════════════════════════ */
 
@@ -28,7 +28,7 @@
   overflow: hidden;
 }
 
-/* Glow layer — always present, revealed on hover */
+/* Glow layer always present, revealed on hover */
 .cat-glow {
   display: block;
   position: absolute;
@@ -54,7 +54,7 @@
 .cat-card--gold:hover   { border-color: rgba(202,138,4,.5);   box-shadow: 0 0 28px rgba(202,138,4,.2),  0 8px 32px rgba(0,0,0,.4); }
 .cat-card--purple:hover { border-color: rgba(168,85,247,.5);  box-shadow: 0 0 28px rgba(168,85,247,.2), 0 8px 32px rgba(0,0,0,.4); }
 
-/* Icon wraps — larger & more vibrant */
+/* Icon wraps larger & more vibrant */
 .cat-icon-wrap {
   width: 58px; height: 58px; border-radius: 16px;
   display: flex; align-items: center; justify-content: center;
@@ -106,7 +106,7 @@
 
 
 /* ══════════════════════════════════════════════════
-   HOW IT WORKS — STACKOPS-INSPIRED STEP CARDS
+   HOW IT WORKS STACKOPS-INSPIRED STEP CARDS
    ══════════════════════════════════════════════════ */
 
 .how-section {
@@ -176,7 +176,7 @@
 
 .step-icon-ring svg { width: 38px; height: 38px; }
 
-/* Step number badge — top-right corner */
+/* Step number badge top-right corner */
 .step-n {
   position: absolute;
   top: 16px; right: 16px;
@@ -233,7 +233,7 @@
 }
 
 /* ══════════════════════════════════════════════════
-   WHY MYTICKETSA — PROOF / BUILT FOR SOUTH AFRICANS
+   WHY TicketsSA PROOF / BUILT FOR SOUTH AFRICANS
    ══════════════════════════════════════════════════ */
 
 .proof-section {

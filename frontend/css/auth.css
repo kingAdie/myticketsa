@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Auth Styles v4.1 (auth.css)
+﻿/* ================================================
+   TicketsSA Auth Styles v4.1 (auth.css)
    Login/register modal + nav user dropdown
    ================================================ */
 
@@ -156,6 +156,22 @@
   text-decoration: underline;
 }
 
+/* ── Organiser contact note (sign-up form) ───────────────────────────── */
+.auth-organiser-note {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-3);
+  margin: 8px 0 0;
+  border-top: 1px solid var(--b1);
+  padding-top: 10px;
+}
+.auth-organiser-note a {
+  color: var(--text-2);
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-organiser-note a:hover { text-decoration: underline; }
+
 /* ── Role picker ──────────────────────────────────────────────────────── */
 .auth-role-picker {
   display: grid;
@@ -294,6 +310,172 @@
 
 .nav-user__logout:hover {
   color: #EF4444 !important;
+}
+
+/* ── Social auth buttons ──────────────────────────────────────────────── */
+.auth-social {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--r2);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.auth-google-btn {
+  background: #fff;
+  color: #3c4043;
+  border: 1.5px solid #dadce0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.auth-google-btn:hover {
+  background: #f8f9fa;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  border-color: #c6c9cc;
+}
+
+.auth-google-btn:active {
+  background: #f1f3f4;
+  box-shadow: none;
+}
+
+/* ── OR divider ───────────────────────────────────────────────────────── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-3);
+  font-size: 0.8125rem;
+  margin: 4px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--b1);
+}
+
+/* ── Password input wrapper + toggle ─────────────────────────────────── */
+.form-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input-wrap .form-input {
+  padding-right: 40px;
+  width: 100%;
+}
+
+.form-pw-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.form-pw-toggle:hover {
+  color: var(--text-2);
+}
+
+/* ── reCAPTCHA container ──────────────────────────────────────────────── */
+.auth-recaptcha-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+  min-height: 78px;
+}
+
+/* ── Forgot password sent confirmation ───────────────────────────────── */
+.auth-forgot-sent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--green-tint, rgba(34,197,94,0.08));
+  border: 1px solid var(--green-border, rgba(34,197,94,0.25));
+  border-radius: var(--r2);
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* ── Forgot password helper text ─────────────────────────────────────── */
+.auth-forgot-hint {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin-bottom: 16px;
+  line-height: 1.55;
+}
+
+/* ── Back button (forgot → login) ────────────────────────────────────── */
+.auth-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.15s;
+}
+
+.auth-back-btn:hover { color: var(--text); }
+
+/* ── Row helpers ──────────────────────────────────────────────────────── */
+.auth-row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: -8px;
+}
+
+/* ── Form label hint ──────────────────────────────────────────────────── */
+.form-label-hint {
+  color: var(--text-3);
+  font-weight: 400;
+  font-size: 0.8125rem;
+}
+
+/* ── Context message ──────────────────────────────────────────────────── */
+.auth-context-msg {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid rgba(59,130,246,0.3);
+  border-radius: var(--r2);
+  padding: 10px 14px;
+  font-size: 0.875rem;
+  color: #93C5FD;
+  margin-bottom: 16px;
+  line-height: 1.5;
 }
 
 /* ── Utility: hidden class used by auth.js ────────────────────────────── */

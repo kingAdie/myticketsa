@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Portal — MyTicketSA</title>
+  <title>Admin Portal TicketsSA</title>
   <link rel="stylesheet" href="../css/styles.css"/>
   <link rel="stylesheet" href="../css/auth.css"/>
   <link rel="stylesheet" href="../css/organiser.css"/>
@@ -19,7 +19,7 @@
   <aside class="admin-sidebar" id="adminSidebar">
     <div class="admin-logo">
       <div class="navbar__logo-wordmark" style="font-size:1.125rem;">
-        <span class="w-my">my</span><span class="w-ticket">ticket</span><span class="w-sa">sa</span>
+        <span class="w-ticket">tickets</span><span class="w-sa">sa</span>
       </div>
       <span class="admin-badge">Admin</span>
     </div>
@@ -52,6 +52,10 @@
       <a href="#" class="admin-nav-item" data-section="customers">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         Customers
+      </a>
+      <a href="#" class="admin-nav-item" data-section="accommodations">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Accommodations
       </a>
       <a href="#" class="admin-nav-item" data-section="media">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -87,12 +91,14 @@
 
     <!-- ── DASHBOARD ──────────────────────────────────────────────────── -->
     <section class="admin-section" id="section-dashboard">
+
+      <!-- Stat cards -->
       <div class="admin-stats-grid" id="statsGrid">
         <div class="admin-stat-card">
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-total">—</div>
             <div class="admin-stat-label">Total Events</div>
           </div>
@@ -101,7 +107,7 @@
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#16A34A,#15803D);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-published">—</div>
             <div class="admin-stat-label">Published</div>
           </div>
@@ -110,7 +116,7 @@
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-pending">—</div>
             <div class="admin-stat-label">Pending Review</div>
           </div>
@@ -119,7 +125,7 @@
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-tickets">—</div>
             <div class="admin-stat-label">Tickets Sold</div>
           </div>
@@ -128,7 +134,7 @@
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#EC4899,#BE185D);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-users">—</div>
             <div class="admin-stat-label">Registered Users</div>
           </div>
@@ -137,30 +143,52 @@
           <div class="admin-stat-icon" style="background:linear-gradient(135deg,#06B6D4,#0284C7);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-organisers">—</div>
             <div class="admin-stat-label">Organisers</div>
           </div>
         </div>
-        <div class="admin-stat-card" style="cursor:pointer;" onclick="showSection('requests')">
-          <div class="admin-stat-icon" style="background:linear-gradient(135deg,#F59E0B,#D97706);">
+        <div class="admin-stat-card" onclick="showSection('requests')" style="cursor:pointer;">
+          <div class="admin-stat-icon" style="background:linear-gradient(135deg,#F59E0B,#B45309);">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           </div>
-          <div class="admin-stat-body">
+          <div>
             <div class="admin-stat-value" id="st-requests">—</div>
             <div class="admin-stat-label">Pending Requests</div>
           </div>
         </div>
       </div>
 
+      <!-- ── Equipment Requests Hero card on dashboard ─────────────── -->
+      <div class="requests-preview-card">
+        <div class="requests-preview-header">
+          <div class="requests-preview-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <h3>Equipment &amp; Service Requests</h3>
+            <span class="req-pulse-badge" id="dashReqBadge" style="display:none">0 Pending</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-secondary btn-sm" id="dashRefreshReq">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="showSection('requests')">View All</button>
+          </div>
+        </div>
+        <div id="dashRequestsBody">
+          <div class="org-empty"><div class="spinner"></div></div>
+        </div>
+      </div>
+
       <!-- Pending events quick list -->
       <div class="admin-card">
-        <div class="admin-card-header">
-          <h2>Pending Approval</h2>
+        <div class="admin-card-header" style="padding:18px 24px 16px;">
+          <h2>Events Awaiting Approval</h2>
           <button class="btn btn-secondary btn-sm" onclick="showSection('events')">View All Events</button>
         </div>
         <div id="pendingList"><div class="org-empty"><div class="spinner"></div></div></div>
       </div>
+
     </section>
 
     <!-- ── EVENTS ─────────────────────────────────────────────────────── -->
@@ -168,6 +196,10 @@
       <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
         <h2>All Events</h2>
         <div class="admin-filter-row">
+          <button class="btn btn-primary btn-sm" id="adminCreateEventBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Event
+          </button>
           <select class="form-select" id="adminStatusFilter" style="width:140px;">
             <option value="">All Statuses</option>
             <option value="published">Published</option>
@@ -210,9 +242,19 @@
       <div class="admin-section-head">
         <div>
           <h2>Service &amp; Equipment Requests</h2>
-          <p style="font-size:.875rem;color:var(--text-secondary);margin-top:4px;">Review and update the status of each incoming request.</p>
+          <p>Review and update the status of each incoming request.</p>
         </div>
-        <button class="btn btn-secondary btn-sm" id="refreshRequestsBtn">↻ Refresh</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" class="form-input" id="requestSearchInput" placeholder="Search by name, email, service…" style="width:240px;"/>
+          <button class="btn btn-secondary btn-sm" id="refreshRequestsBtn">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="req-filter-tabs" id="reqFilterTabs">
+        <button class="req-filter-tab active" data-filter="all">All <span class="req-tab-count" id="rtc-all"></span></button>
+        <button class="req-filter-tab" data-filter="pending">Pending <span class="req-tab-count" id="rtc-pending"></span></button>
+        <button class="req-filter-tab" data-filter="quoted">Quoted <span class="req-tab-count" id="rtc-quoted"></span></button>
+        <button class="req-filter-tab" data-filter="confirmed">Confirmed <span class="req-tab-count" id="rtc-confirmed"></span></button>
+        <button class="req-filter-tab" data-filter="cancelled">Cancelled <span class="req-tab-count" id="rtc-cancelled"></span></button>
       </div>
       <div id="requestsBody" class="admin-card" style="padding:0;overflow:hidden;">
         <div class="org-empty"><div class="spinner"></div></div>
@@ -241,6 +283,78 @@
       </div>
     </section>
 
+    <!-- ── ACCOMMODATIONS ──────────────────────────────────────────── -->
+    <section class="admin-section hidden" id="section-accommodations">
+      <div class="admin-section-head">
+        <div>
+          <h2>Accommodations &amp; Travel</h2>
+          <p>Manage accommodation listings, tourist destinations, and booking enquiries shown on the public site.</p>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="acc-admin-tabs" id="accAdminTabs">
+        <button class="acc-admin-tab active" data-tab="listings" onclick="switchAccTab('listings', this)">🏨 Accommodations</button>
+        <button class="acc-admin-tab" data-tab="spots" onclick="switchAccTab('spots', this)">📍 Tourist Spots</button>
+        <button class="acc-admin-tab" data-tab="bookings" onclick="switchAccTab('bookings', this)">📋 Booking Enquiries</button>
+      </div>
+
+      <!-- Accommodations panel -->
+      <div id="accListingsPanel">
+        <div class="admin-card-header" style="margin-bottom:16px;">
+          <span style="font-size:.875rem;color:var(--a-text-2);" id="accListingsCount"></span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="form-select" id="accProvinceFilter" style="width:180px;">
+              <option value="">All Provinces</option>
+              <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Free State</option><option>Northern Cape</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openAccModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Accommodation
+            </button>
+          </div>
+        </div>
+        <div id="accListingsBody" class="admin-card" style="padding:0;overflow:hidden;">
+          <div class="org-empty"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Tourist spots panel -->
+      <div id="accSpotsPanel" class="hidden">
+        <div class="admin-card-header" style="margin-bottom:16px;">
+          <span style="font-size:.875rem;color:var(--a-text-2);" id="accSpotsCount"></span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="form-select" id="spotProvinceFilter" style="width:180px;">
+              <option value="">All Provinces</option>
+              <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Free State</option><option>Northern Cape</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openSpotModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Tourist Spot
+            </button>
+          </div>
+        </div>
+        <div id="accSpotsBody" class="admin-card" style="padding:0;overflow:hidden;">
+          <div class="org-empty"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Booking enquiries panel -->
+      <div id="accBookingsPanel" class="hidden">
+        <div class="admin-card-header" style="margin-bottom:16px;">
+          <span style="font-size:.875rem;color:var(--a-text-2);" id="accBookingsCount"></span>
+          <button class="btn btn-secondary btn-sm" onclick="loadAccBookings()">↻ Refresh</button>
+        </div>
+        <div id="accBookingsBody" class="admin-card" style="padding:0;overflow:hidden;">
+          <div class="org-empty"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── MEDIA ──────────────────────────────────────────────────── -->
     <section class="admin-section hidden" id="section-media">
       <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
@@ -254,8 +368,397 @@
 
   </div><!-- /.admin-content -->
 
+  <!-- ══════════════════════════════════════════════════════════
+       ADMIN Create / Edit Event Modal
+       ══════════════════════════════════════════════════════════ -->
+  <div class="event-modal-overlay" id="admEventModal">
+    <div class="event-modal" style="max-width:700px;">
+      <div class="event-modal__header">
+        <h2 id="admModalTitle">Create Event</h2>
+        <button class="auth-modal__close" id="admCloseEventModal" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="auth-error hidden" id="admModalError"></div>
+
+      <form id="admEventForm" novalidate>
+        <input type="hidden" id="admEditEventId"/>
+
+        <!-- Admin-only controls -->
+        <div class="modal-grid-2" style="margin-bottom:4px;">
+          <div class="form-group">
+            <label class="form-label" for="admEvStatus">Status</label>
+            <select id="admEvStatus" class="form-select">
+              <option value="published">Published (live on site)</option>
+              <option value="pending">Pending (awaiting review)</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:28px;">
+            <input type="checkbox" id="admEvFeatured" style="width:18px;height:18px;cursor:pointer;accent-color:#EAB308;flex-shrink:0;"/>
+            <label for="admEvFeatured" class="form-label" style="margin:0;cursor:pointer;">Mark as Featured ⭐</label>
+          </div>
+        </div>
+
+        <div class="modal-grid-2">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="admEvOrganiser">Organiser Name</label>
+            <input type="text" id="admEvOrganiser" class="form-input" placeholder="e.g. Cape Town Jazz Festival Org"/>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="admEvTitle">Event Title <span class="required">*</span></label>
+            <input type="text" id="admEvTitle" class="form-input" placeholder="e.g. Cape Town Jazz Festival" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvCategory">Category <span class="required">*</span></label>
+            <select id="admEvCategory" class="form-select" required>
+              <option value="">Select…</option>
+              <option>Music</option><option>Technology</option><option>Food &amp; Drink</option>
+              <option>Sport</option><option>Arts &amp; Culture</option><option>Business</option>
+              <option>Comedy</option><option>Fashion</option><option>Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvPrice">Base Price (R) <span class="required">*</span></label>
+            <input type="number" id="admEvPrice" class="form-input" placeholder="0 for free" min="0" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvDate">Date <span class="required">*</span></label>
+            <input type="date" id="admEvDate" class="form-input" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvTime">Start Time <span class="required">*</span></label>
+            <input type="time" id="admEvTime" class="form-input" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvEndTime">End Time</label>
+            <input type="time" id="admEvEndTime" class="form-input"/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvLocation">Venue / Location <span class="required">*</span></label>
+            <input type="text" id="admEvLocation" class="form-input" placeholder="e.g. CTICC, Cape Town" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvCity">City <span class="required">*</span></label>
+            <input type="text" id="admEvCity" class="form-input" placeholder="Cape Town" required/>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admEvProvince">Province</label>
+            <select id="admEvProvince" class="form-select">
+              <option value="">Select…</option>
+              <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Free State</option><option>Northern Cape</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="admEvAddress">Full Address</label>
+            <input type="text" id="admEvAddress" class="form-input" placeholder="e.g. 1 Convention Square, Cape Town, 8001"/>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Event Image</label>
+            <div class="img-upload-zone">
+              <div class="img-upload-zone__preview hidden" id="admEvImagePreview"></div>
+              <div class="img-upload-zone__input-row">
+                <input type="url" id="admEvImage" class="form-input" placeholder="Paste Cloudinary / public URL, or upload →"/>
+                <label class="btn btn-secondary btn-sm img-upload-zone__btn" for="admEvImageFile" title="Upload & auto-compress">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+                  Upload
+                </label>
+                <input type="file" id="admEvImageFile" accept="image/png,image/png,image/webp" style="display:none;"/>
+              </div>
+              <p class="img-upload-zone__hint">JPG / PNG / WebP · max 5 MB · auto-compressed before upload</p>
+            </div>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Payment Method</label>
+            <div style="display:flex;gap:16px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.875rem;">
+                <input type="radio" name="admEvPayType" value="link" checked/> Payment Link
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.875rem;">
+                <input type="radio" name="admEvPayType" value="bank"/> Bank Transfer
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.875rem;">
+                <input type="radio" name="admEvPayType" value="free"/> Free Event
+              </label>
+            </div>
+            <div id="admPayLinkGroup">
+              <input type="url" id="admEvPayLink" class="form-input" placeholder="https://yoco.com/pay/…"/>
+            </div>
+            <div id="admPayBankGroup" style="display:none;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin:0;"><input type="text" id="admEvBankName"      class="form-input" placeholder="Bank Name (e.g. FNB)"/></div>
+              <div class="form-group" style="margin:0;"><input type="text" id="admEvAccHolder"     class="form-input" placeholder="Account Holder"/></div>
+              <div class="form-group" style="margin:0;"><input type="text" id="admEvAccNumber"     class="form-input" placeholder="Account Number"/></div>
+              <div class="form-group" style="margin:0;"><input type="text" id="admEvBranchCode"    class="form-input" placeholder="Branch Code"/></div>
+            </div>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="admEvDescription">Description <span class="required">*</span></label>
+            <textarea id="admEvDescription" class="form-textarea" rows="4" placeholder="Describe the event…" required style="min-height:110px;"></textarea>
+          </div>
+
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="admEvTags">Tags <span style="font-weight:400;opacity:.6;">(comma separated)</span></label>
+            <input type="text" id="admEvTags" class="form-input" placeholder="Music, Jazz, Adults"/>
+          </div>
+        </div>
+
+        <!-- Ticket Types -->
+        <div class="ticket-types-section">
+          <div class="flex-between mb-md">
+            <label class="form-label" style="margin:0;">Ticket Types</label>
+            <button type="button" class="btn btn-secondary btn-sm" id="admAddTicketTypeBtn">+ Add Type</button>
+          </div>
+          <div id="admTicketTypesContainer"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="admCancelEventBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="admSaveEventBtn">
+            <span id="admSaveBtnText">Create Event</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Accommodation Modal ───────────────────────────────────────────── -->
+  <div class="event-modal-overlay" id="accModal">
+    <div class="event-modal" style="max-width:680px;">
+      <div class="event-modal__header">
+        <h2 id="accModalTitle">Add Accommodation</h2>
+        <button class="auth-modal__close" onclick="closeAccModal()" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="auth-error hidden" id="accModalError"></div>
+      <form id="accForm" novalidate>
+        <input type="hidden" id="accEditId"/>
+        <div class="modal-grid-2" style="margin-bottom:4px;">
+          <div class="form-group">
+            <label class="form-label" for="accStatus">Status</label>
+            <select id="accStatus" class="form-select">
+              <option value="published">Published (live on site)</option>
+              <option value="draft">Draft (hidden)</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:28px;">
+            <input type="checkbox" id="accFeatured" style="width:18px;height:18px;cursor:pointer;accent-color:#EAB308;flex-shrink:0;"/>
+            <label for="accFeatured" class="form-label" style="margin:0;cursor:pointer;">Mark as Featured ⭐</label>
+          </div>
+        </div>
+        <div class="modal-grid-2">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="accName">Accommodation Name <span class="required">*</span></label>
+            <input type="text" id="accName" class="form-input" placeholder="e.g. Vineyard Boutique Hotel" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accProvince">Province <span class="required">*</span></label>
+            <select id="accProvince" class="form-select" required>
+              <option value="">Select…</option>
+              <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Free State</option><option>Northern Cape</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accCity">City <span class="required">*</span></label>
+            <input type="text" id="accCity" class="form-input" placeholder="e.g. Cape Town" required/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="accAddress">Full Address</label>
+            <input type="text" id="accAddress" class="form-input" placeholder="e.g. 12 Long Street, Cape Town, 8001"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accCheckIn">Check-in Time</label>
+            <input type="time" id="accCheckIn" class="form-input" value="14:00"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accCheckOut">Check-out Time</label>
+            <input type="time" id="accCheckOut" class="form-input" value="10:00"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accPriceFrom">Starting Price (R/night)</label>
+            <input type="number" id="accPriceFrom" class="form-input" placeholder="e.g. 850" min="0"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accStarRating">Star Rating</label>
+            <select id="accStarRating" class="form-select">
+              <option value="0">Not rated</option>
+              <option value="1">★ 1 Star</option>
+              <option value="2">★★ 2 Stars</option>
+              <option value="3">★★★ 3 Stars</option>
+              <option value="4">★★★★ 4 Stars</option>
+              <option value="5">★★★★★ 5 Stars</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accPhone">Contact Phone</label>
+            <input type="tel" id="accPhone" class="form-input" placeholder="+27 21 000 0000"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accEmail">Contact Email</label>
+            <input type="email" id="accEmail" class="form-input" placeholder="info@accommodation.co.za"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accWebsite">Website</label>
+            <input type="url" id="accWebsite" class="form-input" placeholder="https://…"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="accBookingUrl">External Booking Link <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+            <input type="url" id="accBookingUrl" class="form-input" placeholder="e.g. booking.com link or WhatsApp"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="accDescription">Description <span class="required">*</span></label>
+            <textarea id="accDescription" class="form-textarea" rows="3" placeholder="Describe the accommodation, its vibe, surroundings…" required style="min-height:90px;"></textarea>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="accAmenities">Amenities <span style="font-weight:400;opacity:.6;">(comma separated)</span></label>
+            <input type="text" id="accAmenities" class="form-input" placeholder="WiFi, Pool, Parking, Breakfast, Air-con, Spa"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Photos <span style="font-weight:400;opacity:.6;">(first image = cover)</span></label>
+            <div class="img-upload-zone">
+              <div class="img-upload-zone__thumb-strip" id="accImagesThumbStrip"></div>
+              <div class="img-upload-zone__input-row">
+                <textarea id="accImages" class="form-textarea" rows="2" placeholder="Comma-separated URLs, or click Upload to add files" style="min-height:54px;"></textarea>
+                <label class="btn btn-secondary btn-sm img-upload-zone__btn" for="accImagesFile" title="Upload & auto-compress (multiple files OK)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+                  Upload
+                </label>
+                <input type="file" id="accImagesFile" accept="image/png,image/png,image/webp" multiple style="display:none;"/>
+              </div>
+              <p class="img-upload-zone__hint">Select multiple files at once · auto-compressed · click × on a thumbnail to remove</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Space types -->
+        <div class="ticket-types-section">
+          <div class="flex-between mb-md">
+            <label class="form-label" style="margin:0;">Space / Room Types</label>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addSpaceTypeRow()">+ Add Type</button>
+          </div>
+          <div id="spaceTypesContainer"></div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeAccModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="accSaveBtn">
+            <span id="accSaveBtnText">Save Accommodation</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Tourist Spot Modal ─────────────────────────────────────────────── -->
+  <div class="event-modal-overlay" id="spotModal">
+    <div class="event-modal" style="max-width:520px;">
+      <div class="event-modal__header">
+        <h2 id="spotModalTitle">Add Tourist Spot</h2>
+        <button class="auth-modal__close" onclick="closeSpotModal()" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="auth-error hidden" id="spotModalError"></div>
+      <form id="spotForm" novalidate>
+        <input type="hidden" id="spotEditId"/>
+        <div class="modal-grid-2" style="margin-bottom:4px;">
+          <div class="form-group">
+            <label class="form-label" for="spotStatus">Status</label>
+            <select id="spotStatus" class="form-select">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:28px;">
+            <input type="checkbox" id="spotFeatured" style="width:18px;height:18px;cursor:pointer;accent-color:#EAB308;flex-shrink:0;"/>
+            <label for="spotFeatured" class="form-label" style="margin:0;cursor:pointer;">Featured ⭐</label>
+          </div>
+        </div>
+        <div class="modal-grid-2">
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="spotName">Destination Name <span class="required">*</span></label>
+            <input type="text" id="spotName" class="form-input" placeholder="e.g. Table Mountain" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="spotProvince">Province <span class="required">*</span></label>
+            <select id="spotProvince" class="form-select" required>
+              <option value="">Select…</option>
+              <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
+              <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
+              <option>North West</option><option>Free State</option><option>Northern Cape</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="spotCity">City / Area</label>
+            <input type="text" id="spotCity" class="form-input" placeholder="e.g. Cape Town"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="spotCategory">Category</label>
+            <select id="spotCategory" class="form-select">
+              <option>Nature</option><option>Culture &amp; Heritage</option><option>Adventure</option>
+              <option>Food &amp; Wine</option><option>History</option><option>Wildlife</option>
+              <option>Beach</option><option>Mountain</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="spotFee">Entry Fee (R)</label>
+            <input type="number" id="spotFee" class="form-input" placeholder="0 for free" min="0" value="0"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Image</label>
+            <div class="img-upload-zone">
+              <div class="img-upload-zone__preview hidden" id="spotImagePreview"></div>
+              <div class="img-upload-zone__input-row">
+                <input type="url" id="spotImage" class="form-input" placeholder="Paste URL, or upload →"/>
+                <label class="btn btn-secondary btn-sm img-upload-zone__btn" for="spotImageFile" title="Upload & auto-compress">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+                  Upload
+                </label>
+                <input type="file" id="spotImageFile" accept="image/png,image/png,image/webp" style="display:none;"/>
+              </div>
+              <p class="img-upload-zone__hint">JPG / PNG / WebP · max 5 MB · auto-compressed before upload</p>
+            </div>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="spotWebsite">Website</label>
+            <input type="url" id="spotWebsite" class="form-input" placeholder="https://…"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label" for="spotDescription">Description <span class="required">*</span></label>
+            <textarea id="spotDescription" class="form-textarea" rows="3" placeholder="Describe this destination…" required style="min-height:90px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeSpotModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="spotSaveBtn">
+            <span id="spotSaveBtnText">Save Tourist Spot</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="../js/config.js"></script>
-<script src="../js/utils.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>
   <script src="admin.js"></script>
 </body>

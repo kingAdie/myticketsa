@@ -1,6 +1,6 @@
-/* ── API base ── */
+﻿/* ── API base ── */
 /* ================================================
-   MyTicketSA — Event Details Logic v4 (event.js)
+   TicketsSA Event Details Logic v4 (event.js)
    Loads event data from the live API via EventsData.init()
    ================================================ */
 
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* ── Render page ─────────────────────────────────────────────────── */
   function renderEventPage(event) {
-    document.title = `${event.title} — MyTicketSA`;
+    document.title = `${event.title} TicketsSA`;
 
     // Banner image
     const bannerImg = document.getElementById('bannerImage');
@@ -181,6 +181,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       ticketPrice:    selectedTicketType.price,
       quantity,
       total:          selectedTicketType.price * quantity,
+      paymentType:    currentEvent.paymentType   || 'free',
+      paymentLink:    currentEvent.paymentLink   || null,
+      bankName:       currentEvent.bankName      || null,
+      accountHolder:  currentEvent.accountHolder || null,
+      accountNumber:  currentEvent.accountNumber || null,
+      branchCode:     currentEvent.branchCode    || null,
     });
 
     Utils.navigateTo('checkout.html');

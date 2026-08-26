@@ -1,17 +1,19 @@
 
 /* ================================================
-   MyTicketSA — Checkout v4.1 (checkout.js)
-   Sends booking to POST /api/checkout
-   Falls back to offline mode if server unreachable
+   TicketsSA Checkout
+   Books the ticket directly (client → Supabase) and
+   confirms it immediately. TicketsSA doesn't process
+   payment itself the organiser collects payment directly
+   from the buyer via their own payment link or bank
+   details, shown here and on the confirmation page.
    ================================================ */
 
-/* global Utils, Auth */
+/* global Utils, Auth, SupabaseAPI */
 
 document.addEventListener('DOMContentLoaded', () => {
 
   Utils.initMobileNav();
 
-  // ── Load selection set by event.js ──────────────────────────────────
   const selection = Utils.getStorage('mt_selection');
   if (!selection) {
     showPageError('No booking found. Please go back and select tickets.');
@@ -19,10 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderSummary(selection);
+  renderPaymentMethodBox(selection);
   setupBackLink(selection);
   initForm(selection);
 
-  // ── Order summary sidebar ─────────────────────────────────────────────
+  // ── Order summary ─────────────────────────────────────────────────────
   function renderSummary(sel) {
     Utils.setText('#summaryEventTitle', sel.eventTitle);
 
@@ -35,8 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     Utils.setText('#summaryQty',        `${sel.quantity} × ticket${sel.quantity !== 1 ? 's' : ''}`);
     Utils.setText('#summaryUnitPrice',  Utils.formatCurrency(sel.ticketPrice));
 
-    const fee      = Math.round(sel.ticketPrice * sel.quantity * 0.05 * 100) / 100;
-    const total    = Math.round((sel.total + fee) * 100) / 100;
+    const fee   = Math.round(sel.ticketPrice * sel.quantity * 0.05 * 100) / 100;
+    const total = Math.round((sel.total + fee) * 100) / 100;
     Utils.setText('#summaryFee',   Utils.formatCurrency(fee));
     Utils.setText('#summaryTotal', Utils.formatCurrency(total));
 
@@ -50,12 +53,74 @@ document.addEventListener('DOMContentLoaded', () => {
     if (link) link.href = `event.html?id=${sel.eventId}`;
   }
 
+  // ── Payment method (organiser-provided; TicketsSA doesn't process payment) ──
+  function renderPaymentMethodBox(sel) {
+    const box = document.getElementById('paymentMethodBox');
+    const btn = document.getElementById('confirmBtn');
+    if (!box) return;
+
+    const isSafeUrl = (url) => /^https?:\/\//i.test(String(url || '').trim());
+
+    if (sel.paymentType === 'link' && sel.paymentLink && isSafeUrl(sel.paymentLink)) {
+      box.innerHTML = `
+        <div class="pay-method-box pay-method-box--link">
+          <div class="pay-method-box__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 13a5 5 0 007.07 0l1.93-1.93a5 5 0 00-7.07-7.07L10.5 5.5"/><path d="M14 11a5 5 0 00-7.07 0L5 12.93a5 5 0 007.07 7.07L13.5 18.5"/></svg>
+          </div>
+          <div>
+            <p class="pay-method-box__title">Pay the Organiser Directly</p>
+            <p class="pay-method-box__sub">This event's organiser collects payment themselves. Reserve your ticket below, then complete payment via their secure link.</p>
+            <a href="${escHtml(sel.paymentLink)}" target="_blank" rel="noopener" class="pay-link-btn">
+              Open Payment Link
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M7 17L17 7M7 7h10v10"/></svg>
+            </a>
+          </div>
+        </div>`;
+      if (btn) btn.textContent = 'Reserve My Ticket';
+
+    } else if (sel.paymentType === 'bank' && sel.bankName) {
+      box.innerHTML = `
+        <div class="pay-method-box pay-method-box--bank">
+          <div class="pay-method-box__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 11l9-7 9 7M7 11v10M11 11v10M13 11v10M17 11v10"/></svg>
+          </div>
+          <div>
+            <p class="pay-method-box__title">Pay the Organiser via EFT</p>
+            <p class="pay-method-box__sub">This event's organiser collects payment directly. Reserve your ticket below, then pay using these bank details.</p>
+            <div class="pay-bank-table">
+              <div class="pay-bank-row"><span class="pay-bank-row__label">Bank</span><span class="pay-bank-row__value">${escHtml(sel.bankName)}</span></div>
+              <div class="pay-bank-row"><span class="pay-bank-row__label">Account Holder</span><span class="pay-bank-row__value">${escHtml(sel.accountHolder || '—')}</span></div>
+              <div class="pay-bank-row"><span class="pay-bank-row__label">Account Number</span><span class="pay-bank-row__value">${escHtml(sel.accountNumber || '—')}</span></div>
+              <div class="pay-bank-row"><span class="pay-bank-row__label">Branch Code</span><span class="pay-bank-row__value">${escHtml(sel.branchCode || '—')}</span></div>
+            </div>
+          </div>
+        </div>`;
+      if (btn) btn.textContent = 'Reserve My Ticket';
+
+    } else {
+      box.innerHTML = `
+        <div class="pay-method-box">
+          <div class="pay-method-box__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <p class="pay-method-box__title">Free Event</p>
+            <p class="pay-method-box__sub">No payment is required for this event. Just confirm your details below to get your eTicket.</p>
+          </div>
+        </div>`;
+      if (btn) btn.textContent = 'Get My Free Ticket';
+    }
+  }
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   // ── Form wiring ───────────────────────────────────────────────────────
   function initForm(sel) {
     const form = document.getElementById('checkoutForm');
     if (!form) return;
 
-    // Inline field validation on blur
     form.querySelectorAll('input[required]').forEach(input => {
       input.addEventListener('blur',  () => Utils.validateField(input));
       input.addEventListener('input', () => {
@@ -69,17 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── Submit handler ────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────────────────
   async function handleSubmit(form, sel) {
     const btn = document.getElementById('confirmBtn');
 
-    // Validate all required inputs
     let valid = true;
     form.querySelectorAll('input[required]').forEach(input => {
       if (!Utils.validateField(input)) valid = false;
     });
 
-    // Terms checkbox
     const terms      = document.getElementById('termsCheck');
     const termsError = document.getElementById('termsError');
     if (!terms?.checked) {
@@ -94,8 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!valid) {
       Utils.showToast('Please fill in all required fields.', 'error');
-      form.querySelector('.form-input.error')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      form.querySelector('.form-input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -106,8 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
       phone:     document.getElementById('phone')?.value.trim() || null,
     };
 
-    // Loading state
-    if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+    const busyLabel = sel.paymentType && sel.paymentType !== 'free' ? 'Reserving…' : 'Booking…';
+    const idleLabel = btn?.textContent || 'Confirm Purchase';
+    if (btn) { btn.disabled = true; btn.textContent = busyLabel; }
 
     const payload = {
       ...buyer,
@@ -125,85 +188,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const res  = await fetch(_API_BASE + '/api/checkout', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
+      // Ticket is booked directly against Supabase and confirmed immediately.
+      // TicketsSA doesn't process payment the organiser collects it directly
+      // via their own payment link / bank details, shown above and on the receipt.
+      const result = await SupabaseAPI.submitTicket(payload);
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        const msg = (data.errors || [data.error]).join(' ') || 'Payment failed. Please try again.';
-        Utils.showToast(msg, 'error', 6000);
-        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Purchase'; }
-        return;
-      }
-
-      // Persist booking data for success page
       Utils.setStorage('mt_booking', {
-        ticketId: data.ticket.id,
+        ticketId: result.id,
         event: {
-          title:    data.ticket.eventTitle,
-          date:     data.ticket.eventDate,
-          time:     data.ticket.eventTime,
-          location: data.ticket.eventLocation,
-          city:     data.ticket.eventCity,
-          image:    data.ticket.eventImage,
+          title:    sel.eventTitle,
+          date:     sel.eventDate,
+          time:     sel.eventTime,
+          location: sel.eventLocation,
+          city:     sel.eventCity,
+          image:    sel.eventImage,
         },
         ticket: {
-          typeName: data.ticket.ticketTypeName,
-          price:    data.ticket.ticketPrice,
-          quantity: data.ticket.quantity,
+          typeName: sel.ticketTypeName,
+          price:    sel.ticketPrice,
+          quantity: sel.quantity,
         },
-        pricing: {
-          subtotal: data.ticket.ticketPrice * data.ticket.quantity,
-          fee:      sel.fee,
-          total:    data.ticket.total,
+        pricing:   result.pricing,
+        payment: {
+          type:          sel.paymentType   || 'free',
+          link:          sel.paymentLink   || null,
+          bankName:      sel.bankName      || null,
+          accountHolder: sel.accountHolder || null,
+          accountNumber: sel.accountNumber || null,
+          branchCode:    sel.branchCode    || null,
         },
         buyer,
-        qrCodeUrl: data.ticket.qrCodeUrl,
-        bookedAt:  data.ticket.bookedAt,
+        qrCodeUrl: result.qrCodeUrl || null,
+        bookedAt:  new Date().toISOString(),
       });
 
       Utils.removeStorage('mt_selection');
-      setTimeout(() => Utils.navigateTo('success.html'), 400);
+      window.location.href = `success.html?ticket=${encodeURIComponent(result.id)}`;
 
-    } catch {
-      // Server unreachable — use client-side fallback so the user isn't stranded
-      Utils.showToast('Server unavailable — processing offline.', 'info', 5500);
-      clientFallback(buyer, sel);
+    } catch (err) {
+      console.error('[Checkout] Booking error:', err?.message || err);
+      Utils.showToast('Could not complete your booking. Please try again.', 'error', 6000);
+      if (btn) { btn.disabled = false; btn.textContent = idleLabel; }
     }
-  }
-
-  // ── Offline fallback (generates a local ticket ID, no QR) ─────────────
-  function clientFallback(buyer, sel) {
-    Utils.setStorage('mt_booking', {
-      ticketId:  Utils.generateTicketId(),
-      event: {
-        title:    sel.eventTitle,
-        date:     sel.eventDate,
-        time:     sel.eventTime,
-        location: sel.eventLocation,
-        city:     sel.eventCity,
-        image:    sel.eventImage,
-      },
-      ticket: {
-        typeName: sel.ticketTypeName,
-        price:    sel.ticketPrice,
-        quantity: sel.quantity,
-      },
-      pricing: {
-        subtotal: sel.total,
-        fee:      sel.fee,
-        total:    sel.grandTotal,
-      },
-      buyer,
-      qrCodeUrl: null,
-      bookedAt:  new Date().toISOString(),
-    });
-    Utils.removeStorage('mt_selection');
-    setTimeout(() => Utils.navigateTo('success.html'), 400);
   }
 
   // ── Error state ───────────────────────────────────────────────────────
@@ -214,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="container" style="text-align:center;padding:80px 0;">
         <div style="font-size:3rem;margin-bottom:1.5rem;">🛒</div>
         <h2 style="margin-bottom:1rem;">Nothing to check out</h2>
-        <p style="margin-bottom:2rem;color:var(--text-secondary);">${msg}</p>
+        <p style="margin-bottom:2rem;color:var(--text-2);">${msg}</p>
         <a href="index.html" class="btn btn-primary btn-lg">Browse Events</a>
       </div>`;
   }

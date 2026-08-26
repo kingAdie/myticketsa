@@ -1,5 +1,5 @@
-/* ==========================================================
-   MyTicketSA — services.css
+﻿/* ==========================================================
+   TicketsSA services.css
    Apple-style bento grid for Event Equipment page
    ========================================================== */
 
@@ -193,7 +193,7 @@ body {
 
 
 /* ──────────────────────────────────────────────────────────
-   MAIN — Apple Bento Grid
+   MAIN Apple Bento Grid
    ────────────────────────────────────────────────────────── */
 .eq-main {
   padding: 60px 0 90px;
@@ -297,7 +297,7 @@ body {
 .eq-tile:hover .eq-tile__glass {
   backdrop-filter: blur(2px);
 }
-/* Wide tile — horizontal layout */
+/* Wide tile horizontal layout */
 .eq-tile__glass--row {
   display: flex;
   align-items: flex-end;
@@ -477,7 +477,7 @@ body {
 .eq-cta--green  { background: rgba(22,163, 74,.14); border-color: rgba(74, 222,128,.3); color: #4ADE80; }
 .eq-cta--purple { background: rgba(124,58 ,237,.14); border-color: rgba(196,181,253,.3); color: #C4B5FD; }
 
-/* Hover — filled + glow */
+/* Hover filled + glow */
 .eq-tile:hover .eq-cta--amber  { background: #D97706; border-color: #D97706; color: #fff; box-shadow: 0 0 28px rgba(217,119, 6,.6);  transform: translateY(-2px); }
 .eq-tile:hover .eq-cta--blue   { background: #2563EB; border-color: #2563EB; color: #fff; box-shadow: 0 0 28px rgba(37, 99,235,.6);  transform: translateY(-2px); }
 .eq-tile:hover .eq-cta--green  { background: #16A34A; border-color: #16A34A; color: #fff; box-shadow: 0 0 28px rgba(22,163, 74,.6);  transform: translateY(-2px); }

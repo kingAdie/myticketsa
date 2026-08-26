@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Homepage Logic v4 (home.js)
+﻿/* ================================================
+   TicketsSA Homepage Logic v4 (home.js)
    Loads events from /api/events via EventsData.init()
    ================================================ */
 
@@ -9,49 +9,55 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSearch();
   initNewsletter();
 
-  /* ── Load events from API, then render ─────────────────────────────── */
+  /* ── Load events from Supabase (for dynamic grid if present) ─────── */
   await EventsData.init();
-  renderCategoryFilters();
-  renderEvents(EventsData.getAll());
 
-  /* ── Category Filters ───────────────────────────────────────────────── */
-  function renderCategoryFilters() {
-    const container = document.getElementById('categoryFilters');
-    if (!container) return;
-    // Remove existing dynamic buttons (keep the "All" button)
-    container.querySelectorAll('.filter-btn:not([data-filter="all"])').forEach(b => b.remove());
+  /* ── Search ────────────────────────────────────────────────────────── */
+  function initSearch() {
+    const searchInput = document.getElementById('heroSearch');
+    const searchBtn   = document.getElementById('heroSearchBtn');
+    const clearBtn    = document.getElementById('clearSearchBtn');
 
-    EventsData.getCategories().forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'filter-pill';
-      btn.textContent = cat;
-      btn.dataset.filter = cat;
-      btn.setAttribute('role', 'tab');
-      btn.addEventListener('click', () => filterByCategory(cat, btn));
-      container.appendChild(btn);
-    });
-  }
+    function doSearch() {
+      const query = (searchInput?.value || '').trim().toLowerCase();
 
-  function filterByCategory(category, clickedBtn) {
-    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-    clickedBtn.classList.add('active');
-    renderEvents(category === 'all' ? EventsData.getAll() : EventsData.getByCategory(category));
-  }
+      document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
 
-  /* ── Render Event Cards ─────────────────────────────────────────────── */
-  function renderEvents(events) {
-    const grid       = document.getElementById('eventsGrid');
-    const emptyState = document.getElementById('emptyState');
-    if (!grid) return;
+      /* Filter the hardcoded event feature cards on the homepage */
+      const featureCards = document.querySelectorAll('.ev-feature-card');
+      featureCards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = (!query || text.includes(query)) ? '' : 'none';
+      });
 
-    grid.innerHTML = '';
+      /* Also show/hide the "coming soon" block */
+      const comingSoon = document.querySelector('.ev-coming-soon');
+      if (comingSoon) comingSoon.style.display = query ? 'none' : '';
 
-    if (!events || events.length === 0) {
-      emptyState?.classList.remove('hidden');
-      return;
+      /* If there's a dynamic grid, render Supabase results there too */
+      const grid = document.getElementById('eventsGrid');
+      if (grid) {
+        const events = query ? EventsData.search(query) : EventsData.getAll();
+        grid.innerHTML = '';
+        events.forEach(event => grid.appendChild(createEventCard(event)));
+      }
     }
-    emptyState?.classList.add('hidden');
-    events.forEach(event => grid.appendChild(createEventCard(event)));
+
+    function clearSearch() {
+      if (searchInput) searchInput.value = '';
+      document.querySelectorAll('.ev-feature-card').forEach(c => c.style.display = '');
+      const comingSoon = document.querySelector('.ev-coming-soon');
+      if (comingSoon) comingSoon.style.display = '';
+      const grid = document.getElementById('eventsGrid');
+      if (grid) {
+        grid.innerHTML = '';
+        EventsData.getAll().forEach(event => grid.appendChild(createEventCard(event)));
+      }
+    }
+
+    searchBtn?.addEventListener('click', doSearch);
+    searchInput?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    clearBtn?.addEventListener('click', clearSearch);
   }
 
   function createEventCard(event) {
@@ -76,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            <span>${Utils.formatDate(event.date)} at ${Utils.formatTime(event.time)}</span>
+            <span>${Utils.formatDate(event.date)} · ${Utils.formatTime(event.time)}</span>
           </div>
           <div class="event-card__meta-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -102,33 +108,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     card.addEventListener('click', () => window.location.href = `event.html?id=${event.id}`);
     return card;
-  }
-
-  /* ── Search ────────────────────────────────────────────────────────── */
-  function initSearch() {
-    const searchInput = document.getElementById('heroSearch');
-    const searchBtn   = document.getElementById('heroSearchBtn');
-    const clearBtn    = document.getElementById('clearSearchBtn');
-
-    function doSearch() {
-      const query = searchInput?.value.trim();
-      document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
-      resetCategoryFilter();
-      renderEvents(query ? EventsData.search(query) : EventsData.getAll());
-    }
-
-    searchBtn?.addEventListener('click', doSearch);
-    searchInput?.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-    clearBtn?.addEventListener('click', () => {
-      if (searchInput) searchInput.value = '';
-      renderEvents(EventsData.getAll());
-      resetCategoryFilter();
-    });
-  }
-
-  function resetCategoryFilter() {
-    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-filter="all"]')?.classList.add('active');
   }
 
   /* ── Newsletter ─────────────────────────────────────────────────────── */

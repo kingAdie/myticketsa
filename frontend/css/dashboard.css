@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA — Dashboard v2 (dashboard.css)
+﻿/* ================================================
+   TicketsSA Dashboard v2 (dashboard.css)
    Aligned with global design system (styles.css)
    ================================================ */
 
@@ -160,7 +160,7 @@ body { background: var(--bg-1); }
 
 
 /* ══════════════════════════════════════════════
-   OVERVIEW — Quick action cards
+   OVERVIEW Quick action cards
    ══════════════════════════════════════════════ */
 .dash-quick-actions {
   display: grid;
@@ -247,7 +247,7 @@ body { background: var(--bg-1); }
 
 
 /* ══════════════════════════════════════════════
-   FORMS — shared
+   FORMS shared
    ══════════════════════════════════════════════ */
 .dash-form { margin-top: var(--s3); }
 
@@ -354,7 +354,7 @@ body { background: var(--bg-1); }
 
 
 /* ══════════════════════════════════════════════
-   EVENT FORM — type selector tabs
+   EVENT FORM type selector tabs
    ══════════════════════════════════════════════ */
 .form-type-tabs {
   display: flex;
@@ -565,7 +565,7 @@ body { background: var(--bg-1); }
 }
 
 /* ══════════════════════════════════════════════
-   SECTION HEAD ROW — title + back button
+   SECTION HEAD ROW title + back button
    ══════════════════════════════════════════════ */
 .dash-head-row {
   display: flex;
@@ -696,7 +696,7 @@ body { background: var(--bg-1); }
   color: var(--text-3);
 }
 
-/* Ticket rows — override existing .tt-row */
+/* Ticket rows override existing .tt-row */
 .tt-row {
   display: grid !important;
   grid-template-columns: 1fr 120px 100px 36px !important;
@@ -720,7 +720,7 @@ body { background: var(--bg-1); }
 }
 
 /* ══════════════════════════════════════════════
-   EQUIPMENT — new selected badge
+   EQUIPMENT new selected badge
    ══════════════════════════════════════════════ */
 .svc-selected-badge {
   display: flex;

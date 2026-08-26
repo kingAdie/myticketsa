@@ -1,5 +1,6 @@
 [build]
-  publish = "frontend"
+  publish   = "frontend"
+  functions = "netlify/functions"
 
 # ── Cache headers ────────────────────────────────────────
 [[headers]]
@@ -13,16 +14,143 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
+    X-Frame-Options       = "DENY"
     X-Content-Type-Options = "nosniff"
+    X-Robots-Tag          = "index, follow"
 
-# ── API proxy ────────────────────────────────────────────
-# Every /api/* request from the browser is handled by Netlify
-# and forwarded to Railway server-side — zero CORS issues.
+[[headers]]
+  for = "/dashboard.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/success.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/checkout.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ── Images: long cache ────────────────────────────────────
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Sitemap & robots ─────────────────────────────────────
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type  = "application/xml"
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type  = "text/plain"
+    Cache-Control = "public, max-age=86400"
+
+# ── www canonical redirect ────────────────────────────────
 [[redirects]]
-  from   = "/api/*"
-  to     = "https://myticketsa-production.up.railway.app/api/:splat"
-  status = 200
+  from   = "https://ticketssa.co.za/*"
+  to     = "https://www.ticketssa.co.za/:splat"
+  status = 301
   force  = true
+
+# ── Strip .html extension from all URLs (clean URLs) ──────
+[[redirects]]
+  from   = "/*.html"
+  to     = "/:splat"
+  status = 301
+  force  = true
+
+# ── Clean URL rewrites serve the right .html file ───────
+[[redirects]]
+  from = "/event"
+  to   = "/event.html"
+  status = 200
+
+[[redirects]]
+  from = "/events"
+  to   = "/events.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/checkout"
+  to   = "/checkout.html"
+  status = 200
+
+[[redirects]]
+  from = "/success"
+  to   = "/success.html"
+  status = 200
+
+[[redirects]]
+  from = "/organiser"
+  to   = "/organiser.html"
+  status = 200
+
+[[redirects]]
+  from = "/my-tickets"
+  to   = "/my-tickets.html"
+  status = 200
+
+[[redirects]]
+  from = "/auth-callback"
+  to   = "/auth-callback.html"
+  status = 200
+
+[[redirects]]
+  from = "/accommodations"
+  to   = "/accommodations.html"
+  status = 200
+
+[[redirects]]
+  from = "/accommodation"
+  to   = "/accommodation.html"
+  status = 200
+
+[[redirects]]
+  from = "/empire-travel"
+  to   = "/empire-travel.html"
+  status = 200
+
+[[redirects]]
+  from = "/mbombela-hospitality"
+  to   = "/mbombela-hospitality.html"
+  status = 200
+
+[[redirects]]
+  from = "/services"
+  to   = "/services/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/services/service"
+  to   = "/services/service.html"
+  status = 200
+
+# ── 404 fallback ──────────────────────────────────────────
+[[redirects]]
+  from   = "/*"
+  to     = "/404.html"
+  status = 404

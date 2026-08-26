@@ -1,5 +1,5 @@
-/* ================================================
-   MyTicketSA - Utility Module (utils.js)
+﻿/* ================================================
+   TicketsSA - Utility Module (utils.js)
    Shared helpers used across all pages
    ================================================ */
 
@@ -16,7 +16,7 @@ const Utils = (() => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
-      console.warn('MyTicketSA: localStorage write failed', e);
+      console.warn('TicketsSA: localStorage write failed', e);
     }
   }
 
@@ -30,7 +30,7 @@ const Utils = (() => {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : null;
     } catch (e) {
-      console.warn('MyTicketSA: localStorage read failed', e);
+      console.warn('TicketsSA: localStorage read failed', e);
       return null;
     }
   }
@@ -43,7 +43,7 @@ const Utils = (() => {
     try {
       localStorage.removeItem(key);
     } catch (e) {
-      console.warn('MyTicketSA: localStorage remove failed', e);
+      console.warn('TicketsSA: localStorage remove failed', e);
     }
   }
 
@@ -101,7 +101,9 @@ const Utils = (() => {
    * @returns {string} - "6:30 PM"
    */
   function formatTime(timeStr) {
+    if (!timeStr) return 'TBC';
     const [hours, minutes] = timeStr.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return 'TBC';
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHour = hours % 12 || 12;
     return `${displayHour}:${String(minutes).padStart(2, '0')} ${ampm}`;
@@ -254,13 +256,152 @@ const Utils = (() => {
     const toggle = document.querySelector('.navbar__toggle');
     const navbar = document.querySelector('.navbar');
     if (!toggle || !navbar) return;
-    toggle.addEventListener('click', () => {
-      navbar.classList.toggle('navbar--open');
+
+    const iconMenu  = toggle.querySelector('.icon-menu');
+    const iconClose = toggle.querySelector('.icon-close');
+
+    function setOpen(open) {
+      navbar.classList.toggle('navbar--open', open);
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      if (iconMenu)  iconMenu.style.display  = open ? 'none'  : 'block';
+      if (iconClose) iconClose.style.display = open ? 'block' : 'none';
+    }
+
+    toggle.addEventListener('click', () => setOpen(!navbar.classList.contains('navbar--open')));
+
+    // Close nav when a category link or button is clicked
+    document.querySelectorAll('.navbar__cats a, .navbar__cat').forEach(link => {
+      link.addEventListener('click', () => setOpen(false));
     });
-    // Close nav when a link is clicked
-    document.querySelectorAll('.navbar__links a').forEach(link => {
-      link.addEventListener('click', () => navbar.classList.remove('navbar--open'));
+    // Close nav when clicking outside
+    document.addEventListener('click', (e) => {
+      if (navbar.classList.contains('navbar--open') && !navbar.contains(e.target)) {
+        setOpen(false);
+      }
     });
+  }
+
+  /* ---------- Image URL optimisation (Cloudinary) ---------- */
+
+  /**
+   * Add Cloudinary delivery transformations to a URL.
+   * Non-Cloudinary URLs are returned unchanged.
+   * @param {string} src   - Original image URL
+   * @param {number} width - Target width in pixels (default 800)
+   * @returns {string}
+   */
+  function imgUrl(src, width = 800) {
+    if (!src || typeof src !== 'string') return src || '';
+    if (!src.includes('res.cloudinary.com')) return src;
+    const t = `q_auto,f_auto,w_${width},c_limit`;
+    return src.replace('/upload/', `/upload/${t}/`);
+  }
+
+  /* ---------- Client-side image compression ---------- */
+
+  /**
+   * Compress an image File using Canvas before upload.
+   * Returns a new File (png) that is smaller or the original if compression
+   * did not reduce the size.
+   * @param {File}   file
+   * @param {Object} [opts]
+   * @param {number} [opts.maxWidth=1920]
+   * @param {number} [opts.maxHeight=1920]
+   * @param {number} [opts.quality=0.82]  - png quality 0–1
+   * @returns {Promise<File>}
+   */
+  async function compressImage(file, { maxWidth = 1920, maxHeight = 1920, quality = 0.82 } = {}) {
+    if (!file || !file.type.startsWith('image/')) return file;
+    if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onerror = () => resolve(file);
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onerror = () => resolve(file);
+        img.onload = () => {
+          let w = img.naturalWidth;
+          let h = img.naturalHeight;
+
+          // Scale down proportionally
+          if (w > maxWidth)  { h = Math.round(h * maxWidth  / w); w = maxWidth;  }
+          if (h > maxHeight) { w = Math.round(w * maxHeight / h); h = maxHeight; }
+
+          const canvas = document.createElement('canvas');
+          canvas.width  = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, w, h);
+
+          const outType = file.type === 'image/png' ? 'image/png' : 'image/png';
+          const outQuality = outType === 'image/png' ? quality : undefined;
+
+          canvas.toBlob((blob) => {
+            if (!blob || blob.size >= file.size) {
+              resolve(file); // compression didn't help keep original
+            } else {
+              const ext  = outType === 'image/png' ? '.png' : '.jpg';
+              const name = file.name.replace(/\.[^.]+$/, ext);
+              resolve(new File([blob], name, { type: outType }));
+            }
+          }, outType, outQuality);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /* ---------- Upload to /api/upload → Cloudinary ---------- */
+
+  const UPLOAD_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const UPLOAD_MAX_MB  = 5;
+
+  /**
+   * Compress then upload a File to /api/upload, returning the Cloudinary URL.
+   * @param {File}   file
+   * @param {string} [folder='uploads']
+   * @returns {Promise<string>}  Cloudinary secure URL
+   */
+  async function uploadImage(file, folder = 'uploads') {
+    if (!UPLOAD_ALLOWED.includes(file.type)) {
+      throw new Error('Only JPG, PNG, WebP images are allowed.');
+    }
+    if (file.size > UPLOAD_MAX_MB * 1024 * 1024) {
+      throw new Error(`Image must be under ${UPLOAD_MAX_MB} MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
+    }
+
+    // Client-side compress first
+    const compressed = await compressImage(file);
+
+    // Read as base64 data URL
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Failed to read file.'));
+      reader.onload  = (e) => resolve(e.target.result);
+      reader.readAsDataURL(compressed);
+    });
+
+    // POST to backend
+    const apiBase = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
+    const headers = { 'Content-Type': 'application/json' };
+    if (typeof Auth !== 'undefined' && typeof Auth.headers === 'function') {
+      Object.assign(headers, Auth.headers());
+    }
+
+    const res = await fetch(`${apiBase}/api/upload`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ data: base64, filename: compressed.name, mimeType: compressed.type, folder }),
+    });
+
+    const json = await res.json().catch(() => ({ success: false, error: 'Server returned invalid response.' }));
+    if (!json.success) throw new Error(json.error || 'Upload failed.');
+
+    return json.url;
   }
 
   /* ---------- Public API ---------- */
@@ -280,6 +421,9 @@ const Utils = (() => {
     setText,
     setHTML,
     initMobileNav,
+    imgUrl,
+    compressImage,
+    uploadImage,
   };
 
 })();
