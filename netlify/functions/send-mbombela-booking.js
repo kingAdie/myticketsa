@@ -140,9 +140,8 @@ function buildBookingEmail({ firstName, lastName, email, phone, guests, message,
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
       <tr>
         <td align="center">
-          <div style="width:64px;height:64px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);
-                      border-radius:50%;display:inline-flex;align-items:center;justify-content:center;line-height:64px;text-align:center;">
-            <span style="font-size:26px;line-height:1;">🏟️</span>
+          <div style="display:inline-block;background:#ffffff;border-radius:14px;padding:14px 18px;">
+            <img src="https://ticketssa.co.za/images/mbombela_logo.png" width="64" height="81" alt="Mbombela Stadium" border="0" style="display:block;width:64px;height:81px;"/>
           </div>
         </td>
       </tr>
