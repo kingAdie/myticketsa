@@ -64,13 +64,6 @@
     Content-Type  = "text/plain"
     Cache-Control = "public, max-age=86400"
 
-# ── www canonical redirect ────────────────────────────────
-[[redirects]]
-  from   = "https://ticketssa.co.za/*"
-  to     = "https://www.ticketssa.co.za/:splat"
-  status = 301
-  force  = true
-
 # ── Strip .html extension from all URLs (clean URLs) ──────
 [[redirects]]
   from   = "/*.html"

@@ -4,7 +4,11 @@ const crypto = require('crypto');
 
 const SUPABASE_URL = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
 const REDIRECT_URL = 'https://www.ticketssa.co.za/auth-callback.html';
-const FROM         = 'TicketsSA <support@ticketssa.co.za>';
+/* Resend has support@ticketssa.co.za's root domain unverified — only the
+   mail. subdomain is verified, so sends must go out from there. Replies
+   still land in the real support inbox via reply_to. */
+const FROM         = 'TicketsSA <support@mail.ticketssa.co.za>';
+const REPLY_TO     = 'support@ticketssa.co.za';
 const MAX_CLOCK_SKEW_SECONDS = 180;
 
 exports.handler = async (event) => {
@@ -88,7 +92,7 @@ exports.handler = async (event) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type':  'application/json',
       },
-      body: JSON.stringify({ from: FROM, to: [email], subject, html }),
+      body: JSON.stringify({ from: FROM, to: [email], subject, html, reply_to: REPLY_TO }),
     });
 
     if (!res.ok) {

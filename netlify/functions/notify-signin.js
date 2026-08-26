@@ -1,4 +1,7 @@
-const FROM    = 'TicketsSA <support@ticketssa.co.za>';
+/* Resend has support@ticketssa.co.za's root domain unverified — only the
+   mail. subdomain is verified, so sends must go out from there. Replies
+   still land in the real support inbox via reply_to. */
+const FROM    = 'TicketsSA <support@mail.ticketssa.co.za>';
 const SUPPORT = 'support@ticketssa.co.za';
 
 exports.handler = async (event) => {
@@ -26,7 +29,7 @@ exports.handler = async (event) => {
     const res = await fetch('https://api.resend.com/emails', {
       method:  'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: FROM, to: [to], subject, html }),
+      body: JSON.stringify({ from: FROM, to: [to], subject, html, reply_to: SUPPORT }),
     });
     if (!res.ok) throw new Error(await res.text());
   };

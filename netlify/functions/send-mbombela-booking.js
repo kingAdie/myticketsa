@@ -1,6 +1,10 @@
 'use strict';
 
-const FROM = 'TicketsSA <support@ticketssa.co.za>';
+/* Resend has support@ticketssa.co.za's root domain unverified — only the
+   mail. subdomain is verified, so sends must go out from there. Replies
+   still land in the real support inbox via reply_to. */
+const FROM     = 'TicketsSA <support@mail.ticketssa.co.za>';
+const REPLY_TO = 'support@ticketssa.co.za';
 
 /* TEMP: every booking also CCs this inbox as a stand-in admin notification
    address while the Mbombela hospitality flow is being verified. Swap to the
@@ -52,9 +56,10 @@ exports.handler = async (event) => {
         'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        from:    FROM,
-        to:      [email, ADMIN_NOTIFICATION_EMAIL],
-        subject: `Mbombela VIP Hospitality Booking Request — ${ref}`,
+        from:     FROM,
+        to:       [email, ADMIN_NOTIFICATION_EMAIL],
+        reply_to: REPLY_TO,
+        subject:  `Mbombela VIP Hospitality Booking Request — ${ref}`,
         html,
       }),
     });
