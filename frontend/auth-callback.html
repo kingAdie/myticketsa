@@ -273,6 +273,29 @@
       </div>`;
   }
 
+  /* ── Show: email not yet confirmed ───────────────────
+     Belt-and-suspenders guard: even if a session token was
+     issued, never sign the user in unless Supabase has actually
+     stamped email_confirmed_at (Google/OAuth users get this
+     automatically; only unconfirmed password sign-ups hit this). */
+  function showNotConfirmed(sb, email) {
+    sb.auth.signOut().catch(() => {});
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    history.replaceState(null, '', window.location.pathname);
+    wrap.innerHTML = `
+      <div class="cb-icon cb-icon--error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+      </div>
+      <h1 class="cb-title">Confirm Your Email</h1>
+      <p class="cb-sub">${email ? `We sent a confirmation link to <strong style="color:var(--text)">${esc(email)}</strong>. ` : ''}Please click the link in that email before signing in.</p>
+      <div class="cb-actions"><a href="index.html" class="btn btn-primary btn-lg">Back to Home</a></div>`;
+  }
+
+  function isConfirmed(authUser) {
+    return !!(authUser && (authUser.email_confirmed_at || authUser.confirmed_at));
+  }
+
   /* ════════════════════════════════════════════════
      MAIN FLOW
   ════════════════════════════════════════════════ */
@@ -287,6 +310,7 @@
       const sb  = sup.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const { data, error } = await sb.auth.exchangeCodeForSession(code);
       if (error || !data.session) { showLinkExpired(); return; }
+      if (!isConfirmed(data.user)) { showNotConfirmed(sb, data.user?.email); return; }
       saveAndRedirect(data.session, data.user);
     } catch (_) { showLinkExpired(); }
     return;
@@ -323,6 +347,7 @@
     if (error || !data.session) {
       showConfirmedManual(email, name); return;
     }
+    if (!isConfirmed(data.user)) { showNotConfirmed(sb, data.user?.email || email); return; }
     saveAndRedirect(data.session, data.user);
   } catch (_) {
     showConfirmedManual(email, name);
