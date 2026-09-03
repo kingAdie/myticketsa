@@ -19,7 +19,7 @@ async function register(req, res, next) {
     const userRole = ['attendee', 'organiser'].includes(role) ? role : 'attendee';
 
     // Create the auth user via the admin API so we can set app_metadata.role
-    // (app_metadata is server-side only — clients cannot write to it)
+    // (app_metadata is server-side only clients cannot write to it)
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email:         email.trim().toLowerCase(),
       password,
@@ -60,7 +60,7 @@ async function register(req, res, next) {
     });
 
     if (signInErr || !session?.session?.access_token) {
-      // Account created but sign-in failed — return partial success so the
+      // Account created but sign-in failed return partial success so the
       // frontend can redirect the user to log in manually
       return res.status(201).json({
         success:  true,

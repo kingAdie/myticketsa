@@ -48,7 +48,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     Utils.setText('#breadcrumbTitle', event.title);
     Utils.setText('#eventTitle',      event.title);
     Utils.setText('#eventDate',       Utils.formatDate(event.date));
-    Utils.setText('#eventTime',       `${Utils.formatTime(event.time)} – ${Utils.formatTime(event.endTime || event.time)}`);
+    // Listings without a published start time show one clear line rather than "TBC – TBC".
+    Utils.setText('#eventTime', event.time
+      ? `${Utils.formatTime(event.time)} – ${Utils.formatTime(event.endTime || event.time)}`
+      : 'Time to be confirmed');
     Utils.setText('#eventLocation',   event.location);
     Utils.setText('#eventCity',       [event.city, event.province].filter(Boolean).join(', '));
     Utils.setText('#eventOrganiser',  event.organiser || '—');

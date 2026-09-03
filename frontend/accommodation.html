@@ -23,10 +23,12 @@
         <span class="w">tickets</span><span class="g">sa</span>
       </div>
     </a>
-    <nav class="navbar__cats">
-      <a class="navbar__cat" href="index.html">Events</a>
-      <!-- <a class="navbar__cat active" href="accommodations.html">Travel &amp; Stay</a> -->
-      <a class="navbar__cat" href="services/index.html">Event Equipment</a>
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
     </nav>
     <div class="navbar__actions" id="navbarActions"></div>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
@@ -264,7 +266,10 @@
                 <button type="submit" class="acc-booking-submit" id="bkSubmitBtn">
                   Send Booking Enquiry
                 </button>
-                <p class="acc-booking-fine">The host will confirm and arrange payment directly with you.</p>
+                <p class="acc-booking-fine">
+                  <strong>You won't be charged now.</strong> This sends your dates to the host, who confirms
+                  availability and arranges payment with you directly — usually within 24 hours.
+                </p>
               </form>
 
               <!-- Success state (shown after submit) -->

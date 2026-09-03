@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   Utils.initMobileNav();
 
   let allEvents = [];
-  let ticketTypeCount = 1;
 
   // ── Load events ──────────────────────────────────────────────────────
   async function loadEvents() {
@@ -46,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       body.innerHTML = `
         <div class="org-empty">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <p>No events yet. Click <strong>Create Event</strong> to get started.</p>
+          <p>You haven't listed an event yet. Click <strong>Create Listing</strong> above to sell your first tickets.</p>
         </div>`;
       return;
     }
@@ -78,7 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
 
     // Attach edit/delete handlers
-    body.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
+    body.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => {
+      // One canonical event form lives in the staged wizard now.
+      window.location.href = `sell-event.html?edit=${encodeURIComponent(btn.dataset.id)}`;
+    }));
     body.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteEvent(btn.dataset.id)));
   }
 
@@ -88,172 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTable(val ? allEvents.filter(ev => ev.status === val) : allEvents);
   });
 
-  // ── Modal helpers ─────────────────────────────────────────────────────
-  function openModal() {
-    document.getElementById('eventModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal() {
-    document.getElementById('eventModal').classList.remove('open');
-    document.body.style.overflow = '';
-    document.getElementById('eventForm').reset();
-    document.getElementById('editEventId').value = '';
-    document.getElementById('ticketTypesContainer').innerHTML = '';
-    document.getElementById('modalError').classList.add('hidden');
-    // Reset payment type visibility to default (link)
-    const payLinkGrp = document.getElementById('payLinkGroup');
-    const payBankGrp = document.getElementById('payBankGroup');
-    if (payLinkGrp) payLinkGrp.style.display = '';
-    if (payBankGrp) payBankGrp.style.display = 'none';
-    ticketTypeCount = 1;
-    Utils.setText('#modalTitle',  'Create New Event');
-    Utils.setText('#saveBtnText', 'Create Event');
-  }
-
-  document.getElementById('newEventBtn')    .addEventListener('click', () => { closeModal(); addTicketTypeRow(); openModal(); });
-  document.getElementById('closeEventModal').addEventListener('click', closeModal);
-  document.getElementById('cancelEventBtn') .addEventListener('click', closeModal);
-  document.getElementById('eventModal')     .addEventListener('click', e => { if (e.target.id === 'eventModal') closeModal(); });
-
-  // ── Ticket type rows ─────────────────────────────────────────────────
-  function addTicketTypeRow(tt = null) {
-    const container = document.getElementById('ticketTypesContainer');
-    const idx = ticketTypeCount++;
-    const row = document.createElement('div');
-    row.className = 'tt-row';
-    row.dataset.idx = idx;
-    row.innerHTML = `
-      <div class="form-group" style="margin:0;">
-        <input type="text" class="form-input tt-name" placeholder="Type name (e.g. VIP)" value="${tt?.name || ''}"/>
-      </div>
-      <div class="form-group" style="margin:0;">
-        <input type="number" class="form-input tt-price" placeholder="Price (R)" min="0" value="${tt?.price ?? ''}"/>
-      </div>
-      <div class="form-group" style="margin:0;">
-        <input type="number" class="form-input tt-avail" placeholder="Qty" min="1" value="${tt?.available ?? ''}"/>
-      </div>
-      <button type="button" class="tt-remove" title="Remove">×</button>`;
-    row.querySelector('.tt-remove').addEventListener('click', () => row.remove());
-    container.appendChild(row);
-  }
-
-  document.getElementById('addTicketTypeBtn').addEventListener('click', () => addTicketTypeRow());
-
-  // ── Open edit modal ───────────────────────────────────────────────────
-  function openEditModal(id) {
-    const ev = allEvents.find(e => e.id === id);
-    if (!ev) return;
-
-    document.getElementById('editEventId').value = ev.id;
-    document.getElementById('evTitle')      .value = ev.title;
-    document.getElementById('evCategory')   .value = ev.category;
-    document.getElementById('evDate')       .value = ev.date;
-    document.getElementById('evTime')       .value = ev.time;
-    document.getElementById('evEndTime')    .value = ev.endTime || '';
-    document.getElementById('evLocation')   .value = ev.location;
-    document.getElementById('evCity')       .value = ev.city;
-    document.getElementById('evProvince')   .value = ev.province || '';
-    document.getElementById('evDescription').value = ev.description;
-    // image is managed by admin only no field for organisers
-    document.getElementById('evPrice')      .value = ev.price;
-    document.getElementById('evTags')       .value = (ev.tags || []).join(', ');
-
-    // New payment / address fields
-    const addrEl = document.getElementById('evAddress');
-    if (addrEl) addrEl.value = ev.address || '';
-    const payType = ev.paymentType || 'free';
-    document.querySelectorAll('input[name="evPayType"]').forEach(r => { r.checked = r.value === payType; });
-    const payLinkGroupEl = document.getElementById('payLinkGroup');
-    const payBankGroupEl = document.getElementById('payBankGroup');
-    if (payLinkGroupEl) payLinkGroupEl.style.display = payType === 'link' ? '' : 'none';
-    if (payBankGroupEl) payBankGroupEl.style.display = payType === 'bank' ? 'grid' : 'none';
-    const evPayLinkEl = document.getElementById('evPayLink');
-    if (evPayLinkEl) evPayLinkEl.value = ev.paymentLink || '';
-    const evBankNameEl = document.getElementById('evBankName');
-    if (evBankNameEl) evBankNameEl.value = ev.bankName || '';
-    const evAccHolderEl = document.getElementById('evAccountHolder');
-    if (evAccHolderEl) evAccHolderEl.value = ev.accountHolder || '';
-    const evAccNumEl = document.getElementById('evAccountNumber');
-    if (evAccNumEl) evAccNumEl.value = ev.accountNumber || '';
-    const evBranchEl = document.getElementById('evBranchCode');
-    if (evBranchEl) evBranchEl.value = ev.branchCode || '';
-
-    // Ticket types
-    document.getElementById('ticketTypesContainer').innerHTML = '';
-    ticketTypeCount = 1;
-    (ev.ticketTypes || []).forEach(tt => addTicketTypeRow(tt));
-    if (!ev.ticketTypes?.length) addTicketTypeRow();
-
-    Utils.setText('#modalTitle',  'Edit Event');
-    Utils.setText('#saveBtnText', 'Save Changes');
-    openModal();
-  }
-
-  // ── Form submit ───────────────────────────────────────────────────────
-  document.getElementById('eventForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const saveBtn  = document.getElementById('saveEventBtn');
-    const editId   = document.getElementById('editEventId').value;
-    const isEdit   = !!editId;
-
-    // Collect ticket types
-    const ticketTypes = [];
-    document.querySelectorAll('.tt-row').forEach((row, i) => {
-      const name  = row.querySelector('.tt-name') .value.trim();
-      const price = parseFloat(row.querySelector('.tt-price').value);
-      const avail = parseInt(row.querySelector('.tt-avail').value, 10);
-      if (name) ticketTypes.push({
-        id:          `TT-${i + 1}`,
-        name,
-        price:       isNaN(price) ? 0 : price,
-        available:   isNaN(avail) ? 100 : avail,
-        description: name,
-      });
-    });
-
-    const payload = {
-      title:       document.getElementById('evTitle')      .value.trim(),
-      category:    document.getElementById('evCategory')   .value,
-      date:        document.getElementById('evDate')       .value,
-      time:        document.getElementById('evTime')       .value,
-      endTime:     document.getElementById('evEndTime')    .value,
-      location:    document.getElementById('evLocation')   .value.trim(),
-      city:        document.getElementById('evCity')       .value.trim(),
-      province:    document.getElementById('evProvince')   .value,
-      description: document.getElementById('evDescription').value.trim(),
-      // image omitted backend will keep existing image or use default
-      price:       parseFloat(document.getElementById('evPrice').value) || 0,
-      tags:        document.getElementById('evTags').value.split(',').map(t => t.trim()).filter(Boolean),
-      ticketTypes,
-      address:       document.getElementById('evAddress')?.value.trim() || '',
-      paymentType:   document.querySelector('input[name="evPayType"]:checked')?.value || 'free',
-      paymentLink:   document.getElementById('evPayLink')?.value.trim() || '',
-      bankName:      document.getElementById('evBankName')?.value.trim() || '',
-      accountHolder: document.getElementById('evAccountHolder')?.value.trim() || '',
-      accountNumber: document.getElementById('evAccountNumber')?.value.trim() || '',
-      branchCode:    document.getElementById('evBranchCode')?.value.trim() || '',
-    };
-
-    saveBtn.disabled = true;
-    Utils.setText('#saveBtnText', isEdit ? 'Saving…' : 'Creating…');
-
-    try {
-      if (isEdit) {
-        await SupabaseAPI.updateEvent(editId, payload);
-      } else {
-        await SupabaseAPI.createEvent(payload);
-      }
-      closeModal();
-      Utils.showToast(isEdit ? 'Event updated!' : 'Event created! Pending admin review.', 'success');
-      await loadEvents();
-    } catch (err) {
-      const errEl = document.getElementById('modalError');
-      errEl.textContent = err.message || 'Could not save event. Please try again.';
-      errEl.classList.remove('hidden');
-      saveBtn.disabled = false;
-      Utils.setText('#saveBtnText', isEdit ? 'Save Changes' : 'Create Event');
-    }
-  });
+  // ── Event create/edit lives in the staged wizard now ─────────────────
+  //    sell-event.html (create)  ·  sell-event.html?edit=<id> (edit)
+  //    The old in-page modal and its form handler were removed with it.
 
   // ── Delete event ──────────────────────────────────────────────────────
   async function deleteEvent(id) {
@@ -270,15 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Payment type toggle
-  document.querySelectorAll('input[name="evPayType"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      document.getElementById('payLinkGroup').style.display = this.value === 'link' ? '' : 'none';
-      document.getElementById('payBankGroup').style.display = this.value === 'bank' ? 'grid' : 'none';
-    });
-  });
-
   // ── Bootstrap ──────────────────────────────────────────────────────────
   await loadEvents();
-  addTicketTypeRow(); // Default 1 ticket type in blank form
 });

@@ -1,6 +1,6 @@
 /**
  * middleware/errorHandler.js
- * Centralised Express error handler — must be registered LAST.
+ * Centralised Express error handler must be registered LAST.
  */
 'use strict';
 

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sell on TicketsSA — List Events, Stays, Experiences &amp; More</title>
+  <meta name="description" content="List your event, accommodation, experience, equipment or merchandise on TicketsSA and reach customers across South Africa."/>
+  <link rel="canonical" href="https://ticketssa.co.za/sell"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
+    </nav>
+
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+  <section class="mk-hero">
+    <div class="container">
+      <div class="mk-hero__eyebrow">Sell on TicketsSA</div>
+      <h1 class="mk-hero__title">Reach people planning<br/>their next experience</h1>
+      <p class="mk-hero__sub">
+        Whether you run events, a guesthouse, a tour company, an equipment hire business or a merch line
+        one account puts you in front of customers across South Africa.
+      </p>
+      <div class="mk-hero__cta" id="sellCta"></div>
+    </div>
+  </section>
+
+  <section class="container">
+    <div class="mk-steps">
+      <h2 class="section-title" style="margin-bottom:26px">How it works</h2>
+
+      <div class="mk-step">
+        <span class="mk-step__num">1</span>
+        <div>
+          <div class="mk-step__title">Create your free account</div>
+          <div class="mk-step__body">Takes under a minute. You only need an email address to start.</div>
+        </div>
+      </div>
+
+      <div class="mk-step">
+        <span class="mk-step__num">2</span>
+        <div>
+          <div class="mk-step__title">We switch on your seller access</div>
+          <div class="mk-step__body">
+            A quick manual check keeps the marketplace trustworthy for buyers. Request access below and our
+            team enables your account usually within one working day. You will get an email as soon as it is on.
+          </div>
+        </div>
+      </div>
+
+      <div class="mk-step">
+        <span class="mk-step__num">3</span>
+        <div>
+          <div class="mk-step__title">Create your listing</div>
+          <div class="mk-step__body">
+            Pick what you are listing and answer only the questions that apply to it. No event fields on an
+            accommodation listing. Save a draft at any point and finish later.
+          </div>
+        </div>
+      </div>
+
+      <div class="mk-step">
+        <span class="mk-step__num">4</span>
+        <div>
+          <div class="mk-step__title">Go live and get paid directly</div>
+          <div class="mk-step__body">
+            Once we approve your listing it appears on TicketsSA. Buyers pay you straight through your own
+            payment link or bank details TicketsSA does not sit between you and your money.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title" style="margin-bottom:20px">What you can list</h2>
+    <div class="mk-what">
+      <div class="mk-what__item"><span class="mk-what__icon">🎟️</span><span class="mk-what__text">Events &amp; tickets</span></div>
+      <div class="mk-what__item"><span class="mk-what__icon">🏨</span><span class="mk-what__text">Accommodation</span></div>
+      <div class="mk-what__item"><span class="mk-what__icon">🌍</span><span class="mk-what__text">Experiences &amp; tours</span></div>
+      <div class="mk-what__item"><span class="mk-what__icon">🔊</span><span class="mk-what__text">Equipment hire</span></div>
+      <div class="mk-what__item"><span class="mk-what__icon">🛍️</span><span class="mk-what__text">Merchandise</span></div>
+    </div>
+
+    <div class="mk-panel" id="accessPanel"></div>
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/seller-apply.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  Auth.updateNavbar();
+  Utils.initMobileNav();
+
+  var cta   = document.getElementById('sellCta');
+  var panel = document.getElementById('accessPanel');
+  var user  = Auth.isLoggedIn() ? Auth.getUser() : null;
+  var role  = user && user.role;
+
+  /* ── Already a seller ── */
+  if (role === 'organiser' || role === 'admin') {
+    cta.innerHTML =
+      '<a class="btn btn-primary btn-lg" href="create-listing.html">+ Create a listing</a>' +
+      '<a class="btn btn-secondary btn-lg" href="dashboard.html">Go to Seller Hub</a>';
+    panel.innerHTML =
+      '<div class="mk-panel__title">You are all set</div>' +
+      '<div class="mk-panel__body">Your account already has seller access. Head to your Seller Hub to manage ' +
+      'listings, or start a new one any time.</div>';
+    return;
+  }
+
+  /* ── Signed in, not yet a seller ── */
+  if (user) {
+    cta.innerHTML = '<button class="btn btn-primary btn-lg" id="requestBtn">Request seller access</button>';
+    panel.innerHTML =
+      '<div class="mk-panel__title">Request seller access</div>' +
+      '<div class="mk-panel__body">' +
+        'You are signed in as <strong>' + escapeHtml(user.email || '') + '</strong>. ' +
+        'Tell us roughly what you want to list and we will switch your account over usually within one working day.' +
+        '<div class="form-group" style="margin-top:16px">' +
+          '<label class="form-label" for="sellerWhat">What do you want to list?</label>' +
+          '<select class="form-select" id="sellerWhat">' +
+            '<option value="Events">Events and tickets</option>' +
+            '<option value="Accommodation">Accommodation</option>' +
+            '<option value="Experiences">Experiences and tours</option>' +
+            '<option value="Equipment">Equipment hire</option>' +
+            '<option value="Merchandise">Merchandise</option>' +
+            '<option value="Multiple">A mix of these</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="form-group" style="margin-top:14px">' +
+          '<label class="form-label" for="sellerPhone">Contact number</label>' +
+          '<input class="form-input" id="sellerPhone" type="tel" placeholder="e.g. 082 123 4567"/>' +
+        '</div>' +
+        '<div class="form-group" style="margin-top:14px">' +
+          '<label class="form-label" for="sellerAbout">Tell us about your business (optional)</label>' +
+          '<textarea class="form-textarea" id="sellerAbout" rows="3" placeholder="e.g. We run a 12-room guesthouse in Hazyview and host live music events."></textarea>' +
+        '</div>' +
+        '<button class="btn btn-primary" id="requestBtn2" style="margin-top:16px">Send request</button>' +
+      '</div>';
+
+    var submitting = false;
+    function sendRequest() {
+      if (submitting) return;
+      var phone = (document.getElementById('sellerPhone') || {}).value || '';
+      if (!phone.trim()) {
+        Utils.showToast('Please add a contact number so we can reach you.', 'error');
+        return;
+      }
+      submitting = true;
+      var btns = [document.getElementById('requestBtn'), document.getElementById('requestBtn2')].filter(Boolean);
+      btns.forEach(function (b) { b.disabled = true; b.textContent = 'Sending…'; });
+
+      SellerApply.submit('seller_access', {
+        title:        'Seller access request',
+        contactName:  [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email,
+        contactEmail: user.email,
+        contactPhone: phone.trim(),
+        details: SellerApply.detailsFrom([
+          ['Wants to list', (document.getElementById('sellerWhat') || {}).value],
+          ['About',         (document.getElementById('sellerAbout') || {}).value],
+          ['Account ID',    user.id],
+        ]),
+      }).then(function () {
+        panel.innerHTML =
+          '<div class="mk-panel__title">Request sent ✅</div>' +
+          '<div class="mk-panel__body">Thanks — we have your request and a confirmation is on its way to your inbox. ' +
+          'We will email you as soon as your seller access is switched on, usually within one working day.</div>';
+        cta.innerHTML = '<a class="btn btn-secondary btn-lg" href="index.html">Keep browsing</a>';
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }).catch(function (err) {
+        submitting = false;
+        btns.forEach(function (b) { b.disabled = false; b.textContent = 'Send request'; });
+        Utils.showToast(err.message || 'Could not send that. Please try again.', 'error', 6000);
+      });
+    }
+
+    document.getElementById('requestBtn').addEventListener('click', function () {
+      document.getElementById('accessPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('sellerPhone').focus();
+    });
+    document.getElementById('requestBtn2').addEventListener('click', sendRequest);
+    return;
+  }
+
+  /* ── Logged out ── */
+  cta.innerHTML =
+    '<button class="btn btn-primary btn-lg" id="signupBtn">Create a free account</button>' +
+    '<button class="btn btn-secondary btn-lg" id="loginBtn">I already have one</button>';
+  panel.innerHTML =
+    '<div class="mk-panel__title">Already selling elsewhere?</div>' +
+    '<div class="mk-panel__body">Create an account first, then request seller access from this page and we will ' +
+    'get you set up. Questions? Email <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</div>';
+
+  document.getElementById('signupBtn').addEventListener('click', function () { Auth.openModal('signup'); });
+  document.getElementById('loginBtn').addEventListener('click',  function () { Auth.openModal('login'); });
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  window.escapeHtml = escapeHtml;
+});
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

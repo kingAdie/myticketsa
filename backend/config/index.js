@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 require('dotenv').config();
 
 const config = {
@@ -29,7 +29,7 @@ const config = {
     secure:  process.env.EMAIL_SECURE  === 'true',
     user:    process.env.EMAIL_USER    || '',
     pass:    process.env.EMAIL_PASS    || '',
-    from:    process.env.EMAIL_FROM    || 'MyTicketSA <noreply@myticketsa.co.za>',
+    from:    process.env.EMAIL_FROM    || 'TicketsSA <noreply@TicketsSA.co.za>',
     preview: process.env.EMAIL_PREVIEW !== 'false',
   },
 

@@ -77,9 +77,90 @@
   to   = "/event.html"
   status = 200
 
+# /events had pointed at events.html, which does not exist it 404'd.
+# Browse is the real listing page.
 [[redirects]]
   from = "/events"
-  to   = "/events.html"
+  to   = "/browse.html"
+  status = 200
+
+[[redirects]]
+  from = "/top32-venda"
+  to   = "/top32-venda.html"
+  status = 200
+
+[[redirects]]
+  from = "/browse"
+  to   = "/browse.html"
+  status = 200
+
+[[redirects]]
+  from = "/experiences"
+  to   = "/browse.html?category=Travel%20%26%20Tours"
+  status = 200
+
+# ── Selling ───────────────────────────────────────────────
+[[redirects]]
+  from = "/sell"
+  to   = "/sell.html"
+  status = 200
+
+[[redirects]]
+  from = "/create-listing"
+  to   = "/create-listing.html"
+  status = 200
+
+# Pretty /sell/<category> URLs served by the flat sell-<category>.html files
+[[redirects]]
+  from = "/sell/event"
+  to   = "/sell-event.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell/accommodation"
+  to   = "/sell-accommodation.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell/experience"
+  to   = "/sell-experience.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell/equipment"
+  to   = "/sell-equipment.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell/merchandise"
+  to   = "/sell-merchandise.html"
+  status = 200
+
+# The strip-.html rule above rewrites sell-event.html → /sell-event,
+# so those bare paths need to resolve too.
+[[redirects]]
+  from = "/sell-event"
+  to   = "/sell-event.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell-accommodation"
+  to   = "/sell-accommodation.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell-experience"
+  to   = "/sell-experience.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell-equipment"
+  to   = "/sell-equipment.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell-merchandise"
+  to   = "/sell-merchandise.html"
   status = 200
 
 [[redirects]]

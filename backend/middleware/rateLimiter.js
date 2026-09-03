@@ -7,7 +7,7 @@
 const rateLimit = require('express-rate-limit');
 
 /**
- * authLimiter — strict limit on login / register endpoints.
+ * authLimiter strict limit on login / register endpoints.
  * 10 attempts per IP per 15 minutes, then locked for 15 min.
  */
 const authLimiter = rateLimit({
@@ -24,7 +24,7 @@ const authLimiter = rateLimit({
 });
 
 /**
- * apiLimiter — general API limit to prevent scraping / abuse.
+ * apiLimiter general API limit to prevent scraping / abuse.
  * 200 requests per IP per minute.
  */
 const apiLimiter = rateLimit({

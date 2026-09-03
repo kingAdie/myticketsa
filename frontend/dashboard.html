@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
   <link rel="stylesheet" href="css/dashboard.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
 </head>
 <body>
 
@@ -23,26 +24,13 @@
         <span class="w">tickets</span><span class="g">sa</span>
       </div>
     </a>
-    <!-- Category picker hidden, preserved for future use
-<nav class="navbar__cats" id="navCats" aria-label="Categories">
-      <button class="navbar__cat" data-cat="events" onclick="window.location.href='index.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
-        Events
-      </button>
-      <button class="navbar__cat" data-cat="travel" onclick="window.location.href='accommodations.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Travel &amp; Stay
-      </button>
-      <button class="navbar__cat" data-cat="equipment" onclick="window.location.href='services/index.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Event Equipment
-      </button>
-      <button class="navbar__cat" data-cat="marketing">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-        Tags &amp; Merch
-      </button>
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
     </nav>
--->
     <div class="navbar__actions" id="navbarActions"></div>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -67,26 +55,13 @@
     </div>
 
     <nav class="dash-nav">
-      <button class="dash-nav-item active" data-tab="overview">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Overview
-      </button>
-      <button class="dash-nav-item" data-tab="event">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        List an Event
-      </button>
-      <button class="dash-nav-item" data-tab="travel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-        Travel &amp; Tours
-      </button>
-      <button class="dash-nav-item" data-tab="service">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        Request Equipment
-      </button>
-      <button class="dash-nav-item" data-tab="bookings">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
-        My Tickets
-      </button>
+      <button class="dash-nav-item active" data-tab="overview"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Dashboard</button>
+      <button class="dash-nav-item" data-tab="listings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> My Listings</button>
+      <button class="dash-nav-item" data-tab="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg> Bookings &amp; Orders</button>
+      <button class="dash-nav-item" data-tab="service"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg> Hire Equipment</button>
+      <button class="dash-nav-item" data-tab="earnings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> Earnings</button>
+      <button class="dash-nav-item" data-tab="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Seller Profile</button>
+      <button class="dash-nav-item" data-tab="bookings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 010 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 010-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2v2z"/></svg> My Tickets</button>
     </nav>
 
     <button class="dash-signout" id="dashSignout">
@@ -101,474 +76,117 @@
     <!-- ──── OVERVIEW ──── -->
     <section class="dash-section" id="tab-overview">
       <div class="dash-section-head">
-        <h1 id="overviewGreeting">Good morning</h1>
-        <p>Here is your account at a glance.</p>
+        <div class="dash-head-row">
+          <div>
+            <h1 id="overviewGreeting">Good morning</h1>
+            <p id="overviewSub">Here is your seller account at a glance.</p>
+          </div>
+          <a href="create-listing.html" class="btn btn-primary">+ Create Listing</a>
+        </div>
       </div>
 
-      <div class="dash-quick-actions">
-        <button class="dash-action-card" data-go="event">
-          <div class="dash-action-icon" style="background:rgba(22,163,74,.12)">🎤</div>
-          <div>
-            <div class="dash-action-label">List Your Event</div>
-            <div class="dash-action-sub">Create and sell tickets</div>
-          </div>
-          <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
-        <!-- <button class="dash-action-card" data-go="travel">
-          <div class="dash-action-icon" style="background:rgba(59,130,246,.12)">✈️</div>
-          <div>
-            <div class="dash-action-label">Travel &amp; Tours</div>
-            <div class="dash-action-sub">Buses, accommodation, packages</div>
-          </div>
-          <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button> -->
-        <!-- <button class="dash-action-card" data-go="service">
-          <div class="dash-action-icon" style="background:rgba(168,85,247,.12)">🧊</div>
-          <div>
-            <div class="dash-action-label">Request Equipment</div>
-            <div class="dash-action-sub">Freezers, toilets, tents &amp; more</div>
-          </div>
-          <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button> -->
-        <button class="dash-action-card" data-go="bookings">
-          <div class="dash-action-icon" style="background:rgba(234,179,8,.12)">🎟</div>
-          <div>
-            <div class="dash-action-label">My Tickets</div>
-            <div class="dash-action-sub">View your bookings</div>
-          </div>
-          <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
+      <!-- New sellers: guided checklist instead of an empty dashboard -->
+      <div id="welcomeBlock" class="hidden">
+        <div class="sh-welcome">
+          <div class="sh-welcome__title">Welcome to TicketsSA 👋</div>
+          <div class="sh-welcome__sub">Let&rsquo;s get your first listing live.</div>
+          <ul class="sh-check" id="sellerChecklist"></ul>
+          <a href="create-listing.html" class="btn btn-primary btn-full" style="margin-top:18px">+ Create your first listing</a>
+        </div>
+      </div>
+
+      <!-- Returning sellers: real numbers -->
+      <div id="statsBlock" class="hidden">
+        <div class="sh-stats" id="sellerStats"></div>
+        <div class="dash-quick-actions" style="margin-top:22px">
+          <a class="dash-action-card" href="create-listing.html">
+            <div class="dash-action-icon" style="background:rgba(22,163,74,.12)">➕</div>
+            <div>
+              <div class="dash-action-label">Create a listing</div>
+              <div class="dash-action-sub">Event, stay, experience, equipment or merch</div>
+            </div>
+            <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <button class="dash-action-card" data-go="listings">
+            <div class="dash-action-icon" style="background:rgba(59,130,246,.12)">📋</div>
+            <div>
+              <div class="dash-action-label">Manage listings</div>
+              <div class="dash-action-sub">Edit, review status, continue drafts</div>
+            </div>
+            <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+          <button class="dash-action-card" data-go="orders">
+            <div class="dash-action-icon" style="background:rgba(234,179,8,.12)">🎟</div>
+            <div>
+              <div class="dash-action-label">Bookings &amp; orders</div>
+              <div class="dash-action-sub">See who has booked with you</div>
+            </div>
+            <svg class="dash-action-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
       </div>
 
       <div class="dash-info-strip">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>Listings go to our team for review. We will confirm and publish within <strong>24 hours</strong>.</span>
+        <span>New listings go to our team for review. We confirm and publish within <strong>24 hours</strong>.</span>
       </div>
     </section>
 
-
-    <!-- ──── LIST AN EVENT ──── -->
-    <section class="dash-section hidden" id="tab-event">
+    <!-- ──── MY LISTINGS ──── -->
+    <section class="dash-section hidden" id="tab-listings">
       <div class="dash-section-head">
         <div class="dash-head-row">
           <div>
-            <h1>List Your Event</h1>
-            <p>Fill in your event details. Our team reviews every listing before it goes live.</p>
+            <h1>My Listings</h1>
+            <p>Everything you have listed on TicketsSA, in one place.</p>
           </div>
-          <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Overview</button>
+          <a href="create-listing.html" class="btn btn-primary">+ Create Listing</a>
         </div>
       </div>
-
-      <div class="dash-success hidden" id="eventSuccess">
-        <div class="dash-success-icon">🎉</div>
-        <h3>Event Submitted!</h3>
-        <p>Your event is now <strong>pending review</strong>. We will publish it within 24 hours and email you when it is live.</p>
-        <div class="dash-success-btns">
-          <button class="btn btn-secondary" id="eventReset">Submit Another Event</button>
-          <button class="btn btn-ghost dash-back-btn" data-back="overview">Back to Overview</button>
-        </div>
-      </div>
-
-      <div class="dash-form-error hidden" id="eventError"></div>
-
-      <form id="eventForm" novalidate>
-
-        <!-- Step 1: Event type -->
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">1</span>Event Type</div>
-          <div class="form-type-tabs">
-            <button type="button" class="form-type-tab active" data-type="general">🎤 General</button>
-            <button type="button" class="form-type-tab" data-type="music">🎵 Music / Concert</button>
-            <button type="button" class="form-type-tab" data-type="sport">⚽ Sport</button>
-            <button type="button" class="form-type-tab" data-type="food">🍽 Food &amp; Drink</button>
-            <button type="button" class="form-type-tab" data-type="comedy">🎭 Comedy / Theatre</button>
-            <button type="button" class="form-type-tab" data-type="business">💼 Conference</button>
-          </div>
-          <input type="hidden" id="evType" value="general"/>
-        </div>
-
-        <!-- Step 2: Event details -->
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">2</span>Event Details</div>
-          <div class="dash-form-grid">
-
-            <div class="form-group full">
-              <label class="form-label" for="evName">Event Name <span class="req">*</span></label>
-              <input type="text" id="evName" class="form-input" placeholder="e.g. Cape Town Jazz Festival 2025" required/>
-              <div class="field-error" id="evName-err"></div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evDate">Start Date <span class="req">*</span></label>
-              <input type="date" id="evDate" class="form-input" required/>
-              <div class="field-error" id="evDate-err"></div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evEndDate">End Date <span class="form-hint">(multi-day)</span></label>
-              <input type="date" id="evEndDate" class="form-input"/>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evTime">Start Time <span class="req">*</span></label>
-              <input type="time" id="evTime" class="form-input" required/>
-              <div class="field-error" id="evTime-err"></div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evEndTime">End Time</label>
-              <input type="time" id="evEndTime" class="form-input"/>
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label" for="evVenue">Venue / Location <span class="req">*</span></label>
-              <input type="text" id="evVenue" class="form-input" placeholder="e.g. Cape Town International Convention Centre, Green Point" required/>
-              <div class="field-error" id="evVenue-err"></div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evCity">City <span class="req">*</span></label>
-              <select id="evCity" class="form-select" required>
-                <option value="">Select city…</option>
-                <option>Cape Town</option><option>Johannesburg</option><option>Durban</option>
-                <option>Pretoria</option><option>Port Elizabeth</option><option>Bloemfontein</option>
-                <option>East London</option><option>George</option><option>Polokwane</option>
-                <option>Nelspruit</option><option>Kimberley</option><option>Thohoyandou</option><option>Other</option>
-              </select>
-              <div class="field-error" id="evCity-err"></div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="evProvince">Province</label>
-              <select id="evProvince" class="form-select">
-                <option value="">Select province…</option>
-                <option>Western Cape</option><option>Gauteng</option><option>KwaZulu-Natal</option>
-                <option>Eastern Cape</option><option>Limpopo</option><option>Mpumalanga</option>
-                <option>North West</option><option>Free State</option><option>Northern Cape</option>
-              </select>
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label" for="evDesc">Description <span class="req">*</span></label>
-              <textarea id="evDesc" class="form-textarea" rows="5"
-                placeholder="Tell people about your event lineup, programme, what to expect, dress code, what is included…"
-                required style="min-height:130px;resize:vertical"></textarea>
-              <div class="field-error" id="evDesc-err"></div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Step 3: Event image -->
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">3</span>Event Image</div>
-
-          <!-- File upload zone -->
-          <div class="upload-zone" id="uploadZone">
-            <input type="file" id="evImageFile" accept="image/png,image/png,image/webp,image/gif" style="display:none" aria-label="Upload event image"/>
-            <div class="upload-zone__inner" id="uploadZoneInner">
-              <div class="upload-zone__icon">🖼️</div>
-              <div class="upload-zone__title">Click to upload or drag &amp; drop</div>
-              <div class="upload-zone__sub">JPG, PNG or WEBP max 5 MB</div>
-              <button type="button" class="btn btn-secondary btn-sm" id="uploadPickBtn">Choose File</button>
-            </div>
-            <div class="upload-zone__preview hidden" id="uploadPreview">
-              <img id="uploadPreviewImg" alt="Event preview"/>
-              <button type="button" class="upload-zone__remove" id="uploadRemoveBtn" title="Remove image" aria-label="Remove image">✕ Remove</button>
-            </div>
-          </div>
-
-          <div class="upload-url-row">
-            <span class="upload-or">or paste an image URL —</span>
-            <input type="url" id="evImage" class="form-input" placeholder="https://images.unsplash.com/photo-..."/>
-          </div>
-        </div>
-
-        <!-- Step 4: Ticket types -->
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">4</span>Ticket Types</div>
-          <p style="font-size:.875rem;color:var(--text-2);margin-bottom:var(--s2)">Add one or more ticket tiers. Attendees will choose when booking.</p>
-
-          <div class="tt-header-row">
-            <span>Ticket Name</span>
-            <span>Price (R)</span>
-            <span>Available</span>
-            <span></span>
-          </div>
-          <div id="ticketTypesContainer"></div>
-          <button type="button" class="btn btn-secondary btn-sm" id="addTicketTypeBtn" style="margin-top:10px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Ticket Type
-          </button>
-        </div>
-
-        <!-- Step 5: Contact -->
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">5</span>Your Contact Details</div>
-          <div class="dash-form-grid">
-            <div class="form-group">
-              <label class="form-label" for="evOrganiserName">Organiser / Company Name</label>
-              <input type="text" id="evOrganiserName" class="form-input" placeholder="e.g. Cape Town Jazz Events"/>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="evPhone">Contact Number <span class="req">*</span></label>
-              <input type="tel" id="evPhone" class="form-input" placeholder="+27 82 000 0000" required/>
-              <div class="field-error" id="evPhone-err"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="evWebsite">Website / Social Link</label>
-              <input type="url" id="evWebsite" class="form-input" placeholder="https://..."/>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="evCapacity">Expected Capacity</label>
-              <input type="number" id="evCapacity" class="form-input" placeholder="e.g. 500" min="1"/>
-            </div>
-          </div>
-        </div>
-
-        <div class="dash-form-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="evSubmitBtn">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Submit Event for Review
-          </button>
-          <p class="dash-form-note">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Events are reviewed before going live. Your event will show as <strong>Pending</strong> until approved. No payment required.
-          </p>
-        </div>
-      </form>
+      <div class="mk-filters" id="listingFilters" role="group" aria-label="Filter listings"></div>
+      <div id="listingsLoading" class="dash-empty"><p style="color:var(--text-3)">Loading your listings…</p></div>
+      <div id="listingsList"></div>
     </section>
 
-
-    <!-- ──── TRAVEL & TOURS ──── -->
-    <section class="dash-section hidden" id="tab-travel">
+    <!-- ──── BOOKINGS & ORDERS ──── -->
+    <section class="dash-section hidden" id="tab-orders">
       <div class="dash-section-head">
         <div class="dash-head-row">
           <div>
-            <h1>List a Travel Package or Tour</h1>
-            <p>Buses, accommodation, day trips and holiday packages. Reviewed by our team.</p>
+            <h1>Bookings &amp; Orders</h1>
+            <p>Tickets people have booked on your events.</p>
           </div>
-          <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Overview</button>
+          <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Dashboard</button>
         </div>
       </div>
-
-      <div class="dash-success hidden" id="travelSuccess">
-        <div class="dash-success-icon">✈️</div>
-        <h3>Travel Listing Submitted!</h3>
-        <p>Your listing is <strong>pending review</strong>. Our team will publish it within 24 hours.</p>
-        <div class="dash-success-btns">
-          <button class="btn btn-secondary" id="travelReset">Submit Another</button>
-          <button class="btn btn-ghost dash-back-btn" data-back="overview">Back to Overview</button>
-        </div>
-      </div>
-
-      <div class="dash-form-error hidden" id="travelError"></div>
-
-      <!-- Travel type picker -->
-      <div class="dash-step">
-        <div class="dash-step-label"><span class="dash-step-num">1</span>Listing Type</div>
-        <div class="travel-type-grid" id="travelTypePicker">
-          <button class="travel-type-btn active" data-ttype="bus">
-            <span class="travel-type-icon">🚌</span>
-            <span class="travel-type-name">Bus / Coach</span>
-            <span class="travel-type-desc">Intercity, charter buses</span>
-          </button>
-          <button class="travel-type-btn" data-ttype="accommodation">
-            <span class="travel-type-icon">🏨</span>
-            <span class="travel-type-name">Accommodation</span>
-            <span class="travel-type-desc">Hotels, lodges, B&amp;Bs</span>
-          </button>
-          <button class="travel-type-btn" data-ttype="daytrip">
-            <span class="travel-type-icon">🗺️</span>
-            <span class="travel-type-name">Day Trip / Tour</span>
-            <span class="travel-type-desc">Guided tours, excursions</span>
-          </button>
-          <button class="travel-type-btn" data-ttype="package">
-            <span class="travel-type-icon">🎒</span>
-            <span class="travel-type-name">Holiday Package</span>
-            <span class="travel-type-desc">Transport + accommodation</span>
-          </button>
-        </div>
-        <input type="hidden" id="travelType" value="bus"/>
-      </div>
-
-      <form id="travelForm" novalidate>
-        <div class="dash-step">
-          <div class="dash-step-label"><span class="dash-step-num">2</span>Listing Details</div>
-          <div class="dash-form-grid">
-
-            <div class="form-group full">
-              <label class="form-label" for="tvTitle">Title <span class="req">*</span></label>
-              <input type="text" id="tvTitle" class="form-input" placeholder="e.g. Cape Town to Durban Express / Blue Waters Lodge" required/>
-              <div class="field-error" id="tvTitle-err"></div>
-            </div>
-
-            <!-- BUS -->
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvFrom">Departure City</label>
-              <select id="tvFrom" class="form-select">
-                <option value="">Select…</option>
-                <option>Cape Town</option><option>Johannesburg</option><option>Durban</option>
-                <option>Pretoria</option><option>Port Elizabeth</option><option>Bloemfontein</option>
-                <option>George</option><option>East London</option><option>Other</option>
-              </select>
-            </div>
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvTo">Destination City</label>
-              <select id="tvTo" class="form-select">
-                <option value="">Select…</option>
-                <option>Cape Town</option><option>Johannesburg</option><option>Durban</option>
-                <option>Pretoria</option><option>Port Elizabeth</option><option>Bloemfontein</option>
-                <option>George</option><option>East London</option><option>Other</option>
-              </select>
-            </div>
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvDepartureDate">Departure Date</label>
-              <input type="date" id="tvDepartureDate" class="form-input"/>
-            </div>
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvDepartureTime">Departure Time</label>
-              <input type="time" id="tvDepartureTime" class="form-input"/>
-            </div>
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvBusType">Bus Type</label>
-              <select id="tvBusType" class="form-select">
-                <option value="">Select…</option>
-                <option>Luxury Coach</option><option>Standard Coach</option>
-                <option>Minibus (14 seater)</option><option>Minibus (22 seater)</option>
-                <option>Double Decker</option><option>Sleeper Coach</option>
-              </select>
-            </div>
-            <div class="form-group travel-field bus-field">
-              <label class="form-label" for="tvSeats">Available Seats</label>
-              <input type="number" id="tvSeats" class="form-input" placeholder="e.g. 45" min="1"/>
-            </div>
-
-            <!-- ACCOMMODATION -->
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvAccomType">Accommodation Type <span class="req">*</span></label>
-              <select id="tvAccomType" class="form-select">
-                <option value="">Select…</option>
-                <option>Hotel</option><option>Lodge</option><option>Guesthouse</option>
-                <option>B&amp;B</option><option>Self-Catering</option><option>Backpackers</option>
-                <option>Game Reserve</option><option>Boutique Hotel</option><option>Hostel</option>
-              </select>
-            </div>
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvAccomCity">Location / City <span class="req">*</span></label>
-              <input type="text" id="tvAccomCity" class="form-input" placeholder="e.g. Hermanus, Western Cape"/>
-            </div>
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvCheckIn">Check-in Date</label>
-              <input type="date" id="tvCheckIn" class="form-input"/>
-            </div>
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvCheckOut">Check-out Date</label>
-              <input type="date" id="tvCheckOut" class="form-input"/>
-            </div>
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvRooms">Rooms Available</label>
-              <input type="number" id="tvRooms" class="form-input" placeholder="e.g. 10" min="1"/>
-            </div>
-            <div class="form-group travel-field accom-field hidden">
-              <label class="form-label" for="tvStarRating">Star Rating</label>
-              <select id="tvStarRating" class="form-select">
-                <option value="">Not rated</option>
-                <option>1 Star</option><option>2 Star</option><option>3 Star</option>
-                <option>4 Star</option><option>5 Star</option>
-              </select>
-            </div>
-
-            <!-- DAY TRIP -->
-            <div class="form-group travel-field trip-field hidden">
-              <label class="form-label" for="tvTourDate">Tour Date</label>
-              <input type="date" id="tvTourDate" class="form-input"/>
-            </div>
-            <div class="form-group travel-field trip-field hidden">
-              <label class="form-label" for="tvTourCity">Departing From</label>
-              <input type="text" id="tvTourCity" class="form-input" placeholder="e.g. Cape Town Waterfront"/>
-            </div>
-            <div class="form-group travel-field trip-field hidden">
-              <label class="form-label" for="tvTourDuration">Duration</label>
-              <select id="tvTourDuration" class="form-select">
-                <option value="">Select…</option>
-                <option>Half day (4 hrs)</option><option>Full day (8 hrs)</option>
-                <option>2 days</option><option>3 days</option><option>Weekend</option>
-              </select>
-            </div>
-            <div class="form-group travel-field trip-field hidden">
-              <label class="form-label" for="tvGroupSize">Max Group Size</label>
-              <input type="number" id="tvGroupSize" class="form-input" placeholder="e.g. 20" min="1"/>
-            </div>
-
-            <!-- PACKAGE -->
-            <div class="form-group travel-field package-field hidden">
-              <label class="form-label" for="tvPkgDuration">Duration <span class="req">*</span></label>
-              <select id="tvPkgDuration" class="form-select">
-                <option value="">Select…</option>
-                <option>Weekend (2 nights)</option><option>3 nights / 4 days</option>
-                <option>5 nights / 6 days</option><option>7 nights / 8 days</option>
-                <option>10 nights+</option><option>Custom</option>
-              </select>
-            </div>
-            <div class="form-group travel-field package-field hidden">
-              <label class="form-label" for="tvPkgDestination">Destination</label>
-              <input type="text" id="tvPkgDestination" class="form-input" placeholder="e.g. Cape Winelands, Garden Route"/>
-            </div>
-            <div class="form-group travel-field package-field hidden">
-              <label class="form-label" for="tvPkgIncludes">What Is Included</label>
-              <input type="text" id="tvPkgIncludes" class="form-input" placeholder="e.g. Transport, 3-star accommodation, breakfast, guide"/>
-            </div>
-
-            <!-- COMMON -->
-            <div class="form-group">
-              <label class="form-label" for="tvPrice">Price per Person (R) <span class="req">*</span></label>
-              <input type="number" id="tvPrice" class="form-input" placeholder="0 if quote-based" min="0" required/>
-              <div class="field-error" id="tvPrice-err"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="tvPriceNote">Pricing Note <span class="form-hint">(optional)</span></label>
-              <input type="text" id="tvPriceNote" class="form-input" placeholder="e.g. Includes breakfast, excludes flights"/>
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label" for="tvDesc">Description <span class="req">*</span></label>
-              <textarea id="tvDesc" class="form-textarea" rows="4"
-                placeholder="Describe the experience itinerary, highlights, what is included, pick-up points…"
-                required style="min-height:120px;resize:vertical"></textarea>
-              <div class="field-error" id="tvDesc-err"></div>
-            </div>
-
-            <div class="form-group full">
-              <label class="form-label" for="tvImage">Image URL <span class="form-hint">(optional)</span></label>
-              <input type="url" id="tvImage" class="form-input" placeholder="https://images.unsplash.com/..."/>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="tvContact">Contact Number <span class="req">*</span></label>
-              <input type="tel" id="tvContact" class="form-input" placeholder="+27 82 000 0000" required/>
-              <div class="field-error" id="tvContact-err"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="tvOperator">Company / Operator Name</label>
-              <input type="text" id="tvOperator" class="form-input" placeholder="e.g. Safari Express Tours"/>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="dash-form-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="tvSubmitBtn">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            Submit Listing for Review
-          </button>
-          <p class="dash-form-note">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Listings are reviewed before going live. No payment required to submit.
-          </p>
-        </div>
-      </form>
+      <div id="ordersLoading" class="dash-empty"><p style="color:var(--text-3)">Loading bookings…</p></div>
+      <div id="ordersList"></div>
     </section>
+
+    <!-- ──── SELLER PROFILE ──── -->
+    <section class="dash-section hidden" id="tab-profile">
+      <div class="dash-section-head">
+        <div class="dash-head-row">
+          <div>
+            <h1>Seller Profile</h1>
+            <p>How you appear to buyers across all your listings.</p>
+          </div>
+          <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Dashboard</button>
+        </div>
+      </div>
+      <div class="sh-profile" id="sellerProfile"></div>
+    </section>
+
+    <section class="dash-section hidden" id="tab-earnings">
+      <div class="dash-section-head"><div class="dash-head-row"><div>
+        <h1>Earnings</h1><p>What you have sold through TicketsSA.</p>
+      </div><button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Dashboard</button></div></div>
+      <div id="earningsBody"></div>
+    </section>
+
+
+
+
 
 
     <!-- ──── REQUEST EQUIPMENT ──── -->
@@ -700,7 +318,7 @@
         <div class="dash-head-row">
           <div>
             <h1>My Tickets</h1>
-            <p>All your confirmed ticket bookings in one place.</p>
+            <p>Tickets you have personally booked as a customer.</p>
           </div>
           <button class="btn btn-ghost btn-sm dash-back-btn" data-back="overview">← Overview</button>
         </div>
@@ -725,6 +343,7 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/wizard-core.js"></script>
 <script>
 /* ============================================================
    API BASE works at port 5500 or 3000, file:// also handled
@@ -847,277 +466,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   }
-
-  /* ==========================================================
-     EVENT FORM
-     ========================================================== */
-
-  /* Type tabs */
-  document.querySelectorAll('.form-type-tab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.form-type-tab').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      document.getElementById('evType').value = btn.getAttribute('data-type');
-    });
-  });
-
-  /* Image upload file input + drag-drop + URL fallback */
-  var uploadedBase64 = null;
-
-  var fileInput    = document.getElementById('evImageFile');
-  var pickBtn      = document.getElementById('uploadPickBtn');
-  var removeBtn    = document.getElementById('uploadRemoveBtn');
-  var uploadZone   = document.getElementById('uploadZone');
-  var zoneInner    = document.getElementById('uploadZoneInner');
-  var previewWrap  = document.getElementById('uploadPreview');
-  var previewImg   = document.getElementById('uploadPreviewImg');
-
-  pickBtn.addEventListener('click', function() { fileInput.click(); });
-
-  fileInput.addEventListener('change', function() {
-    var file = this.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be under 5 MB. Please choose a smaller file.'); return;
-    }
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      uploadedBase64 = e.target.result;
-      previewImg.src = uploadedBase64;
-      zoneInner.classList.add('hidden');
-      previewWrap.classList.remove('hidden');
-      document.getElementById('evImage').value = '';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  removeBtn.addEventListener('click', function() {
-    uploadedBase64 = null;
-    fileInput.value = '';
-    previewImg.src  = '';
-    previewWrap.classList.add('hidden');
-    zoneInner.classList.remove('hidden');
-  });
-
-  uploadZone.addEventListener('dragover',  function(e) { e.preventDefault(); uploadZone.classList.add('drag-over'); });
-  uploadZone.addEventListener('dragleave', function()  { uploadZone.classList.remove('drag-over'); });
-  uploadZone.addEventListener('drop', function(e) {
-    e.preventDefault();
-    uploadZone.classList.remove('drag-over');
-    var file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      fileInput.files = dt.files;
-      fileInput.dispatchEvent(new Event('change'));
-    }
-  });
-
-  /* Ticket type builder */
-  var ttCount = 0;
-
-  function addTicketRow(defaults) {
-    var container = document.getElementById('ticketTypesContainer');
-    ttCount++;
-    var row = document.createElement('div');
-    row.className = 'tt-row';
-    row.innerHTML =
-      '<input type="text"   class="form-input tt-name"  placeholder="e.g. General Admission, VIP" value="' + (defaults && defaults.name  ? defaults.name  : '') + '"/>' +
-      '<input type="number" class="form-input tt-price" placeholder="Price (0 = free)" min="0"      value="' + (defaults && defaults.price !== undefined ? defaults.price : '') + '"/>' +
-      '<input type="number" class="form-input tt-qty"   placeholder="Qty available"   min="1"       value="' + (defaults && defaults.qty   ? defaults.qty   : '') + '"/>' +
-      '<button type="button" class="tt-remove" title="Remove" aria-label="Remove ticket type">' +
-        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
-      '</button>';
-    row.querySelector('.tt-remove').addEventListener('click', function() { row.remove(); });
-    container.appendChild(row);
-  }
-
-  document.getElementById('addTicketTypeBtn').addEventListener('click', function() { addTicketRow({}); });
-  addTicketRow({ name: 'General Admission', price: '', qty: '' });
-
-  /* Event form submit */
-  document.getElementById('eventForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    clearFormErrors(this);
-    hideBanner('eventError');
-
-    var valid = true;
-    var evName  = document.getElementById('evName').value.trim();
-    var evDate  = document.getElementById('evDate').value;
-    var evTime  = document.getElementById('evTime').value;
-    var evVenue = document.getElementById('evVenue').value.trim();
-    var evCity  = document.getElementById('evCity').value;
-    var evDesc  = document.getElementById('evDesc').value.trim();
-    var evPhone = document.getElementById('evPhone').value.trim();
-
-    if (!evName)  { fieldOk('evName',  'Event name is required.');    valid = false; }
-    if (!evDate)  { fieldOk('evDate',  'Start date is required.');    valid = false; }
-    if (!evTime)  { fieldOk('evTime',  'Start time is required.');    valid = false; }
-    if (!evVenue) { fieldOk('evVenue', 'Venue is required.');         valid = false; }
-    if (!evCity)  { fieldOk('evCity',  'Please select a city.');      valid = false; }
-    if (!evDesc)  { fieldOk('evDesc',  'Description is required.');   valid = false; }
-    if (!evPhone) { fieldOk('evPhone', 'Contact number is required.'); valid = false; }
-
-    if (!valid) {
-      var firstErr = this.querySelector('.form-input.error, .form-select.error');
-      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-
-    /* Collect ticket types */
-    var ticketTypes = [];
-    document.querySelectorAll('#ticketTypesContainer .tt-row').forEach(function(row, i) {
-      var name  = row.querySelector('.tt-name').value.trim();
-      var price = parseFloat(row.querySelector('.tt-price').value) || 0;
-      var avail = parseInt(row.querySelector('.tt-qty').value)     || 100;
-      if (name) ticketTypes.push({ id: 'TT-' + (i+1), name: name, price: price, available: avail, description: name });
-    });
-    if (ticketTypes.length === 0) {
-      ticketTypes = [{ id: 'TT-1', name: 'General Admission', price: 0, available: 100, description: 'General Admission' }];
-    }
-
-    /* Image: uploaded file beats URL input */
-    var imageVal = uploadedBase64 || document.getElementById('evImage').value.trim()
-                   || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80';
-
-    var cat = document.getElementById('evType').value;
-    var payload = {
-      title:       evName,
-      category:    cat.charAt(0).toUpperCase() + cat.slice(1),
-      date:        evDate,
-      time:        evTime,
-      endTime:     document.getElementById('evEndTime').value || evTime,
-      location:    evVenue,
-      city:        evCity,
-      province:    document.getElementById('evProvince').value,
-      description: evDesc,
-      image:       imageVal,
-      price:       ticketTypes.length ? Math.min.apply(null, ticketTypes.map(function(t) { return t.price; })) : 0,
-      ticketTypes: ticketTypes,
-      tags:        [],
-    };
-
-    var btn = document.getElementById('evSubmitBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Submitting…';
-
-    try {
-      await SupabaseAPI.createEvent(payload);
-      document.getElementById('eventForm').classList.add('hidden');
-      document.getElementById('eventSuccess').classList.remove('hidden');
-      if (typeof Utils !== 'undefined') Utils.showToast('Event submitted! Pending review.', 'success');
-    } catch(err) {
-      showBanner('eventError', err.message || 'Could not submit event. Please try again.');
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Submit Event for Review';
-    }
-  });
-
-  /* Event reset */
-  document.getElementById('eventReset').addEventListener('click', function() {
-    document.getElementById('eventForm').reset();
-    document.getElementById('eventForm').classList.remove('hidden');
-    document.getElementById('eventSuccess').classList.add('hidden');
-    document.getElementById('ticketTypesContainer').innerHTML = '';
-    ttCount = 0;
-    addTicketRow({ name: 'General Admission', price: '', qty: '' });
-    uploadedBase64 = null;
-    document.getElementById('uploadPreview').classList.add('hidden');
-    document.getElementById('uploadZoneInner').classList.remove('hidden');
-    hideBanner('eventError');
-  });
-
-  /* ==========================================================
-     TRAVEL FORM
-     ========================================================== */
-  var travelTypeGroups = { bus: 'bus', accommodation: 'accom', daytrip: 'trip', package: 'package' };
-
-  function applyTravelType(type) {
-    document.getElementById('travelType').value = type;
-    document.querySelectorAll('.travel-type-btn').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-ttype') === type);
-    });
-    var active = travelTypeGroups[type] || 'bus';
-    ['bus', 'accom', 'trip', 'package'].forEach(function(grp) {
-      document.querySelectorAll('.' + grp + '-field').forEach(function(el) {
-        el.classList.toggle('hidden', grp !== active);
-      });
-    });
-  }
-
-  document.querySelectorAll('.travel-type-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() { applyTravelType(btn.getAttribute('data-ttype')); });
-  });
-  applyTravelType('bus');
-
-  document.getElementById('travelForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    clearFormErrors(this);
-    hideBanner('travelError');
-
-    var valid = true;
-    if (!document.getElementById('tvTitle').value.trim()) { fieldOk('tvTitle', 'Title is required.'); valid = false; }
-    var tvPrice = document.getElementById('tvPrice');
-    if (tvPrice.value === '' || tvPrice.value === null) { fieldOk('tvPrice', 'Price is required (enter 0 if quote-based).'); valid = false; }
-    if (!document.getElementById('tvDesc').value.trim()) { fieldOk('tvDesc', 'Description is required.'); valid = false; }
-    if (!document.getElementById('tvContact').value.trim()) { fieldOk('tvContact', 'Contact number is required.'); valid = false; }
-    if (!valid) return;
-
-    var ttype = document.getElementById('travelType').value;
-    var g = {
-      tvTourCity:        document.getElementById('tvTourCity')        ? document.getElementById('tvTourCity').value        : '',
-      tvAccomCity:       document.getElementById('tvAccomCity')       ? document.getElementById('tvAccomCity').value       : '',
-      tvPkgDestination:  document.getElementById('tvPkgDestination')  ? document.getElementById('tvPkgDestination').value  : '',
-      tvTo:              document.getElementById('tvTo')              ? document.getElementById('tvTo').value              : '',
-      tvFrom:            document.getElementById('tvFrom')            ? document.getElementById('tvFrom').value            : '',
-      tvDepartureDate:   document.getElementById('tvDepartureDate')   ? document.getElementById('tvDepartureDate').value   : '',
-      tvCheckIn:         document.getElementById('tvCheckIn')         ? document.getElementById('tvCheckIn').value         : '',
-      tvTourDate:        document.getElementById('tvTourDate')        ? document.getElementById('tvTourDate').value        : '',
-      tvDepartureTime:   document.getElementById('tvDepartureTime')   ? document.getElementById('tvDepartureTime').value   : '',
-    };
-
-    var payload = {
-      title:       document.getElementById('tvTitle').value.trim(),
-      category:    'Travel & Tours',
-      date:        g.tvDepartureDate || g.tvCheckIn || g.tvTourDate || '',
-      time:        g.tvDepartureTime || '08:00',
-      endTime:     '23:59',
-      location:    g.tvTourCity || g.tvAccomCity || g.tvPkgDestination || g.tvTo || '',
-      city:        g.tvFrom || g.tvAccomCity || '',
-      province:    '',
-      description: document.getElementById('tvDesc').value.trim(),
-      image:       document.getElementById('tvImage').value.trim() || 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80',
-      price:       parseFloat(document.getElementById('tvPrice').value) || 0,
-      ticketTypes: [{
-        id: 'TT-1', name: 'Per Person',
-        price: parseFloat(document.getElementById('tvPrice').value) || 0,
-        available: 100,
-        description: document.getElementById('tvPriceNote').value || 'Per Person',
-      }],
-      tags: [ttype],
-    };
-
-    var btn = document.getElementById('tvSubmitBtn');
-    btn.disabled = true; btn.textContent = 'Submitting…';
-
-    try {
-      await SupabaseAPI.createEvent(payload);
-      document.getElementById('travelForm').classList.add('hidden');
-      document.getElementById('travelSuccess').classList.remove('hidden');
-      if (typeof Utils !== 'undefined') Utils.showToast('Travel listing submitted!', 'success');
-    } catch(err) {
-      showBanner('travelError', err.message || 'Could not submit. Please try again.');
-      btn.disabled = false; btn.textContent = 'Submit Listing for Review';
-    }
-  });
-
-  document.getElementById('travelReset').addEventListener('click', function() {
-    document.getElementById('travelForm').reset();
-    document.getElementById('travelForm').classList.remove('hidden');
-    document.getElementById('travelSuccess').classList.add('hidden');
-    hideBanner('travelError');
-    applyTravelType('bus');
-  });
 
   /* ==========================================================
      EQUIPMENT REQUEST
@@ -1259,6 +607,352 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   document.querySelectorAll('.dash-action-card[data-go="bookings"]').forEach(function(card) {
     card.addEventListener('click', loadMyTickets);
+  });
+
+
+  /* ==========================================================
+     SELLER HUB
+     Dashboard checklist · unified listings · bookings · profile
+     Reads through existing SupabaseAPI calls only.
+     ========================================================== */
+
+  var HUB = { loaded: {}, events: [], accs: [], reqs: [], sales: [], drafts: [] };
+
+  var CAT_META = {
+    event:         { name: 'Event',         icon: '🎟️', href: 'sell-event.html' },
+    accommodation: { name: 'Accommodation', icon: '🏨', href: 'sell-accommodation.html' },
+    experience:    { name: 'Experience',    icon: '🌍', href: 'sell-experience.html' },
+    equipment:     { name: 'Equipment',     icon: '🔊', href: 'sell-equipment.html' },
+    merchandise:   { name: 'Merchandise',   icon: '🛍️', href: 'sell-merchandise.html' }
+  };
+
+  function hubMoney(n) {
+    var v = parseFloat(n);
+    if (isNaN(v)) return 'R0';
+    return 'R' + v.toLocaleString('en-ZA', { maximumFractionDigits: 0 });
+  }
+
+  function hubSince(iso) {
+    if (!iso) return 'recently';
+    var mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 60)   return Math.max(1, mins) + ' min ago';
+    if (mins < 1440) return Math.round(mins / 60) + ' hr ago';
+    var d = Math.round(mins / 1440);
+    if (d < 31) return d + ' day' + (d > 1 ? 's' : '') + ' ago';
+    return new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  async function hubLoad() {
+    var user = Auth.getUser();
+    if (!user) return;
+    var r = await Promise.allSettled([
+      SupabaseAPI.getEvents({ organiserId: user.id }),
+      SupabaseAPI.getMyAccommodations ? SupabaseAPI.getMyAccommodations() : Promise.resolve([]),
+      SupabaseAPI.getMyServiceRequests(),
+      SupabaseAPI.getSalesForMyEvents ? SupabaseAPI.getSalesForMyEvents() : Promise.resolve([])
+    ]);
+    HUB.events = r[0].status === 'fulfilled' ? (r[0].value || []) : [];
+    HUB.accs   = r[1].status === 'fulfilled' ? (r[1].value || []) : [];
+    HUB.reqs   = r[2].status === 'fulfilled' ? (r[2].value || []) : [];
+    HUB.sales  = r[3].status === 'fulfilled' ? (r[3].value || []) : [];
+    HUB.drafts = (typeof WizardCore !== 'undefined') ? WizardCore.listDrafts() : [];
+  }
+
+  function renderOverview() {
+    var user      = Auth.getUser() || {};
+    var listings  = HUB.events.length + HUB.accs.length;
+    var published = HUB.events.filter(function (e) { return e.status === 'published'; }).length;
+    var isNew     = listings === 0 && HUB.drafts.length === 0;
+
+    document.getElementById('welcomeBlock').classList.toggle('hidden', !isNew);
+    document.getElementById('statsBlock').classList.toggle('hidden', isNew);
+
+    if (isNew) {
+      var steps = [
+        { done: true, text: 'Account created' },
+        { done: HUB.drafts.length > 0, text: 'Start a listing' },
+        { done: listings > 0, text: 'Submit it for review' },
+        { done: !!user.organisationName, text: 'Add your seller name' },
+        { done: published > 0, text: 'Go live' }
+      ];
+      document.getElementById('sellerChecklist').innerHTML = steps.map(function (s) {
+        return '<li class="' + (s.done ? 'is-done' : '') + '">' +
+          '<span class="sh-check__mark">' + (s.done ? '✓' : '') + '</span>' + escHtml(s.text) + '</li>';
+      }).join('');
+      document.getElementById('overviewSub').textContent = 'You have not listed anything yet — let us fix that.';
+      return;
+    }
+
+    var soldTickets = HUB.sales.reduce(function (n, t) { return n + (t.ticket.quantity || 0); }, 0);
+    var revenue     = HUB.sales.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
+    var pending     = HUB.events.filter(function (e) { return e.status === 'pending'; }).length;
+
+    document.getElementById('sellerStats').innerHTML = [
+      { v: listings, l: 'Listings' },
+      { v: published, l: 'Published' },
+      { v: soldTickets, l: 'Tickets sold' },
+      { v: hubMoney(revenue), l: 'Booked value' }
+    ].map(function (s) {
+      return '<div class="sh-stat"><div class="sh-stat__value">' + escHtml(String(s.v)) +
+             '</div><div class="sh-stat__label">' + escHtml(s.l) + '</div></div>';
+    }).join('');
+
+    document.getElementById('overviewSub').textContent = pending
+      ? pending + ' listing' + (pending > 1 ? 's are' : ' is') + ' waiting on our review.'
+      : 'Here is your seller account at a glance.';
+  }
+
+  var listingFilter = 'all';
+
+  function listingRow(o) {
+    var badge = '<span class="sh-badge sh-badge--' + o.statusKey + '">' + escHtml(o.status) + '</span>';
+    var thumb = o.image
+      ? '<div class="sh-listing__thumb"><img src="' + escHtml(Utils.imgUrl(o.image, 200)) + '" alt=""/></div>'
+      : '<div class="sh-listing__thumb">' + (o.icon || '📋') + '</div>';
+    return '<div class="sh-listing">' + thumb +
+      '<div class="sh-listing__body">' +
+        '<div class="sh-listing__top">' +
+          '<span class="sh-listing__title">' + escHtml(o.title) + '</span>' + badge +
+          '<span class="sh-badge sh-badge--cat">' + escHtml(o.category) + '</span>' +
+        '</div>' +
+        '<div class="sh-listing__meta">' + escHtml(o.meta) + '</div>' +
+        (o.perf ? '<div class="sh-listing__perf">' + o.perf + '</div>' : '') +
+        (o.actions ? '<div class="sh-listing__actions">' + o.actions + '</div>' : '') +
+      '</div></div>';
+  }
+
+  function renderListings() {
+    var rows = [];
+
+    HUB.drafts.forEach(function (d) {
+      var m = CAT_META[d.category] || { name: d.category, icon: '📝', href: 'create-listing.html' };
+      rows.push({
+        kind: 'draft', statusKey: 'draft', status: 'Draft', icon: m.icon,
+        title: d.titleGuess || ('Untitled ' + m.name.toLowerCase()),
+        category: m.name, image: null,
+        meta: (d.percent || 0) + '% complete · saved ' + hubSince(d.savedAt),
+        perf: '',
+        actions: '<a class="btn btn-primary btn-sm" href="' + m.href + '">Continue</a>'
+      });
+    });
+
+    HUB.events.forEach(function (e) {
+      var isExp = e.category === 'Travel & Tours';
+      var sold  = HUB.sales.filter(function (t) { return t.event.id === e.id; });
+      var qty   = sold.reduce(function (n, t) { return n + (t.ticket.quantity || 0); }, 0);
+      var value = sold.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
+      var stKey = e.sold_out ? 'soldout' : (e.status === 'published' ? 'published' : (e.status === 'pending' ? 'pending' : 'archived'));
+      rows.push({
+        kind: isExp ? 'experience' : 'event', statusKey: stKey,
+        status: e.sold_out ? 'Sold out' : (e.status || 'draft'),
+        icon: isExp ? '🌍' : '🎟️', title: e.title,
+        category: isExp ? 'Experience' : 'Event', image: e.image,
+        meta: [Utils.formatDate(e.date), [e.location, e.city].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
+        perf: qty ? '<b>' + qty + '</b> ticket' + (qty > 1 ? 's' : '') + ' sold · <b>' + hubMoney(value) + '</b> booked' : 'No sales yet',
+        actions:
+          '<a class="btn btn-secondary btn-sm" href="event.html?id=' + encodeURIComponent(e.id) + '">Preview</a>' +
+          '<a class="btn btn-secondary btn-sm" href="sell-event.html?edit=' + encodeURIComponent(e.id) + '">Edit</a>' +
+          '<button class="btn btn-ghost btn-sm" data-del-event="' + encodeURIComponent(e.id) + '" data-del-title="' + escHtml(e.title) + '">Delete</button>'
+      });
+    });
+
+    HUB.accs.forEach(function (a) {
+      rows.push({
+        kind: 'accommodation',
+        statusKey: a.status === 'published' ? 'published' : 'pending',
+        status: a.status || 'pending', icon: '🏨', title: a.name,
+        category: 'Accommodation', image: (a.images || [])[0],
+        meta: [a.city, a.province].filter(Boolean).join(', ') + ' · from ' + hubMoney(a.priceFrom) + ' per night',
+        perf: '',
+        actions: '<a class="btn btn-secondary btn-sm" href="accommodation.html?id=' + encodeURIComponent(a.id) + '">Preview</a>'
+      });
+    });
+
+    HUB.reqs.forEach(function (r) {
+      rows.push({
+        kind: 'equipment',
+        statusKey: r.status === 'confirmed' ? 'published' : 'pending',
+        status: r.status || 'pending', icon: '🔊',
+        title: r.service_name || 'Equipment request',
+        category: 'Equipment request', image: null,
+        meta: [r.location, r.event_date ? Utils.formatDate(r.event_date) : null, r.quantity ? ('Qty ' + r.quantity) : null].filter(Boolean).join(' · '),
+        perf: '', actions: ''
+      });
+    });
+
+    var filtered = listingFilter === 'all' ? rows : rows.filter(function (r) { return r.kind === listingFilter; });
+
+    var counts = { all: rows.length };
+    rows.forEach(function (r) { counts[r.kind] = (counts[r.kind] || 0) + 1; });
+    var chips = [['all', 'All']].concat(
+      [['draft', 'Drafts'], ['event', 'Events'], ['accommodation', 'Stays'], ['experience', 'Experiences'], ['equipment', 'Equipment']]
+        .filter(function (c) { return counts[c[0]]; }));
+    document.getElementById('listingFilters').innerHTML = chips.map(function (c) {
+      return '<button class="mk-filter' + (listingFilter === c[0] ? ' is-active' : '') + '" data-lf="' + c[0] + '">' +
+             escHtml(c[1]) + ' (' + (counts[c[0]] || 0) + ')</button>';
+    }).join('');
+    document.querySelectorAll('[data-lf]').forEach(function (b) {
+      b.addEventListener('click', function () { listingFilter = b.getAttribute('data-lf'); renderListings(); });
+    });
+
+    document.getElementById('listingsLoading').style.display = 'none';
+
+    var host = document.getElementById('listingsList');
+    if (!filtered.length) {
+      host.innerHTML =
+        '<div class="mk-empty">' +
+          '<div class="mk-empty__icon">📋</div>' +
+          '<div class="mk-empty__title">' + (rows.length ? 'Nothing in this filter' : 'You have not created a listing yet') + '</div>' +
+          '<div class="mk-empty__body">' +
+            (rows.length
+              ? 'Try another filter to see the rest of your listings.'
+              : 'List your event, accommodation, experience, equipment or merchandise and start reaching customers across South Africa.') +
+          '</div>' +
+          '<div class="mk-empty__actions"><a class="btn btn-primary" href="create-listing.html">+ Create Listing</a></div>' +
+        '</div>';
+      return;
+    }
+    host.innerHTML = filtered.map(listingRow).join('');
+
+    /* Delete removes the event and its ticket types; ask first, it cannot be undone. */
+    host.querySelectorAll('[data-del-event]').forEach(function (btn) {
+      btn.addEventListener('click', async function () {
+        var id    = decodeURIComponent(btn.getAttribute('data-del-event'));
+        var title = btn.getAttribute('data-del-title') || 'this listing';
+        if (!window.confirm('Delete \u201c' + title + '\u201d?\n\nThis removes the listing and its ticket types for good. Anyone holding a ticket keeps it, but the event page will no longer work.')) return;
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+        try {
+          await SupabaseAPI.deleteEvent(id);
+          HUB.events = HUB.events.filter(function (e) { return e.id !== id; });
+          Utils.showToast('Listing deleted.', 'success');
+          renderListings();
+          renderOverview();
+        } catch (err) {
+          console.error(err);
+          btn.disabled = false;
+          btn.textContent = 'Delete';
+          Utils.showToast('Could not delete that listing. Please try again.', 'error');
+        }
+      });
+    });
+  }
+
+  function renderOrders() {
+    document.getElementById('ordersLoading').style.display = 'none';
+    var host = document.getElementById('ordersList');
+
+    if (!HUB.sales.length) {
+      var hasLive = HUB.events.some(function (e) { return e.status === 'published'; });
+      host.innerHTML =
+        '<div class="mk-empty">' +
+          '<div class="mk-empty__icon">🎟</div>' +
+          '<div class="mk-empty__title">No bookings yet</div>' +
+          '<div class="mk-empty__body">' +
+            (hasLive
+              ? 'Your listings are live but nobody has booked yet. Sharing your event link is the quickest way to get that first sale.'
+              : 'Once a listing of yours is published and someone books it, their booking shows up here with their contact details.') +
+          '</div>' +
+          '<div class="mk-empty__actions"><button class="btn btn-secondary" data-go="listings">See my listings</button></div>' +
+        '</div>';
+      host.querySelectorAll('[data-go]').forEach(function (b) {
+        b.addEventListener('click', function () { openTab(b.getAttribute('data-go')); });
+      });
+      return;
+    }
+
+    host.innerHTML = HUB.sales.map(function (t) {
+      return '<div class="sh-listing">' +
+        '<div class="sh-listing__thumb">🎟️</div>' +
+        '<div class="sh-listing__body">' +
+          '<div class="sh-listing__top">' +
+            '<span class="sh-listing__title">' + escHtml(t.event.title) + '</span>' +
+            '<span class="sh-badge sh-badge--' + (t.status === 'confirmed' ? 'published' : 'pending') + '">' + escHtml(t.status) + '</span>' +
+          '</div>' +
+          '<div class="sh-listing__meta">' +
+            escHtml(t.buyer.firstName + ' ' + t.buyer.lastName) + ' · ' + escHtml(t.buyer.email) +
+            (t.buyer.phone ? ' · ' + escHtml(t.buyer.phone) : '') +
+          '</div>' +
+          '<div class="sh-listing__perf">' +
+            escHtml(String(t.ticket.quantity)) + ' × ' + escHtml(t.ticket.typeName) +
+            ' · <b>' + hubMoney(t.pricing.total) + '</b> · booked ' + escHtml(hubSince(t.bookedAt)) +
+          '</div>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  function renderProfile() {
+    var u = Auth.getUser() || {};
+    var listings = HUB.events.length + HUB.accs.length;
+    document.getElementById('sellerProfile').innerHTML =
+      [['Seller name', u.organisationName || ((u.firstName || '') + ' ' + (u.lastName || ''))],
+       ['Account email', u.email],
+       ['Account type', u.role === 'admin' ? 'Administrator' : 'Seller'],
+       ['Live and pending listings', String(listings)]]
+      .map(function (r) {
+        return '<div class="sh-profile__row"><div class="sh-profile__key">' + escHtml(r[0]) +
+               '</div><div class="sh-profile__val">' + escHtml(r[1] || '—') + '</div></div>';
+      }).join('') +
+      '<div class="dash-info-strip" style="margin-top:18px">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">' +
+        '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+        '<span>Need your seller name or details changed? Email ' +
+        '<a href="mailto:support@ticketssa.co.za" style="color:var(--green)">support@ticketssa.co.za</a> and we will update it for you.</span>' +
+      '</div>';
+  }
+
+  function renderEarnings() {
+    var revenue = HUB.sales.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
+    var fees    = HUB.sales.reduce(function (n, t) { return n + (t.pricing.serviceFee || 0); }, 0);
+    document.getElementById('earningsBody').innerHTML =
+      '<div class="sh-stats">' +
+        '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(revenue) + '</div><div class="sh-stat__label">Total booked</div></div>' +
+        '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(revenue - fees) + '</div><div class="sh-stat__label">Your share</div></div>' +
+        '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(fees) + '</div><div class="sh-stat__label">Service fee</div></div>' +
+        '<div class="sh-stat"><div class="sh-stat__value">' + HUB.sales.length + '</div><div class="sh-stat__label">Bookings</div></div>' +
+      '</div>' +
+      '<div class="dash-info-strip" style="margin-top:20px">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2">' +
+        '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+        '<span>Buyers pay you directly through the payment details on your listing, so this is a record of what has been ' +
+        'booked — not a TicketsSA balance waiting to be paid out.</span>' +
+      '</div>';
+  }
+
+  function openTab(name) {
+    showTab(name);
+    if (HUB.loaded[name]) return;
+    HUB.loaded[name] = true;
+    if (name === 'listings') renderListings();
+    if (name === 'orders')   renderOrders();
+    if (name === 'profile')  renderProfile();
+    if (name === 'earnings') renderEarnings();
+    if (name === 'bookings') loadMyTickets();
+  }
+
+  document.querySelectorAll('.dash-nav-item').forEach(function (b) {
+    b.addEventListener('click', function () { openTab(b.getAttribute('data-tab')); });
+  });
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function () { openTab(b.getAttribute('data-go')); });
+  });
+  document.querySelectorAll('.dash-back-btn').forEach(function (b) {
+    b.addEventListener('click', function () { openTab(b.getAttribute('data-back')); });
+  });
+
+  hubLoad().then(function () {
+    renderOverview();
+    var t = new URLSearchParams(window.location.search).get('tab');
+    if (t && t !== 'service') openTab(t);
+  }).catch(function (e) {
+    console.error('Seller hub load failed:', e);
+    document.getElementById('statsBlock').classList.remove('hidden');
+    document.getElementById('sellerStats').innerHTML =
+      '<div class="mk-empty" style="grid-column:1/-1">' +
+        '<div class="mk-empty__icon">⚠️</div>' +
+        '<div class="mk-empty__title">We could not load your seller data</div>' +
+        '<div class="mk-empty__body">Refresh the page to try again. If it keeps happening, email support@ticketssa.co.za.</div>' +
+      '</div>';
   });
 
   function escHtml(str) {

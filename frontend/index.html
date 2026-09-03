@@ -87,13 +87,6 @@
 
 <div class="scroll-progress" id="scrollProgress"></div>
 
-<div id="fileBanner" style="display:none;background:#1e3a5f;border-bottom:1px solid rgba(59,130,246,.4);padding:10px 24px;text-align:center;font-size:.8125rem;color:#93C5FD;">
-  <strong>Run the backend first:</strong>
-  <code style="background:rgba(255,255,255,.1);padding:1px 7px;border-radius:4px;">cd backend &amp;&amp; npm run dev</code>
-  then visit <a href="http://localhost:5500" style="color:#60A5FA;text-decoration:underline;">http://localhost:5500</a>
-</div>
-<script>if(window.location.protocol==='file:')document.getElementById('fileBanner').style.display='block'</script>
-
 <!-- ═══════════ NAVBAR ═══════════ -->
 <nav class="navbar" id="navbar">
   <div class="container navbar__inner">
@@ -103,26 +96,13 @@
       </div>
     </a>
 
-    <!-- Category picker hidden, preserved for future use single-category (Events) sites don't need it
-    <nav class="navbar__cats" id="navCats" aria-label="Categories">
-      <button class="navbar__cat active" data-cat="events">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
-        Events
-      </button>
-      <button class="navbar__cat" data-cat="travel" onclick="window.location.href='accommodations.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Travel &amp; Stay
-      </button>
-      <button class="navbar__cat" data-cat="equipment" onclick="window.location.href='services/index.html'">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        Event Equipment
-      </button>
-      <button class="navbar__cat" data-cat="marketing">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cat-icon-svg"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-        Tags &amp; Merch
-      </button>
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
     </nav>
-    -->
 
     <div class="navbar__actions" id="navbarActions"></div>
     <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
@@ -150,31 +130,48 @@
     <div class="hero__copy reveal">
       <div class="hero__tag">
         <span class="live-dot"></span>
-        South Africa's #1 Event Marketplace
+        South Africa's experience marketplace
       </div>
 
       <h1 class="hero__h1">
-        Your Next <span class="hero__h1-accent">Experience</span><br>
-        Starts Here.
+        Everything You Need For<br>
+        Your Next <span class="hero__h1-accent">Experience</span>
       </h1>
 
       <p class="hero__sub">
-        Tickets to the best concerts, sport, festivals and shows across South Africa all in one place.
+        Discover events, places to stay, experiences, equipment and more across South Africa.
       </p>
-
-      <div class="hero__cta">
-        <a href="#events" class="btn btn-primary btn-lg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          Explore Events
-        </a>
-      </div>
 
       <div class="hero__search" role="search">
         <div class="search-bar search-bar--hero">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" id="heroSearch" placeholder="Search events, cities..." aria-label="Search"/>
+          <input type="text" id="heroSearch" placeholder="What are you looking for?" aria-label="Search events, stays and experiences"/>
           <button class="btn btn-primary btn-sm" id="heroSearchBtn">Search</button>
         </div>
+      </div>
+
+      <!-- Category shortcuts: the five things you can actually do here -->
+      <nav class="hero__cats" aria-label="Browse by category">
+        <a class="hero__cat" href="browse.html">
+          <span class="hero__cat-icon">🎟</span><span>Events</span>
+        </a>
+        <a class="hero__cat" href="accommodations.html">
+          <span class="hero__cat-icon">🏨</span><span>Accommodation</span>
+        </a>
+        <a class="hero__cat" href="browse.html?category=Travel%20%26%20Tours">
+          <span class="hero__cat-icon">🌍</span><span>Experiences</span>
+        </a>
+        <a class="hero__cat" href="services/index.html">
+          <span class="hero__cat-icon">🔊</span><span>Equipment</span>
+        </a>
+        <a class="hero__cat" href="#merch">
+          <span class="hero__cat-icon">🛍</span><span>Merchandise</span>
+        </a>
+      </nav>
+
+      <div class="hero__sell">
+        Got something to list?
+        <a href="sell.html">Sell on TicketsSA →</a>
       </div>
     </div>
 
@@ -1032,7 +1029,7 @@
         <h2 class="section-title">Custom Event <span class="accent">Merchandise</span> &amp; Printing</h2>
         <p class="section-sub">Branded apparel, custom tags, wristbands and accessories designed, printed and delivered for your event.</p>
       </div>
-      <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%20Enquiry" class="btn btn-secondary">Get a Quote</a>
+      <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=apparel&name=Apparel%20%26%20Merch" class="btn btn-secondary">Get a Quote</a>
     </div>
 
     <div class="merch-grid merch-grid--v2 reveal">
@@ -1050,7 +1047,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Custom%20Event%20ID%20Tags" class="merch-cta merch-cta--green">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=tags&name=Tags%20%26%20Labels" class="merch-cta merch-cta--green">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--blue" tabindex="0">
@@ -1066,7 +1063,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20VIP%20Wristbands%20%26%20Access%20Tags" class="merch-cta merch-cta--blue">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=wristbands&name=Wristbands" class="merch-cta merch-cta--blue">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--amber" tabindex="0">
@@ -1082,7 +1079,7 @@
             <span class="merch-stars">★★★★☆</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Branded%20Event%20Caps" class="merch-cta merch-cta--amber">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=apparel&name=Apparel%20%26%20Merch" class="merch-cta merch-cta--amber">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--purple" tabindex="0">
@@ -1098,7 +1095,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Custom%20Cups%20%26%20Mugs" class="merch-cta merch-cta--purple">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=apparel&name=Apparel%20%26%20Merch" class="merch-cta merch-cta--purple">Get a Quote →</a>
       </div>
 
       <div class="merch-card merch-card--v2 merch-card--coral" tabindex="0">
@@ -1114,7 +1111,7 @@
             <span class="merch-stars">★★★★★</span>
           </div>
         </div>
-        <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Merch%20Quote%3A%20Printed%20Event%20T-Shirts" class="merch-cta merch-cta--coral">Get a Quote →</a>
+        <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=apparel&name=Apparel%20%26%20Merch" class="merch-cta merch-cta--coral">Get a Quote →</a>
       </div>
 
     </div>
@@ -1129,7 +1126,7 @@
           <p>Submit your design brief and we'll produce branded merchandise, tags and printed materials delivered before your event date.</p>
         </div>
       </div>
-      <a href="javascript:void(0)" data-qhref="mailto:quotes@TicketsSA.co.za?subject=Custom%20Merch%20Design%20Brief" class="btn btn-primary btn-lg" style="cursor:pointer;">Request a Quote →</a>
+      <a href="javascript:void(0)" data-qhref="dashboard.html?tab=service&service=custom&name=Custom%20/%20Other" class="btn btn-primary btn-lg" style="cursor:pointer;">Request a Quote →</a>
     </div>
 
   </div>

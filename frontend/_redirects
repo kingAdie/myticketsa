@@ -1,0 +1,45 @@
+# Mirrors netlify.toml's [[redirects]] rules.
+#
+# netlify.toml lives one directory ABOVE frontend/, so it is invisible to a
+# manual "drag the frontend folder into Netlify" deploy — Netlify only reads
+# config from inside the folder you actually upload. This file is the
+# equivalent config in the plain-text format Netlify also supports, placed
+# directly in the published folder, so clean URLs (/event, /sell, etc.) work
+# under either deploy method.
+#
+# If these two ever drift, netlify.toml is source of truth — regenerate this
+# file from it rather than hand-editing both.
+
+/*.html   /:splat   301!
+
+/event                    /event.html                                     200
+/events                    /browse.html                                    200
+/top32-venda               /top32-venda.html                               200
+/browse                    /browse.html                                    200
+/experiences                /browse.html?category=Travel%20%26%20Tours     200
+/sell                      /sell.html                                      200
+/create-listing             /create-listing.html                           200
+/sell/event                 /sell-event.html                               200
+/sell/accommodation          /sell-accommodation.html                      200
+/sell/experience             /sell-experience.html                         200
+/sell/equipment              /sell-equipment.html                          200
+/sell/merchandise            /sell-merchandise.html                        200
+/sell-event                 /sell-event.html                               200
+/sell-accommodation          /sell-accommodation.html                      200
+/sell-experience             /sell-experience.html                         200
+/sell-equipment               /sell-equipment.html                         200
+/sell-merchandise             /sell-merchandise.html                       200
+/dashboard                  /dashboard.html                                200
+/checkout                   /checkout.html                                 200
+/success                    /success.html                                  200
+/organiser                  /organiser.html                                200
+/my-tickets                 /my-tickets.html                               200
+/auth-callback               /auth-callback.html                           200
+/accommodations              /accommodations.html                          200
+/accommodation               /accommodation.html                           200
+/empire-travel               /empire-travel.html                           200
+/mbombela-hospitality         /mbombela-hospitality.html                   200
+/services                   /services/index.html                          200
+/services/service            /services/service.html                       200
+
+/*   /404.html   404

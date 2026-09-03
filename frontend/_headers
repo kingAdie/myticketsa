@@ -1,0 +1,42 @@
+# Mirrors netlify.toml's [[headers]] rules — same reasoning as _redirects:
+# netlify.toml lives above frontend/, so a manual folder-only deploy never
+# sees it. Without the no-cache rule below, a browser that visited before a
+# re-deploy can keep serving its OLD cached css/js/html indefinitely, which
+# looks exactly like "the page updated but the styling/nav didn't."
+
+/js/*
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/css/*
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-Robots-Tag: index, follow
+
+/dashboard.html
+  X-Robots-Tag: noindex, nofollow
+
+/success.html
+  X-Robots-Tag: noindex, nofollow
+
+/checkout.html
+  X-Robots-Tag: noindex, nofollow
+
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/sitemap.xml
+  Content-Type: application/xml
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Content-Type: text/plain
+  Cache-Control: public, max-age=86400

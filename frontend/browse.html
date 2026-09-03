@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Events &amp; Experiences · TicketsSA</title>
+  <meta name="description" content="Browse events, concerts, sports, tours and experiences happening across South Africa."/>
+  <link rel="canonical" href="https://ticketssa.co.za/browse"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
+    </nav>
+
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main class="container">
+
+  <header class="mk-head">
+    <h1 class="mk-head__title" id="pageTitle">What&rsquo;s on in South Africa</h1>
+    <p class="mk-head__sub" id="pageSub">Concerts, festivals, sport, comedy and more — book your tickets in a few taps.</p>
+
+    <div class="search-bar" style="margin-top:22px;max-width:520px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <label class="sr-only" for="searchInput">Search events</label>
+      <input type="search" id="searchInput" placeholder="Search by name, city or venue…" autocomplete="off"/>
+    </div>
+  </header>
+
+  <div class="mk-filters" id="filters" role="group" aria-label="Filter by category"></div>
+
+  <section class="mk-grid" id="grid" role="list" aria-live="polite">
+    <div class="mk-skeleton"></div><div class="mk-skeleton"></div><div class="mk-skeleton"></div>
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  Auth.updateNavbar();
+  Utils.initMobileNav();
+
+  var CATEGORIES = ['All', 'Music', 'Sport', 'Food & Drink', 'Comedy', 'Arts & Culture', 'Business', 'Travel & Tours', 'Other'];
+
+  var grid    = document.getElementById('grid');
+  var filters = document.getElementById('filters');
+  var search  = document.getElementById('searchInput');
+
+  var active = Utils.getParam('category') || 'All';
+  var all    = [];
+
+  /* Search handed over from the homepage hero (?q=) */
+  var initialQuery = Utils.getParam('q');
+  if (initialQuery) search.value = initialQuery;
+
+  /* Experiences are events in the "Travel & Tours" category give that view its own framing. */
+  if (active === 'Travel & Tours') {
+    document.getElementById('pageTitle').textContent = 'Experiences & tours';
+    document.getElementById('pageSub').textContent   = 'Guided tours, day trips, safaris and travel packages run by local operators.';
+    document.title = 'Experiences & Tours · TicketsSA';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderFilters() {
+    filters.innerHTML = CATEGORIES.map(function (c) {
+      return '<button class="mk-filter' + (c === active ? ' is-active' : '') + '" data-cat="' + esc(c) + '"' +
+             (c === active ? ' aria-current="true"' : '') + '>' + esc(c === 'Travel & Tours' ? 'Experiences' : c) + '</button>';
+    }).join('');
+    filters.querySelectorAll('.mk-filter').forEach(function (b) {
+      b.addEventListener('click', function () {
+        active = b.dataset.cat;
+        var url = new URL(window.location.href);
+        if (active === 'All') url.searchParams.delete('category');
+        else url.searchParams.set('category', active);
+        window.history.replaceState({}, '', url);
+        renderFilters(); paint();
+      });
+    });
+  }
+
+  function card(ev) {
+    var img = ev.image || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80';
+    return '<article class="event-card" role="listitem" onclick="window.location.href=\'event.html?id=' + encodeURIComponent(ev.id) + '\'">' +
+      '<div class="event-card__img-wrap">' +
+        '<img class="event-card__img" src="' + esc(Utils.imgUrl(img, 800)) + '" alt="' + esc(ev.title) + '" loading="lazy"' +
+          ' onerror="this.src=\'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&amp;q=80\'"/>' +
+        '<div class="event-card__img-overlay"></div>' +
+        (ev.featured ? '<span class="event-card__badge badge badge-green">Featured</span>' : '') +
+      '</div>' +
+      '<div class="event-card__body">' +
+        '<div class="event-card__cat">' + esc(ev.category) + '</div>' +
+        '<h3 class="event-card__title">' + esc(ev.title) + '</h3>' +
+        '<div class="event-card__meta">' +
+          '<div class="event-card__meta-item">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>' +
+            '<span>' + esc(Utils.formatDate(ev.date) + (ev.time ? ' · ' + Utils.formatTime(ev.time) : '')) + '</span>' +
+          '</div>' +
+          '<div class="event-card__meta-item">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+            '<span>' + esc([ev.location, ev.city].filter(Boolean).join(', ')) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="event-card__foot">' +
+          '<div class="event-card__price">' + esc(Utils.formatCurrency(ev.price)) +
+            '<span class="event-card__price-note">from per ticket</span></div>' +
+          '<span class="btn btn-primary btn-sm">View</span>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function paint() {
+    var q = (search.value || '').trim().toLowerCase();
+    var list = all.filter(function (ev) {
+      var catOk = active === 'All' || ev.category === active;
+      if (!catOk) return false;
+      if (!q) return true;
+      return [ev.title, ev.city, ev.location, ev.category].filter(Boolean)
+        .join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (!list.length) {
+      grid.style.display = 'block';
+      grid.innerHTML =
+        '<div class="mk-empty">' +
+          '<div class="mk-empty__icon">🔍</div>' +
+          '<div class="mk-empty__title">' + (q ? 'Nothing matches that search' : 'Nothing listed here yet') + '</div>' +
+          '<div class="mk-empty__body">' +
+            (q
+              ? 'We could not find anything for “' + esc(search.value.trim()) + '”. Try a different name, city or venue.'
+              : 'There are no published listings in this category right now. New ones go up regularly — try another category, or check back soon.') +
+          '</div>' +
+          '<div class="mk-empty__actions">' +
+            (q ? '<button class="btn btn-secondary" id="clearSearch">Clear search</button>' : '') +
+            '<a class="btn btn-primary" href="sell.html">List yours on TicketsSA</a>' +
+          '</div>' +
+        '</div>';
+      var cs = document.getElementById('clearSearch');
+      if (cs) cs.addEventListener('click', function () { search.value = ''; paint(); });
+      return;
+    }
+
+    grid.style.display = '';
+    grid.innerHTML = list.map(card).join('');
+  }
+
+  try {
+    all = await SupabaseAPI.getEvents({});
+  } catch (e) {
+    console.error(e);
+    grid.style.display = 'block';
+    grid.innerHTML =
+      '<div class="mk-empty">' +
+        '<div class="mk-empty__icon">⚠️</div>' +
+        '<div class="mk-empty__title">We could not load listings</div>' +
+        '<div class="mk-empty__body">Something went wrong on our side. Please refresh the page — if it keeps happening, email support@ticketssa.co.za.</div>' +
+        '<div class="mk-empty__actions"><button class="btn btn-primary" onclick="window.location.reload()">Try again</button></div>' +
+      '</div>';
+    return;
+  }
+
+  renderFilters();
+  paint();
+
+  var t = null;
+  search.addEventListener('input', function () {
+    clearTimeout(t);
+    t = setTimeout(paint, 180);
+  });
+});
+</script>
+</body>
+</html>

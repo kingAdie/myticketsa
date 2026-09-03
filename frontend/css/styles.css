@@ -181,7 +181,7 @@ p{color:var(--text-2);line-height:1.75}
   background:var(--bg-2);border:1px solid var(--b1);
   border-radius:var(--rx);padding:4px;
   margin:0 var(--s2);flex:1;
-  max-width:700px;
+  max-width:760px;
 }
 .navbar__cat{
   display:flex;align-items:center;gap:7px;
@@ -201,6 +201,9 @@ p{color:var(--text-2);line-height:1.75}
 .navbar__cat:nth-child(2) .cat-icon{background:rgba(59,130,246,.15)}
 .navbar__cat:nth-child(3) .cat-icon{background:rgba(234,179,8,.15)}
 .navbar__cat:nth-child(4) .cat-icon{background:rgba(168,85,247,.15)}
+.navbar__cat:nth-child(5) .cat-icon{background:rgba(236,72,153,.15)}
+/* Keyboard focus must be as obvious as hover mouse users aren't the only ones here */
+.navbar__cat:focus-visible{outline:none;background:var(--bg-4);color:var(--text);box-shadow:0 0 0 2px var(--green-border)}
 
 .navbar__actions{display:flex;align-items:center;gap:var(--s2);flex-shrink:0;margin-left:auto}
 .navbar__toggle{
@@ -214,19 +217,29 @@ p{color:var(--text-2);line-height:1.75}
 .navbar__toggle svg{width:22px;height:22px;display:block}
 
 /* Scrolled state for navbar cats */
-@media(max-width:1100px){.navbar__cats{max-width:520px}}
+@media(max-width:1100px){
+  .navbar__cats{max-width:560px}
+  .navbar__cat{padding:9px 12px;font-size:.8125rem}
+}
+@media(max-width:1000px){
+  /* Labels start crowding the actions hide them, keep the icons as the target */
+  .navbar__cat{padding:9px}
+  .navbar__cat .cat-label{display:none}
+}
 @media(max-width:900px){
   /* Fix: use fixed positioning so it never moves on scroll */
   .navbar{position:fixed;top:0;left:0;right:0;width:100%}
   /* Offset page content so it doesn't hide under the fixed bar */
   body{padding-top:60px}
   .navbar__inner{height:60px;gap:var(--s2)}
+  /* Categories collapse into the drawer opened by the toggle below */
   .navbar__cats{display:none}
-  /* No category drawer left to open keep Log In / Sign Up visible instead of a hamburger */
-  .navbar__toggle{display:none}
+  .navbar__toggle{display:block}
   .navbar__actions{gap:8px}
   .navbar__actions .btn{padding:11px 14px;font-size:.75rem;min-height:44px}
   .navbar__logo-wordmark{font-size:1.125rem}
+  /* Labels come back inside the drawer, where there is room */
+  .navbar--open .navbar__cat .cat-label{display:inline}
 }
 
 /* Mobile nav open full-screen drawer */
@@ -467,4 +480,38 @@ p{color:var(--text-2);line-height:1.75}
   .btn{font-size:.8125rem;padding:10px 20px}
   .btn-lg{padding:12px 28px;font-size:.9375rem}
   .btn-xl{padding:14px 32px;font-size:.9375rem}
+}
+
+/* Sell entry point in the navbar.
+   Deliberately a text link, not a button: Log In / Sign Up are the two
+   buttons up there, and a third filled control turned the header into three
+   competing CTAs. Hidden on small screens, where the account menu and the
+   homepage hero already carry the same link. */
+.navbar__sell{
+  display:inline-flex;align-items:center;
+  min-height:44px;padding:0 6px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.8125rem;font-weight:600;
+  color:var(--text-3);white-space:nowrap;
+  transition:color .2s;
+}
+.navbar__sell:hover{color:var(--green)}
+.navbar__sell:focus-visible{outline:none;color:var(--green);
+  box-shadow:0 0 0 2px var(--green-border);border-radius:var(--r1)}
+@media(max-width:900px){ .navbar__sell{display:none} }
+
+/* ── Mobile touch targets ────────────────────────────────
+   Several controls across the site render under the 44px
+   minimum tap-target size (WCAG 2.5.5 / Apple HIG) on touch
+   viewports desktop sizing is kept for mouse users, these
+   only grow on screens narrow enough to be touch-first. */
+@media(max-width:768px){
+  .btn{min-height:44px}
+  .btn-sm{min-height:44px;padding-top:0;padding-bottom:0}
+  .nav-user__link{min-height:44px;display:flex;align-items:center;padding:8px 10px}
+  .navbar__toggle{min-width:44px;min-height:44px}
+  .dash-nav-item{min-height:44px}
+  .mt-signout{min-height:44px}
+  /* .org-btn-icon fixed directly in organiser.css it loads after this
+     file, so an unconditional rule there would otherwise win the cascade. */
 }

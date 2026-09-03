@@ -1,5 +1,5 @@
 -- ============================================================
---  MyTicketSA — MySQL Database Schema v1.0
+--  MyTicketSA MySQL Database Schema v1.0
 --  Compatible with MySQL Workbench 8.0+
 --
 --  HOW TO USE IN MYSQL WORKBENCH:
@@ -128,7 +128,7 @@ CREATE TABLE tickets (
   id                 VARCHAR(40)   NOT NULL,
   status             ENUM('pending','confirmed','used','cancelled') NOT NULL DEFAULT 'confirmed',
 
-  -- Buyer (snapshot — survives account deletion)
+  -- Buyer (snapshot survives account deletion)
   buyer_first_name   VARCHAR(100)  NOT NULL,
   buyer_last_name    VARCHAR(100)  NOT NULL,
   buyer_email        VARCHAR(255)  NOT NULL,
@@ -272,7 +272,7 @@ ORDER BY t.booked_at DESC;
 
 
 -- ============================================================
---  SEED DATA — same 6 events as the original JSON file
+--  SEED DATA same 6 events as the original JSON file
 -- ============================================================
 
 -- Admin user

@@ -117,7 +117,9 @@
   grid-template-columns: 1fr 400px;
   gap: 56px; align-items: center;
   position: relative; z-index: 1;
-  padding: 96px 0 88px;
+  /* Keep .container's horizontal padding a bare 0 here made the hero sit
+     flush against the window edge once the viewport reached --mw (1280px). */
+  padding: 96px var(--px) 88px;
 }
 
 /* Hero tag */
@@ -1462,4 +1464,45 @@
   .reveal, .trust-bar__track { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
   .hero__bg-logo { animation: none !important; }
+}
+
+/* ── Hero category shortcuts (marketplace IA) ─────────────
+   The five things a visitor can actually do here, right
+   under the search box. Mobile-first: wraps by default. */
+.hero__cats{
+  display:flex;flex-wrap:wrap;gap:10px;
+  margin-top:20px;
+}
+.hero__cat{
+  display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 16px;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--rx);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.875rem;font-weight:600;color:var(--text-2);
+  transition:border-color .2s,color .2s,background .2s,transform .2s;
+  white-space:nowrap;
+}
+.hero__cat:hover{
+  border-color:var(--green-border);color:var(--text);
+  background:var(--green-tint);transform:translateY(-1px);
+}
+.hero__cat:focus-visible{
+  outline:none;border-color:var(--green);
+  box-shadow:0 0 0 3px rgba(22,163,74,.2);
+}
+.hero__cat-icon{font-size:1rem;line-height:1}
+
+.hero__sell{
+  margin-top:22px;font-size:.875rem;color:var(--text-3);
+}
+.hero__sell a{
+  color:var(--green);font-weight:700;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.hero__sell a:hover{text-decoration:underline}
+
+@media(max-width:600px){
+  .hero__cats{gap:8px}
+  .hero__cat{padding:0 13px;font-size:.8125rem}
 }

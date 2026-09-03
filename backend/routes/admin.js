@@ -126,7 +126,7 @@ router.get('/media', async (req, res, next) => {
     const fsSync     = require('fs');
     if (!fsSync.existsSync(uploadsDir)) return res.json({ success: true, files: [] });
     const files = fsSync.readdirSync(uploadsDir)
-      .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
+      .filter(f => /\.(jpg|png|png|webp)$/i.test(f))
       .map(f => ({
         filename: f,
         url:      `/uploads/${f}`,

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const QRCode        = require('qrcode');
 const { supabaseAdmin } = require('./supabase');
@@ -29,7 +29,7 @@ async function createTicket(params) {
       type: 'png', width: 300, margin: 2, errorCorrectionLevel: 'H',
       color: { dark: '#000000', light: '#FFFFFF' },
     });
-    qrCodeUrl = await storage.uploadBuffer(qrBuffer, { folder: 'myticketsa/tickets', public_id: ticketId });
+    qrCodeUrl = await storage.uploadBuffer(qrBuffer, { folder: 'TicketsSA/tickets', public_id: ticketId });
   } catch (err) {
     console.error('[TICKET] QR generation/upload failed:', err.message);
   }
@@ -75,7 +75,7 @@ async function createTicket(params) {
     pricing: { subtotal: pricing.subtotal, serviceFee: pricing.serviceFee, total: pricing.total },
     payment: { reference: payment.reference, method: payment.method || 'simulated', paidAt: payment.paidAt },
     qrCodeUrl,
-    qrCodeBuffer: qrBuffer, // Buffer passed to emailService for attachment — no disk I/O needed
+    qrCodeBuffer: qrBuffer, // Buffer passed to emailService for attachment no disk I/O needed
     bookedAt: new Date().toISOString(),
   };
 }

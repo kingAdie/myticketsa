@@ -225,7 +225,7 @@ async function seedEventsIfEmpty() {
     .maybeSingle();
 
   if (!adminProfile) {
-    console.log('[SEED] No admin profile yet — skipping event seed.');
+    console.log('[SEED] No admin profile yet skipping event seed.');
     return;
   }
 

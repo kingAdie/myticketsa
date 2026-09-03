@@ -1,0 +1,327 @@
+/* ================================================
+   TicketsSA Marketplace surfaces (marketplace.css)
+   Create Listing hub · Sell explainer · Browse
+   Shared pieces for the Buy/Sell information
+   architecture. Mobile-first; tokens from styles.css.
+   ================================================ */
+
+/* ── Page header ────────────────────────────────── */
+.mk-head{padding:40px 0 26px}
+.mk-head__back{
+  display:inline-flex;align-items:center;gap:7px;
+  min-height:44px;color:var(--text-3);
+  font-size:.875rem;font-weight:600;transition:color .2s;
+}
+.mk-head__back:hover{color:var(--green)}
+.mk-head__back svg{width:15px;height:15px}
+.mk-head__title{
+  margin-top:6px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(1.75rem,5vw,2.5rem);font-weight:800;
+  letter-spacing:-.03em;line-height:1.15;color:var(--text);
+}
+.mk-head__sub{
+  margin-top:12px;font-size:1rem;color:var(--text-2);
+  line-height:1.7;max-width:560px;
+}
+
+/* ── Listing category picker ────────────────────── */
+.mk-picker{
+  display:grid;grid-template-columns:1fr;gap:14px;
+  padding-bottom:56px;
+}
+.mk-pick{
+  display:flex;align-items:flex-start;gap:16px;
+  padding:20px;text-align:left;width:100%;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--r4);cursor:pointer;
+  transition:border-color .2s,background .2s,transform .2s,box-shadow .2s;
+  color:inherit;font-family:inherit;
+}
+.mk-pick:hover{
+  border-color:var(--green-border);background:var(--bg-3);
+  transform:translateY(-2px);box-shadow:var(--sh-g);
+}
+.mk-pick:focus-visible{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.2)}
+.mk-pick__icon{
+  width:52px;height:52px;flex-shrink:0;border-radius:var(--r3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;background:var(--bg-4);
+}
+.mk-pick:hover .mk-pick__icon{background:rgba(22,163,74,.15)}
+.mk-pick__body{flex:1;min-width:0}
+.mk-pick__title{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.0625rem;font-weight:700;color:var(--text);
+}
+.mk-pick__sub{margin-top:6px;font-size:.9375rem;color:var(--text-2);line-height:1.6}
+.mk-pick__arrow{
+  flex-shrink:0;align-self:center;width:20px;height:20px;
+  color:var(--text-3);transition:transform .2s,color .2s;
+}
+.mk-pick:hover .mk-pick__arrow{color:var(--green);transform:translateX(3px)}
+.mk-pick__tag{
+  padding:2px 9px;border-radius:var(--rx);
+  font-size:.625rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  background:rgba(234,179,8,.12);color:#EAB308;border:1px solid rgba(234,179,8,.3);
+}
+
+/* ── Draft resume strip ─────────────────────────── */
+.mk-drafts{margin-bottom:28px}
+.mk-drafts__label{
+  font-size:.6875rem;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text-3);margin-bottom:12px;
+}
+.mk-draft{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 16px;margin-bottom:10px;
+  background:var(--bg-2);border:1px solid var(--green-border);
+  border-radius:var(--r3);
+}
+.mk-draft__body{flex:1;min-width:160px}
+.mk-draft__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.9375rem;font-weight:700;color:var(--text);
+}
+.mk-draft__meta{margin-top:4px;font-size:.8125rem;color:var(--text-2)}
+.mk-draft__bar{
+  height:4px;border-radius:var(--rx);background:var(--bg-4);
+  margin-top:9px;overflow:hidden;max-width:220px;
+}
+.mk-draft__bar span{display:block;height:100%;background:var(--green);border-radius:var(--rx)}
+
+/* ── Sell explainer ─────────────────────────────── */
+.mk-hero{
+  padding:52px 0 40px;
+  border-bottom:1px solid var(--b1);
+}
+.mk-hero__eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.75rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--green);margin-bottom:14px;
+}
+.mk-hero__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(2rem,6vw,3.25rem);font-weight:800;
+  letter-spacing:-.03em;line-height:1.08;color:var(--text);
+}
+.mk-hero__sub{
+  margin-top:16px;font-size:1.0625rem;color:var(--text-2);
+  line-height:1.75;max-width:580px;
+}
+.mk-hero__cta{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+
+.mk-steps{padding:44px 0}
+.mk-step{
+  display:flex;gap:16px;padding-bottom:26px;
+}
+.mk-step__num{
+  width:34px;height:34px;flex-shrink:0;border-radius:var(--rx);
+  background:var(--green-tint);border:1px solid var(--green-border);
+  color:var(--green);display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.875rem;
+}
+.mk-step__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.0625rem;font-weight:700;color:var(--text);
+}
+.mk-step__body{margin-top:6px;font-size:.9375rem;color:var(--text-2);line-height:1.7}
+
+.mk-what{
+  display:grid;grid-template-columns:1fr;gap:12px;
+  padding:0 0 48px;
+}
+.mk-what__item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;background:var(--bg-2);
+  border:1px solid var(--b1);border-radius:var(--r3);
+}
+.mk-what__icon{font-size:1.25rem;flex-shrink:0}
+.mk-what__text{font-size:.9375rem;color:var(--text);font-weight:600}
+
+.mk-panel{
+  padding:22px;border-radius:var(--r4);
+  background:var(--bg-2);border:1px solid var(--b1);
+  margin-bottom:48px;
+}
+.mk-panel__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.125rem;font-weight:700;color:var(--text);margin-bottom:10px;
+}
+.mk-panel__body{font-size:.9375rem;color:var(--text-2);line-height:1.75}
+.mk-panel__body a{color:var(--green);font-weight:600}
+.mk-panel__body a:hover{text-decoration:underline}
+
+/* ── Browse / discovery ─────────────────────────── */
+.mk-filters{
+  display:flex;gap:8px;overflow-x:auto;padding:0 0 16px;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.mk-filters::-webkit-scrollbar{display:none}
+.mk-filter{
+  flex-shrink:0;min-height:44px;padding:0 16px;
+  display:inline-flex;align-items:center;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--rx);color:var(--text-2);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:.875rem;font-weight:600;cursor:pointer;
+  white-space:nowrap;transition:all .2s;
+}
+.mk-filter:hover{border-color:var(--b3);color:var(--text)}
+.mk-filter.is-active{background:var(--green-tint);border-color:var(--green);color:var(--green)}
+
+.mk-grid{
+  display:grid;grid-template-columns:1fr;gap:18px;
+  padding-bottom:56px;
+}
+
+/* ── Empty & loading states ─────────────────────── */
+.mk-empty{
+  text-align:center;padding:56px 20px;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--r4);
+}
+.mk-empty__icon{font-size:2.25rem;margin-bottom:16px}
+.mk-empty__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.125rem;font-weight:700;color:var(--text);
+}
+.mk-empty__body{
+  margin:10px auto 0;max-width:420px;
+  font-size:.9375rem;color:var(--text-2);line-height:1.7;
+}
+.mk-empty__actions{
+  display:flex;flex-direction:column;gap:10px;
+  max-width:280px;margin:22px auto 0;
+}
+
+.mk-skeleton{
+  height:300px;border-radius:var(--r4);
+  background:linear-gradient(90deg,var(--bg-2) 25%,var(--bg-3) 50%,var(--bg-2) 75%);
+  background-size:200% 100%;animation:mkShimmer 1.4s infinite;
+}
+@keyframes mkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Tablet and up ──────────────────────────────── */
+@media(min-width:640px){
+  .mk-picker{grid-template-columns:repeat(2,1fr)}
+  .mk-what{grid-template-columns:repeat(2,1fr)}
+  .mk-hero__cta{flex-direction:row}
+  .mk-grid{grid-template-columns:repeat(2,1fr)}
+  .mk-empty__actions{flex-direction:row;justify-content:center;max-width:none}
+}
+@media(min-width:1024px){
+  .mk-grid{grid-template-columns:repeat(3,1fr)}
+  .mk-what{grid-template-columns:repeat(3,1fr)}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .mk-pick:hover{transform:none}
+  .mk-skeleton{animation:none}
+}
+
+/* ================================================
+   Seller Hub (sh-*) — used by dashboard.html
+   ================================================ */
+
+.sh-welcome{
+  padding:24px;border-radius:var(--r4);
+  background:var(--bg-2);border:1px solid var(--green-border);
+}
+.sh-welcome__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.375rem;font-weight:800;letter-spacing:-.02em;color:var(--text);
+}
+.sh-welcome__sub{margin-top:8px;font-size:.9375rem;color:var(--text-2);line-height:1.7}
+
+.sh-check{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.sh-check li{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--b0);
+  font-size:.9375rem;color:var(--text-2);
+}
+.sh-check li:last-child{border-bottom:none}
+.sh-check__mark{
+  width:22px;height:22px;flex-shrink:0;border-radius:var(--rx);
+  border:1.5px solid var(--b2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6875rem;font-weight:800;color:var(--text-3);
+}
+.sh-check li.is-done{color:var(--text)}
+.sh-check li.is-done .sh-check__mark{background:var(--green);border-color:var(--green);color:#fff}
+
+.sh-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.sh-stat{
+  padding:18px;border-radius:var(--r3);
+  background:var(--bg-2);border:1px solid var(--b1);
+}
+.sh-stat__value{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1.75rem;font-weight:800;letter-spacing:-.02em;color:var(--text);
+  line-height:1.1;
+}
+.sh-stat__label{
+  margin-top:6px;font-size:.75rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);
+}
+
+/* Unified listing row — every category renders through this */
+.sh-listing{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:16px;margin-bottom:12px;
+  background:var(--bg-2);border:1px solid var(--b1);
+  border-radius:var(--r3);
+  transition:border-color .2s;
+}
+.sh-listing:hover{border-color:var(--b3)}
+.sh-listing__thumb{
+  width:64px;height:64px;flex-shrink:0;border-radius:var(--r2);
+  object-fit:cover;background:var(--bg-4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;overflow:hidden;
+}
+.sh-listing__thumb img{width:100%;height:100%;object-fit:cover}
+.sh-listing__body{flex:1;min-width:0}
+.sh-listing__top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sh-listing__title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:1rem;font-weight:700;color:var(--text);
+  word-break:break-word;
+}
+.sh-listing__meta{margin-top:6px;font-size:.8125rem;color:var(--text-2);line-height:1.6}
+.sh-listing__perf{margin-top:8px;font-size:.8125rem;color:var(--text-3)}
+.sh-listing__perf b{color:var(--green);font-weight:700}
+.sh-listing__actions{
+  display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;
+}
+.sh-listing__actions .btn{min-height:40px}
+
+.sh-badge{
+  display:inline-flex;align-items:center;padding:3px 10px;
+  border-radius:var(--rx);font-size:.625rem;font-weight:800;
+  letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;
+}
+.sh-badge--published{background:rgba(22,163,74,.13);color:var(--green);border:1px solid var(--green-border)}
+.sh-badge--pending  {background:rgba(234,179,8,.13);color:#EAB308;border:1px solid rgba(234,179,8,.32)}
+.sh-badge--draft    {background:rgba(255,255,255,.07);color:var(--text-2);border:1px solid var(--b2)}
+.sh-badge--soldout  {background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.32)}
+.sh-badge--archived {background:rgba(255,255,255,.05);color:var(--text-3);border:1px solid var(--b1)}
+.sh-badge--cat      {background:var(--bg-4);color:var(--text-2);border:1px solid var(--b1)}
+
+.sh-profile{
+  padding:22px;border-radius:var(--r4);
+  background:var(--bg-2);border:1px solid var(--b1);
+}
+.sh-profile__row{
+  display:flex;gap:14px;padding:12px 0;
+  border-bottom:1px solid var(--b0);
+}
+.sh-profile__row:last-child{border-bottom:none}
+.sh-profile__key{flex:0 0 40%;font-size:.8125rem;color:var(--text-3)}
+.sh-profile__val{flex:1;font-size:.9375rem;color:var(--text);word-break:break-word}
+
+@media(min-width:640px){
+  .sh-stats{grid-template-columns:repeat(4,1fr)}
+  .sh-listing__actions{margin-top:10px}
+}

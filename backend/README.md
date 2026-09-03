@@ -1,4 +1,4 @@
-# MyTicketSA v6 — Platform Documentation
+﻿# TicketsSA v6 Platform Documentation
 
 South Africa's event ticketing platform. Three-section architecture:
 **Public** → **Organiser Dashboard** → **Admin Portal**
@@ -22,14 +22,14 @@ npm run dev
 # → http://localhost:5500
 ```
 
-**Default admin login:** `admin@myticketsa.co.za` / `admin123`
+**Default admin login:** `admin@TicketsSA.co.za` / `admin123`
 
 ---
 
 ## Architecture
 
 ```
-myticketsa-v6/
+TicketsSA-v6/
 ├── backend/
 │   ├── config/
 │   │   └── index.js              ← Centralised env config (single source of truth)
@@ -153,7 +153,7 @@ myticketsa-v6/
 
 | # | Bug | Impact | Fix |
 |---|-----|--------|-----|
-| 1 | `sanitiseUser` was `async` | Login/register returned `user: {}` — auth completely broken | Removed `async` keyword |
+| 1 | `sanitiseUser` was `async` | Login/register returned `user: {}` auth completely broken | Removed `async` keyword |
 | 2 | `isLoggedIn()` didn't check JWT expiry | Users stayed "logged in" after 7-day token expired | Added client-side JWT decode + expiry check |
 | 3 | `_API_BASE` declared in 6 files | `SyntaxError` on pages that loaded two JS files | Centralised to `js/config.js` |
 | 4 | Equipment requests had no backend | Dashboard form did `setTimeout` simulation, saved nothing | Full route + controller + service + DB table |
@@ -180,7 +180,7 @@ Copy the output into `JWT_SECRET=` in your `.env`.
 
 | Field | Value |
 |-------|-------|
-| Email | `admin@myticketsa.co.za` |
+| Email | `admin@TicketsSA.co.za` |
 | Password | `admin123` |
 
 **Change immediately after first login.**

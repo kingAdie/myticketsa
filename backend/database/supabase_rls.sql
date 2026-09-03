@@ -1,5 +1,5 @@
 -- ============================================================
---  MyTicketSA — Row Level Security Policies
+--  MyTicketSA Row Level Security Policies
 --
 --  Run this in your Supabase project → SQL Editor
 --  AFTER running supabase_schema.sql.

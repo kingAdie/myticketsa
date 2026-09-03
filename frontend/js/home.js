@@ -21,6 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     function doSearch() {
       const query = (searchInput?.value || '').trim().toLowerCase();
 
+      /* A real query goes to the full results page, which searches every
+         published listing rather than only the cards on this page. */
+      if (query) {
+        window.location.href = 'browse.html?q=' + encodeURIComponent(query);
+        return;
+      }
+
       document.getElementById('events')?.scrollIntoView({ behavior: 'smooth' });
 
       /* Filter the hardcoded event feature cards on the homepage */
@@ -82,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            <span>${Utils.formatDate(event.date)} · ${Utils.formatTime(event.time)}</span>
+            <span>${Utils.formatDate(event.date)}${event.time ? ' · ' + Utils.formatTime(event.time) : ''}</span>
           </div>
           <div class="event-card__meta-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

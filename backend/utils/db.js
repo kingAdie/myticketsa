@@ -1,4 +1,4 @@
-/**
+﻿/**
  * utils/db.js
  *
  * MySQL connection pool using mysql2/promise.
@@ -42,7 +42,7 @@ function getPool() {
     port:     fromUrl?.port     || parseInt(process.env.MYSQLPORT    || process.env.MYSQL_PORT    || process.env.DB_PORT     || '3306', 10),
     user:     fromUrl?.user     || process.env.MYSQLUSER     || process.env.MYSQL_USER     || process.env.DB_USER     || 'root',
     password: fromUrl?.password || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
-    database: fromUrl?.database || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME     || 'myticketsa',
+    database: fromUrl?.database || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME     || 'TicketsSA',
     waitForConnections: true,
     connectionLimit:    10,
     queueLimit:         0,
@@ -62,7 +62,7 @@ function getPool() {
   return pool;
 }
 
-// Proxy object — every method call goes to the real pool.
+// Proxy object every method call goes to the real pool.
 // This means `require('./db').query(...)` works immediately even
 // though the pool is created lazily after dotenv is loaded.
 module.exports = new Proxy({}, {

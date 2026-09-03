@@ -1,4 +1,4 @@
-/**
+﻿/**
  * utils/emailService.js
  *
  * Sends transactional emails via Nodemailer.
@@ -64,12 +64,12 @@ async function sendConfirmation(ticket) {
     attachments.push({
       filename: `ticket-${id}.png`,
       content:  qrCodeBuffer,
-      cid:      'qrcode@myticketsa',
+      cid:      'qrcode@TicketsSA',
     });
   }
 
   const mailOptions = {
-    from:        process.env.EMAIL_FROM || 'MyTicketSA <noreply@myticketsa.co.za>',
+    from:        process.env.EMAIL_FROM || 'TicketsSA <noreply@TicketsSA.co.za>',
     to:          `${buyer.firstName} ${buyer.lastName} <${buyer.email}>`,
     subject,
     html,
@@ -112,7 +112,7 @@ function buildConfirmationHTML(ticket) {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Your MyTicketSA Booking</title>
+  <title>Your TicketsSA Booking</title>
 </head>
 <body style="margin:0;padding:0;background:#0B0B0B;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
 
@@ -202,7 +202,7 @@ function buildConfirmationHTML(ticket) {
         <tr>
           <td style="background:#111111;padding:0 36px 28px;text-align:center;">
             <p style="margin:0 0 14px;font-size:13px;color:#A1A1AA;">Scan this QR code at the entrance</p>
-            <img src="cid:qrcode@myticketsa" alt="QR Code" width="180" style="border-radius:12px;border:4px solid #1C1C1C;" />
+            <img src="cid:qrcode@TicketsSA" alt="QR Code" width="180" style="border-radius:12px;border:4px solid #1C1C1C;" />
           </td>
         </tr>
 
@@ -219,7 +219,7 @@ function buildConfirmationHTML(ticket) {
         <tr>
           <td style="background:#161616;border-radius:0 0 16px 16px;padding:20px 36px;border-top:1px solid rgba(255,255,255,0.06);">
             <p style="margin:0;font-size:12px;color:#52525B;text-align:center;">
-              © 2025 MyTicketSA · Built in South Africa 🇿🇦 ·
+              © 2025 TicketsSA · Built in South Africa 🇿🇦 ·
               <a href="#" style="color:#16A34A;text-decoration:none;">Help Centre</a>
             </p>
           </td>
@@ -239,7 +239,7 @@ function buildConfirmationHTML(ticket) {
 function buildConfirmationText(ticket) {
   const { buyer, event, ticket: tkt, pricing, id } = ticket;
   return [
-    'MyTicketSA – Booking Confirmation',
+    'TicketsSA – Booking Confirmation',
     '='.repeat(40),
     '',
     `Hi ${buyer.firstName},`,
@@ -256,7 +256,7 @@ function buildConfirmationText(ticket) {
     '',
     'Your QR code is attached to this email. Show it at the entrance.',
     '',
-    '© 2025 MyTicketSA – Built in South Africa 🇿🇦',
+    '© 2025 TicketsSA – Built in South Africa 🇿🇦',
   ].join('\n');
 }
 

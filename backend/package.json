@@ -1,7 +1,7 @@
-{
-  "name": "myticketsa-backend",
+﻿{
+  "name": "TicketsSA-backend",
   "version": "7.0.0",
-  "description": "MyTicketSA v7 — Supabase-backed",
+  "description": "TicketsSA v7 Supabase-backed",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

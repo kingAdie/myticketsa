@@ -300,13 +300,6 @@
 
   </div>
 
-  <!-- Shown only when opened as file:// -->
-  <div id="serverHint" style="display:none;max-width:400px;margin:16px auto 0;padding:14px 16px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.35);border-radius:12px;font-size:.8125rem;color:#93C5FD;line-height:1.7;text-align:center;">
-    ⚠️ <strong>Open via the server, not as a file.</strong><br/>
-    In your terminal, run <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;">npm run dev</code> inside the <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;">backend</code> folder,<br/>
-    then visit <a href="http://localhost:5500/admin/login.html" style="color:#60A5FA;text-decoration:underline;">http://localhost:5500/admin/login.html</a>
-  </div>
-
   <a href="../index.html" class="back-link">← Back to TicketsSA</a>
 
   <script>
@@ -319,12 +312,6 @@
       // Served from any real server (local dev, Netlify, etc.) → use relative URLs
       return '';
     })();
-
-    // ── If opened as a file, show a helpful instruction banner ───────────
-    if (window.location.protocol === 'file:') {
-      const hint = document.getElementById('serverHint');
-      if (hint) hint.style.display = 'block';
-    }
 
     // ── Check if already logged in as admin ─────────────────────────────
     (function () {

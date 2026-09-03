@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const path   = require('path');
 const fs     = require('fs');
@@ -69,7 +69,7 @@ app.use(express.urlencoded({ extended: true, limit: '6mb' }));
 // ── Logging ───────────────────────────────────────────────────────────────────
 app.use(morgan(PROD ? 'combined' : 'dev'));
 
-// ── Static: frontend files (local dev only — Netlify serves these separately) ─
+// ── Static: frontend files (local dev only Netlify serves these separately) ─
 if (fs.existsSync(frontendDir)) {
   app.use(express.static(frontendDir, {
     etag: false, maxAge: 0,
@@ -91,15 +91,22 @@ app.post('/api/upload', async (req, res) => {
   try {
     const { data, filename, mimeType } = req.body;
     if (!data || !filename) return res.status(400).json({ success: false, error: 'data and filename required' });
-    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const allowed = ['image/png', 'image/png', 'image/webp', 'image/gif'];
     if (mimeType && !allowed.includes(mimeType)) {
       return res.status(400).json({ success: false, error: 'Only JPG, PNG, WebP images allowed.' });
     }
     const base64Data = data.replace(/^data:[^;]+;base64,/, '');
     const buf = Buffer.from(base64Data, 'base64');
     if (buf.length > 5 * 1024 * 1024) return res.status(400).json({ success: false, error: 'Image must be under 5MB.' });
-    const publicId = `myticketsa/uploads/evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const url      = await storage.uploadBuffer(buf, { folder: 'myticketsa/uploads', public_id: publicId, resource_type: 'image' });
+    const safeFolder = String(req.body.folder || 'uploads').replace(/[^a-z0-9_-]/gi, '').slice(0, 32) || 'uploads';
+    const publicId   = `TicketsSA/${safeFolder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const url        = await storage.uploadBuffer(buf, {
+      folder:        `TicketsSA/${safeFolder}`,
+      public_id:     publicId,
+      resource_type: 'image',
+      quality:       'auto',
+      fetch_format:  'auto',
+    });
     return res.json({ success: true, url });
   } catch (err) {
     console.error('[UPLOAD]', err.message);
@@ -152,7 +159,7 @@ app.use(errorHandler);
 // ── DB init (Supabase connection check + seed on first boot) ──────────────────
 async function initDb() {
   if (!config.supabase.jwtSecret) {
-    console.warn('[WARN] SUPABASE_JWT_SECRET not set — auth will reject all tokens.');
+    console.warn('[WARN] SUPABASE_JWT_SECRET not set auth will reject all tokens.');
   }
 
   try {
@@ -166,19 +173,19 @@ async function initDb() {
       let adminId = null;
 
       const { data: adminData, error: adminErr } = await supabaseAdmin.auth.admin.createUser({
-        email:         'admin@myticketsa.co.za',
+        email:         'admin@TicketsSA.co.za',
         password:      'admin123',
         email_confirm: true,
         app_metadata:  { role: 'admin' },
-        user_metadata: { firstName: 'Admin', lastName: 'User', organisationName: 'MyTicketSA' },
+        user_metadata: { firstName: 'Admin', lastName: 'User', organisationName: 'TicketsSA' },
       });
 
       if (!adminErr && adminData?.user) {
         adminId = adminData.user.id;
       } else {
-        // User may already exist in Auth but profile row was never written — look them up
+        // User may already exist in Auth but profile row was never written look them up
         const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-        const existing = (listData?.users || []).find(u => u.email === 'admin@myticketsa.co.za');
+        const existing = (listData?.users || []).find(u => u.email === 'admin@TicketsSA.co.za');
         if (existing) adminId = existing.id;
       }
 
@@ -186,16 +193,16 @@ async function initDb() {
         // Upsert the full profile row first
         await supabaseAdmin.from('profiles').upsert({
           id:                adminId,
-          email:             'admin@myticketsa.co.za',
+          email:             'admin@TicketsSA.co.za',
           first_name:        'Admin',
           last_name:         'User',
           role:              'admin',
-          organisation_name: 'MyTicketSA',
+          organisation_name: 'TicketsSA',
         }, { onConflict: 'id' });
-        // Then explicitly force the role — the trigger may have written 'attendee'
+        // Then explicitly force the role the trigger may have written 'attendee'
         // before Supabase merged app_metadata, so we overwrite it here
         await supabaseAdmin.from('profiles').update({ role: 'admin' }).eq('id', adminId);
-        console.log('[SEED] Admin ready → admin@myticketsa.co.za / admin123');
+        console.log('[SEED] Admin ready → admin@TicketsSA.co.za / admin123');
       }
     }
 
@@ -212,7 +219,7 @@ async function start() {
     app.listen(PORT, () => {
       console.log('');
       console.log('  ╔══════════════════════════════════════════╗');
-      console.log('  ║   MyTicketSA v7.0  —  Supabase  Ready    ║');
+      console.log('  ║   TicketsSA v7.0   Supabase  Ready    ║');
       console.log(`  ║   PORT ${PORT}                               ║`);
       console.log('  ╚══════════════════════════════════════════╝');
       console.log('');

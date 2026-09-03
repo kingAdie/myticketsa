@@ -1,6 +1,6 @@
 /**
  * routes/public.js
- * Unauthenticated routes — events listing and detail.
+ * Unauthenticated routes events listing and detail.
  * Token is attached if present (optionalAuth) for role-based filtering.
  */
 'use strict';

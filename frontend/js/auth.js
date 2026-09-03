@@ -123,7 +123,9 @@ const Auth = (() => {
     getSupabase().then(sb => sb.auth.signOut()).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    window.location.href = 'index.html';
+    // Signing out from services/ or admin/ used to land on a 404.
+    const d = window.location.pathname.replace(/^\/|\/$/g, '').split('/').length - 1;
+    window.location.href = (d > 0 ? '../'.repeat(d) : '') + 'index.html';
   }
 
   function headers() {
@@ -160,11 +162,18 @@ const Auth = (() => {
 
     const user = getUser();
 
+    /* These links are injected into pages at the site root AND into pages a
+       directory down (services/, admin/). Bare relative hrefs resolved to
+       services/dashboard.html on those pages and 404'd, so work out how far
+       down we are and prefix accordingly. */
+    const depth = window.location.pathname.replace(/^\/|\/$/g, '').split('/').length - 1;
+    const up    = depth > 0 ? '../'.repeat(depth) : '';
+
     if (user) {
       const adm = isAdmin();
       const org = isOrganiser();
-      const accountHref  = (adm || org) ? 'dashboard.html' : 'my-tickets.html';
-      const accountLabel = (adm || org) ? 'My Events' : 'My Tickets';
+      const accountHref  = up + ((adm || org) ? 'dashboard.html' : 'my-tickets.html');
+      const accountLabel = (adm || org) ? 'Seller Hub' : 'My TicketsSA';
       actions.innerHTML = `
         <a href="${accountHref}" class="btn btn-ghost btn-sm">${accountLabel}</a>
         <div class="nav-user" id="navUserMenu">
@@ -179,15 +188,22 @@ const Auth = (() => {
             <div class="nav-user__name">${escHtml(user.firstName)} ${escHtml(user.lastName)}</div>
             <div class="nav-user__email">${escHtml(user.email)}</div>
             <div class="nav-user__divider"></div>
-            <a href="dashboard.html" class="nav-user__link">
+            <a href="${up}dashboard.html" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              My Dashboard
+              Seller Hub
             </a>
-            ${org ? `<a href="organiser.html" class="nav-user__link">
+            ${org ? `<a href="${up}organiser.html" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
               My Events
             </a>` : ''}
-            ${adm ? `<a href="admin/" class="nav-user__link">
+            ${org ? `<a href="${up}create-listing.html" class="nav-user__link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Listing
+            </a>` : `<a href="${up}sell.html" class="nav-user__link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              Sell on TicketsSA
+            </a>`}
+            ${adm ? `<a href="${up}admin/" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               Admin Portal
             </a>` : ''}
@@ -211,6 +227,7 @@ const Auth = (() => {
 
     } else {
       actions.innerHTML = `
+        <a href="${up}sell.html" class="navbar__sell">Sell on TicketsSA</a>
         <button class="btn btn-ghost btn-sm" id="navLoginBtn">Log In</button>
         <button class="btn btn-primary btn-sm" id="navSignupBtn">Sign Up</button>`;
       document.getElementById('navLoginBtn')?.addEventListener('click', () => openModal('login'));

@@ -34,6 +34,13 @@ const SupabaseAPI = (() => {
 
   // ── Normalise helpers ─────────────────────────────────────────────────────
 
+  /** '00:00' is the "no time published" marker — see normaliseEvent. */
+  function normaliseTime(value) {
+    if (!value) return null;
+    const hhmm = String(value).slice(0, 5);
+    return hhmm === '00:00' ? null : hhmm;
+  }
+
   function normaliseEvent(row) {
     return {
       id:             row.id,
@@ -41,8 +48,11 @@ const SupabaseAPI = (() => {
       title:          row.title,
       category:       row.category,
       date:           row.event_date,
-      time:           row.event_time ? String(row.event_time).slice(0, 5) : null,
-      endTime:        row.end_time   ? String(row.end_time).slice(0, 5)   : null,
+      // events.event_time is NOT NULL, so listings with no published start time
+      // are stored as 00:00. Map that back to null here rather than showing a
+      // midnight start the organiser never advertised the UI renders "TBC".
+      time:           normaliseTime(row.event_time),
+      endTime:        normaliseTime(row.end_time),
       location:       row.location,
       city:           row.city,
       province:       row.province   || null,
@@ -138,6 +148,9 @@ const SupabaseAPI = (() => {
     const { error: evtErr } = await sb.from('events').insert({
       id:             eventId,
       status:         'pending',
+      // Organiser-supplied artwork. Events land as `pending`, so an admin still
+      // reviews (and can replace) the image before anything is published.
+      image:          eventData.image || null,
       title:          eventData.title,
       category:       eventData.category,
       event_date:     eventData.date,
@@ -191,7 +204,12 @@ const SupabaseAPI = (() => {
   async function updateEvent(id, eventData) {
     const sb = await client();
 
+    // Only overwrite the image when the organiser actually supplied a new one,
+    // so an admin-curated image is never wiped by an edit that left it alone.
+    const imagePatch = eventData.image ? { image: eventData.image } : {};
+
     const { error: evtErr } = await sb.from('events').update({
+      ...imagePatch,
       title:          eventData.title,
       category:       eventData.category,
       event_date:     eventData.date,
@@ -440,6 +458,30 @@ const SupabaseAPI = (() => {
     return (data || []).map(normaliseTicket);
   }
 
+  /**
+   * Tickets people have booked on the signed-in seller's own events.
+   * Two hops: fetch my event ids, then the tickets against them. Returns []
+   * rather than throwing if row-level security blocks the read, so the Seller
+   * Hub can show an explanatory empty state instead of an error.
+   */
+  async function getSalesForMyEvents() {
+    const sb   = await client();
+    const user = window.Auth?.getUser();
+    if (!user) return [];
+
+    const { data: myEvents, error: evErr } = await sb
+      .from('events').select('id, title').eq('organiser_id', user.id);
+    if (evErr || !myEvents?.length) return [];
+
+    const ids = myEvents.map(e => e.id);
+    const { data, error } = await sb
+      .from('tickets').select('*')
+      .in('event_id', ids)
+      .order('booked_at', { ascending: false });
+    if (error) return [];
+    return (data || []).map(normaliseTicket);
+  }
+
   async function submitTicket(payload) {
     const sb = await client();
 
@@ -678,6 +720,68 @@ const SupabaseAPI = (() => {
     return data;
   }
 
+  /**
+   * Seller-submitted accommodation listing. Always lands as `pending` so it
+   * goes through the same admin review queue as an admin-created one.
+   *
+   * NOTE: `accommodations` may not have an `owner_id` column yet (it was an
+   * admin-only table historically). We try the insert with owner_id and, if
+   * the column is missing, retry without it so submissions still succeed the
+   * listing is then only visible/manageable from the admin panel until the
+   * column is added.
+   */
+  async function createAccommodation(data) {
+    const sb   = await client();
+    const user = window.Auth?.getUser();
+    if (!user) throw new Error('Please sign in to list accommodation.');
+
+    const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+    const row = {
+      id:             newId,
+      name:           data.name,
+      description:    data.description   || null,
+      province:       data.province,
+      city:           data.city,
+      address:        data.address       || null,
+      check_in_time:  data.checkInTime   || '14:00',
+      check_out_time: data.checkOutTime  || '10:00',
+      price_from:     parseFloat(data.priceFrom) || 0,
+      amenities:      Array.isArray(data.amenities) ? data.amenities : [],
+      space_types:    Array.isArray(data.spaceTypes) ? data.spaceTypes : [],
+      images:         Array.isArray(data.images) ? data.images : [],
+      contact_email:  data.contactEmail  || user.email || null,
+      contact_phone:  data.contactPhone  || null,
+      website:        data.website       || null,
+      star_rating:    parseInt(data.starRating) || 0,
+      featured:       false,
+      status:         'pending',
+    };
+
+    let { error } = await sb.from('accommodations').insert({ ...row, owner_id: user.id });
+
+    if (error && /owner_id/i.test(error.message || '')) {
+      // Column not present on this database retry without it.
+      ({ error } = await sb.from('accommodations').insert(row));
+    }
+    if (error) throw error;
+
+    return { id: newId, ...data, status: 'pending' };
+  }
+
+  /** Accommodation listings owned by the signed-in seller (empty if no owner_id column). */
+  async function getMyAccommodations() {
+    const sb   = await client();
+    const user = window.Auth?.getUser();
+    if (!user) return [];
+    const { data, error } = await sb
+      .from('accommodations')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false });
+    if (error) return [];            // column missing → caller shows the explanatory note
+    return (data || []).map(normaliseAccommodation);
+  }
+
   // ════════════════════════════════════════
   //  ACCOMMODATIONS (admin)
   // ════════════════════════════════════════
@@ -778,13 +882,14 @@ const SupabaseAPI = (() => {
     adminGetStats, adminGetUsers, adminUpdateUserRole,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
+    createAccommodation, getMyAccommodations,
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
     adminGetAccommodationBookings, adminUpdateBookingStatus,
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
-    getMyTickets, submitTicket,
+    getMyTickets, submitTicket, getSalesForMyEvents,
     getMyProfile,
   };
 

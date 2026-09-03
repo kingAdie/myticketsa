@@ -9,7 +9,7 @@ cloudinary.config({
 });
 
 if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-  console.warn('[STORAGE] Missing CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, or CLOUDINARY_API_SECRET — uploads will fail.');
+  console.warn('[STORAGE] Missing CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, or CLOUDINARY_API_SECRET uploads will fail.');
 }
 
 /**

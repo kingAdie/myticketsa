@@ -132,3 +132,9 @@
   .modal-grid-2 { grid-template-columns: 1fr; }
   .tt-row { grid-template-columns: 1fr 80px 36px; }
 }
+
+@media (max-width: 768px) {
+  /* Edit/Delete sit side by side small icon targets are the easiest
+     pair to mis-tap, delete being the one that actually matters. */
+  .org-btn-icon { width: 40px; height: 40px; }
+}

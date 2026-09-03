@@ -1,12 +1,12 @@
 -- ============================================================
---  MyTicketSA — Supabase / PostgreSQL Schema v7.0
+--  MyTicketSA Supabase / PostgreSQL Schema v7.0
 --
 --  HOW TO USE:
 --  1. Open your Supabase project → SQL Editor
 --  2. Paste this entire file and click Run
 --  3. Add SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY,
 --     and SUPABASE_JWT_SECRET to your .env / Railway Variables
---  4. Start the backend — the admin seed user is created automatically
+--  4. Start the backend the admin seed user is created automatically
 -- ============================================================
 
 -- ── Trigger: auto-create a profile row when a new auth user is created ─────────

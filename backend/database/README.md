@@ -1,4 +1,4 @@
-# MyTicketSA — MySQL Database Setup Guide
+﻿# TicketsSA MySQL Database Setup Guide
 
 ## What's in this folder
 
@@ -8,7 +8,7 @@
 
 ---
 
-## Step 1 — Run schema.sql in MySQL Workbench
+## Step 1 Run schema.sql in MySQL Workbench
 
 1. Open **MySQL Workbench**
 2. Connect to your local MySQL server (usually `localhost:3306`)
@@ -16,13 +16,13 @@
 4. Click the **lightning bolt ⚡** button (*Execute All*)
 5. You should see in the output:
    ```
-   ✅ MyTicketSA database created successfully!
+   ✅ TicketsSA database created successfully!
    Tables: users, events, ticket_types, event_tags, tickets, equipment_requests
    ```
 
 ---
 
-## Step 2 — Update your .env file
+## Step 2 Update your .env file
 
 Open `backend/.env` and fill in your MySQL password:
 
@@ -31,15 +31,15 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your_mysql_root_password_here
-DB_NAME=myticketsa
+DB_NAME=TicketsSA
 ```
 
 > If you use a different MySQL user, set `DB_USER` to that user.
-> Make sure that user has full access to the `myticketsa` database.
+> Make sure that user has full access to the `TicketsSA` database.
 
 ---
 
-## Step 3 — Start the server
+## Step 3 Start the server
 
 ```bash
 cd backend
@@ -49,9 +49,9 @@ npm run dev
 
 You should see:
 ```
-[DB] Connected to MySQL — database: myticketsa
-[SEED] Admin → admin@myticketsa.co.za / admin123
-🎟  MyTicketSA v5  —  Ready
+[DB] Connected to MySQL database: TicketsSA
+[SEED] Admin → admin@TicketsSA.co.za / admin123
+🎟  TicketsSA v5   Ready
 🌐  http://localhost:5500
 ```
 
@@ -105,7 +105,7 @@ It drops and recreates the entire database.
 
 | Field | Value |
 |-------|-------|
-| Email | `admin@myticketsa.co.za` |
+| Email | `admin@TicketsSA.co.za` |
 | Password | `admin123` |
 
 Change the password after your first login.

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Preview Mode (local only) · TicketsSA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+  <style>
+    .pv{max-width:720px;margin:0 auto;padding:48px 20px 80px}
+    .pv__badge{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;
+      border-radius:var(--rx);background:rgba(234,179,8,.12);color:#EAB308;
+      border:1px solid rgba(234,179,8,.3);font-size:.6875rem;font-weight:800;
+      letter-spacing:.08em;text-transform:uppercase}
+    .pv__title{margin-top:14px;font-family:'Plus Jakarta Sans',sans-serif;
+      font-size:clamp(1.75rem,5vw,2.25rem);font-weight:800;letter-spacing:-.03em;color:var(--text)}
+    .pv__sub{margin-top:12px;font-size:1rem;color:var(--text-2);line-height:1.7}
+    .pv__roles{display:grid;grid-template-columns:1fr;gap:12px;margin:28px 0}
+    @media(min-width:640px){.pv__roles{grid-template-columns:repeat(3,1fr)}}
+    .pv__role{display:flex;flex-direction:column;gap:6px;padding:18px;text-align:left;
+      background:var(--bg-2);border:1.5px solid var(--b1);border-radius:var(--r3);
+      cursor:pointer;transition:border-color .2s,background .2s;font-family:inherit;color:inherit}
+    .pv__role:hover{border-color:var(--green);background:var(--green-tint)}
+    .pv__role-icon{font-size:1.5rem}
+    .pv__role-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;
+      font-size:1rem;color:var(--text)}
+    .pv__role-desc{font-size:.8125rem;color:var(--text-2);line-height:1.55}
+    .pv__current{padding:14px 16px;border-radius:var(--r3);margin-bottom:24px;
+      background:var(--green-tint);border:1px solid var(--green-border);
+      font-size:.9375rem;color:var(--text)}
+    .pv__links{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+    .pv__blocked{padding:24px;border-radius:var(--r4);background:var(--bg-2);
+      border:1px solid rgba(239,68,68,.4)}
+  </style>
+</head>
+<body>
+
+<div class="pv" id="root"></div>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script>
+/* ============================================================
+   LOCAL PREVIEW MODE
+
+   Supabase has Bot & Abuse Protection switched on, so it rejects
+   any sign-in that arrives without a valid Turnstile token —
+   which makes reviewing signed-in screens on localhost painful.
+
+   This page fakes the *client-side* session only: it writes the
+   same localStorage keys auth.js reads, so the UI renders as if
+   you were signed in. It is NOT a real Supabase session, so it
+   grants no extra database access whatsoever — Supabase still
+   treats every request as anonymous.
+
+   Hard-gated to localhost. On ticketssa.co.za this page refuses
+   to run (and Netlify has no rewrite for it, so it 404s anyway).
+   ============================================================ */
+
+var HOST = window.location.hostname;
+var IS_LOCAL = HOST === 'localhost' || HOST === '127.0.0.1' || HOST === '::1' || HOST === '';
+
+var root = document.getElementById('root');
+
+/* The seed organiser that owns the two live listings — using it means the
+   Seller Hub preview shows real data instead of empty states. */
+var SELLER_ID = '2feefa9f-0271-4880-8e61-726b03819fb0';
+
+var ROLES = {
+  seller: {
+    icon: '🎪', name: 'Seller', desc: 'Seller Hub, My Listings, all five creation wizards.',
+    user: { id: SELLER_ID, email: 'preview.seller@ticketssa.co.za', firstName: 'Preview',
+            lastName: 'Seller', role: 'organiser', organisationName: 'Preview Events Co' }
+  },
+  customer: {
+    icon: '🎟️', name: 'Customer', desc: 'My TicketsSA — tickets, bookings and requests.',
+    user: { id: '00000000-0000-4000-8000-0000000c0001', email: 'preview.buyer@ticketssa.co.za',
+            firstName: 'Preview', lastName: 'Buyer', role: 'attendee', organisationName: null }
+  },
+  admin: {
+    icon: '🛡️', name: 'Admin', desc: 'Admin portal navigation and layout.',
+    user: { id: '00000000-0000-4000-8000-0000000a0001', email: 'preview.admin@ticketssa.co.za',
+            firstName: 'Preview', lastName: 'Admin', role: 'admin', organisationName: null }
+  }
+};
+
+function fakeJwt(sub) {
+  var b64 = function (o) {
+    return btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+  var exp = Math.floor(Date.now() / 1000) + 7 * 24 * 3600;
+  return b64({ alg: 'none', typ: 'JWT' }) + '.' + b64({ sub: sub, exp: exp, preview: true }) + '.preview';
+}
+
+function currentUser() {
+  try { return JSON.parse(localStorage.getItem('mt_user')); } catch (e) { return null; }
+}
+
+function enter(key) {
+  var r = ROLES[key];
+  localStorage.setItem('mt_user', JSON.stringify(r.user));
+  localStorage.setItem('mt_token', fakeJwt(r.user.id));
+  render();
+}
+
+function leave() {
+  localStorage.removeItem('mt_user');
+  localStorage.removeItem('mt_token');
+  render();
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function render() {
+  if (!IS_LOCAL) {
+    root.innerHTML =
+      '<div class="pv__blocked">' +
+        '<div class="pv__title" style="font-size:1.5rem">Preview mode is disabled here</div>' +
+        '<p class="pv__sub">This page only runs on localhost. Sign in normally instead.</p>' +
+        '<div class="pv__links"><a class="btn btn-primary" href="index.html">Go to TicketsSA</a></div>' +
+      '</div>';
+    return;
+  }
+
+  var u = currentUser();
+  var active = u
+    ? '<div class="pv__current">Currently previewing as <strong>' + esc(u.firstName + ' ' + u.lastName) +
+      '</strong> — role <strong>' + esc(u.role) + '</strong>.' +
+      '<div class="pv__links">' +
+        (u.role === 'attendee'
+          ? '<a class="btn btn-primary btn-sm" href="my-tickets.html">My TicketsSA</a>' +
+            '<a class="btn btn-secondary btn-sm" href="sell.html">Sell page</a>'
+          : '<a class="btn btn-primary btn-sm" href="dashboard.html">Seller Hub</a>' +
+            '<a class="btn btn-secondary btn-sm" href="create-listing.html">Create Listing</a>' +
+            '<a class="btn btn-secondary btn-sm" href="organiser.html">My Events</a>') +
+        (u.role === 'admin' ? '<a class="btn btn-secondary btn-sm" href="admin/index.html">Admin portal</a>' : '') +
+        '<button class="btn btn-ghost btn-sm" onclick="leave()">Exit preview</button>' +
+      '</div></div>'
+    : '';
+
+  root.innerHTML =
+    '<span class="pv__badge">Local preview only</span>' +
+    '<h1 class="pv__title">Preview the signed-in screens</h1>' +
+    '<p class="pv__sub">Supabase requires a CAPTCHA token on every real sign-in, so signing in on localhost is ' +
+      'blocked unless the CAPTCHA is configured for this domain. Pick a role below to render the signed-in UI ' +
+      'without signing in.</p>' +
+    active +
+    '<div class="pv__roles">' +
+      Object.keys(ROLES).map(function (k) {
+        var r = ROLES[k];
+        return '<button class="pv__role" onclick="enter(\'' + k + '\')">' +
+          '<span class="pv__role-icon">' + r.icon + '</span>' +
+          '<span class="pv__role-name">Preview as ' + esc(r.name) + '</span>' +
+          '<span class="pv__role-desc">' + esc(r.desc) + '</span>' +
+        '</button>';
+      }).join('') +
+    '</div>' +
+    '<div class="mk-panel">' +
+      '<div class="mk-panel__title">What works in preview — and what doesn\'t</div>' +
+      '<div class="mk-panel__body">' +
+        '<p><strong>Works:</strong> every layout, the Seller Hub (it shows your two real published listings), ' +
+        'all five creation wizards including validation, photo upload, draft save and resume, the review step, ' +
+        'and the whole My TicketsSA area.</p>' +
+        '<p style="margin-top:12px"><strong>Doesn\'t work:</strong> anything that writes to the database — ' +
+        'submitting a listing, booking a ticket. This is a fake client-side session, so Supabase still sees you ' +
+        'as a signed-out visitor and will reject writes. That is deliberate: this page grants no real access.</p>' +
+        '<p style="margin-top:12px"><strong>To sign in for real on localhost,</strong> either add ' +
+        '<code>localhost</code> to your Turnstile site\'s allowed domains in the Cloudflare dashboard, or ' +
+        'temporarily switch off Authentication → Bot and Abuse Protection in Supabase.</p>' +
+      '</div>' +
+    '</div>';
+}
+
+render();
+</script>
+</body>
+</html>

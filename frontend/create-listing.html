@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Create a Listing · TicketsSA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+    <div class="navbar__actions" id="navbarActions"></div>
+  </div>
+</nav>
+
+<main class="container">
+
+  <header class="mk-head">
+    <a href="dashboard.html" class="mk-head__back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to Seller Hub
+    </a>
+    <h1 class="mk-head__title">What would you like to list?</h1>
+    <p class="mk-head__sub">Pick a category and we will only ask for the details that actually apply to it. You can save and come back at any point.</p>
+  </header>
+
+  <!-- Drafts in progress filled by JS from WizardCore.listDrafts() -->
+  <section class="mk-drafts hidden" id="draftsBlock" aria-label="Drafts in progress">
+    <div class="mk-drafts__label">Pick up where you left off</div>
+    <div id="draftsList"></div>
+  </section>
+
+  <section class="mk-picker" aria-label="Listing categories">
+
+    <a class="mk-pick" href="sell-event.html">
+      <span class="mk-pick__icon">🎟️</span>
+      <span class="mk-pick__body">
+        <span class="mk-pick__title">Event</span>
+        <span class="mk-pick__sub">Sell tickets to concerts, festivals, sports, shows and more.</span>
+      </span>
+      <svg class="mk-pick__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <a class="mk-pick" href="sell-accommodation.html">
+      <span class="mk-pick__icon">🏨</span>
+      <span class="mk-pick__body">
+        <span class="mk-pick__title">Accommodation</span>
+        <span class="mk-pick__sub">List a hotel, guesthouse, lodge, apartment, B&amp;B or other stay.</span>
+      </span>
+      <svg class="mk-pick__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <a class="mk-pick" href="sell-experience.html">
+      <span class="mk-pick__icon">🌍</span>
+      <span class="mk-pick__body">
+        <span class="mk-pick__title">Experience</span>
+        <span class="mk-pick__sub">Sell tours, activities, day trips and travel packages.</span>
+      </span>
+      <svg class="mk-pick__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <a class="mk-pick" href="sell-equipment.html">
+      <span class="mk-pick__icon">🔊</span>
+      <span class="mk-pick__body">
+        <span class="mk-pick__title">Equipment <span class="mk-pick__tag">Team-assisted</span></span>
+        <span class="mk-pick__sub">Rent out generators, sound equipment, tents, lighting and more.</span>
+      </span>
+      <svg class="mk-pick__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <a class="mk-pick" href="sell-merchandise.html">
+      <span class="mk-pick__icon">🛍️</span>
+      <span class="mk-pick__body">
+        <span class="mk-pick__title">Merchandise <span class="mk-pick__tag">Early access</span></span>
+        <span class="mk-pick__sub">Sell event merchandise, apparel and branded products.</span>
+      </span>
+      <svg class="mk-pick__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+  </section>
+
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/wizard-core.js"></script>
+<script>
+/* Sellers only. Everyone else gets the explainer, not a locked door. */
+(function () {
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
+  var role = Auth.getUser() && Auth.getUser().role;
+  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); }
+})();
+
+document.addEventListener('DOMContentLoaded', function () {
+  Auth.updateNavbar();
+  Utils.initMobileNav();
+
+  var LABELS = {
+    event:        { name: 'Event',         href: 'sell-event.html',        icon: '🎟️' },
+    accommodation:{ name: 'Accommodation', href: 'sell-accommodation.html', icon: '🏨' },
+    experience:   { name: 'Experience',    href: 'sell-experience.html',   icon: '🌍' },
+    equipment:    { name: 'Equipment',     href: 'sell-equipment.html',    icon: '🔊' },
+    merchandise:  { name: 'Merchandise',   href: 'sell-merchandise.html',  icon: '🛍️' },
+  };
+
+  function ago(iso) {
+    var mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 60)   return Math.max(1, mins) + ' min ago';
+    if (mins < 1440) return Math.round(mins / 60) + ' hr ago';
+    var d = Math.round(mins / 1440);
+    return d + ' day' + (d > 1 ? 's' : '') + ' ago';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  var drafts = WizardCore.listDrafts();
+  if (!drafts.length) return;
+
+  document.getElementById('draftsBlock').classList.remove('hidden');
+  document.getElementById('draftsList').innerHTML = drafts.map(function (d) {
+    var meta = LABELS[d.category] || { name: d.category, href: 'create-listing.html', icon: '📝' };
+    var pct  = d.percent || 0;
+    return '<div class="mk-draft">' +
+        '<span class="mk-pick__icon">' + meta.icon + '</span>' +
+        '<div class="mk-draft__body">' +
+          '<div class="mk-draft__title">' + esc(d.titleGuess || ('Untitled ' + meta.name.toLowerCase())) + '</div>' +
+          '<div class="mk-draft__meta">' + esc(meta.name) + ' draft · ' + pct + '% complete · saved ' + esc(ago(d.savedAt)) + '</div>' +
+          '<div class="mk-draft__bar"><span style="width:' + Math.max(4, pct) + '%"></span></div>' +
+        '</div>' +
+        '<a class="btn btn-primary btn-sm" href="' + meta.href + '">Continue</a>' +
+      '</div>';
+  }).join('');
+});
+</script>
+</body>
+</html>

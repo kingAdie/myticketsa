@@ -1,7 +1,7 @@
 /**
  * utils/dataStore.js  (MySQL version)
  *
- * Same public API as the original JSON file store — no controller changes needed.
+ * Same public API as the original JSON file store no controller changes needed.
  * All functions are now async (they were sync before, but controllers already
  * use async/await so this is compatible).
  */
@@ -200,7 +200,7 @@ function toEvent(row, allTTs, allTags) {
 async function seedEventsIfEmpty() {
   const [rows] = await db.query('SELECT COUNT(*) AS cnt FROM events');
   if (rows[0].cnt > 0) return;
-  console.log('[SEED] Events table empty — run database/schema.sql in MySQL Workbench to seed events.');
+  console.log('[SEED] Events table empty run database/schema.sql in MySQL Workbench to seed events.');
 }
 
 async function seedAdminIfEmpty() {
