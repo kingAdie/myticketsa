@@ -303,12 +303,20 @@
       } catch { /* ignore */ }
     })();
 
-    // ── Supabase client (direct auth no backend call needed) ───────────
-    const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+    // ── Firebase config keep in sync with frontend/js/auth.js ──────────
+    const firebaseConfig = {
+      apiKey:            'YOUR_FIREBASE_API_KEY',
+      authDomain:        'tickets-sa.firebaseapp.com',
+      projectId:         'tickets-sa',
+      storageBucket:     'tickets-sa.appspot.com',
+      messagingSenderId: 'YOUR_FIREBASE_SENDER_ID',
+      appId:             'YOUR_FIREBASE_APP_ID',
+    };
+    const FIREBASE_SDK_VERSION = '10.13.2';
 
-    // ── Cloudflare Turnstile CAPTCHA (must match the site key configured
-    //    in Supabase Dashboard → Authentication → Bot and Abuse Protection) ──
+    // ── Cloudflare Turnstile CAPTCHA verified server-side by
+    //    verify-turnstile.js — Firebase Auth has no built-in captchaToken
+    //    passthrough the way Supabase did. ──────────────────────────────
     const TURNSTILE_SITE_KEY = '0x4AAAAAADrXDvUXgmgxhbAx';
     const RC_ENABLED = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('YOUR_');
     let _rcWidget = null;
@@ -358,19 +366,39 @@
 
     _updateSubmitState(); // disables submit up front when RC_ENABLED, until solved
 
-    let _sb = null;
-    async function getSB() {
-      if (_sb) return _sb;
-      if (!window.supabase) {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-          s.onload = resolve; s.onerror = reject;
-          document.head.appendChild(s);
-        });
+    function _loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    let _fbReady = null;
+    async function getFirebase() {
+      if (_fbReady) return _fbReady;
+      if (!window.firebase) {
+        await _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app-compat.js`);
+        await Promise.all([
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-auth-compat.js`),
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore-compat.js`),
+        ]);
       }
-      _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      return _sb;
+      if (!window.firebase.apps.length) window.firebase.initializeApp(firebaseConfig);
+      _fbReady = window.firebase;
+      return _fbReady;
+    }
+
+    async function verifyTurnstile(token) {
+      try {
+        const res = await fetch('/.netlify/functions/verify-turnstile', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return !!data.success;
+      } catch { return false; }
     }
 
     // ── Login form submit ────────────────────────────────────────────────
@@ -402,29 +430,22 @@
       btn.textContent = 'Signing in…';
 
       try {
-        const sb = await getSB();
-        const { data, error } = await sb.auth.signInWithPassword({
-          email,
-          password: pass,
-          ...(captchaToken ? { options: { captchaToken } } : {}),
-        });
-
-        if (error || !data.session) {
+        if (RC_ENABLED && !(await verifyTurnstile(captchaToken))) {
           _resetRc();
-          errorEl.textContent   = error?.message === 'Invalid login credentials'
-            ? 'Incorrect email or password.'
-            : (error?.message || 'Login failed.');
+          errorEl.textContent   = 'CAPTCHA check failed. Please try again.';
           errorEl.style.display = 'block';
           _updateSubmitState();
           btn.textContent = 'Sign In to Admin Portal';
           return;
         }
 
-        const u = data.user;
-        const role = u.app_metadata?.role || u.user_metadata?.role || 'attendee';
+        const fb   = await getFirebase();
+        const cred = await fb.auth().signInWithEmailAndPassword(email, pass);
+        const idTokenResult = await cred.user.getIdTokenResult();
+        const role = idTokenResult.claims.role || 'attendee';
 
         if (role !== 'admin') {
-          await sb.auth.signOut();
+          await fb.auth().signOut();
           _resetRc();
           errorEl.textContent   = 'This portal is for admin accounts only.';
           errorEl.style.display = 'block';
@@ -433,11 +454,17 @@
           return;
         }
 
-        localStorage.setItem('mt_token', data.session.access_token);
+        let profile = {};
+        try {
+          const snap = await fb.firestore().collection('users').doc(cred.user.uid).get();
+          if (snap.exists) profile = snap.data() || {};
+        } catch { /* best-effort */ }
+
+        localStorage.setItem('mt_token', idTokenResult.token);
         localStorage.setItem('mt_user', JSON.stringify({
-          id: u.id, email: u.email, role,
-          firstName: u.user_metadata?.firstName || '',
-          lastName:  u.user_metadata?.lastName  || '',
+          id: cred.user.uid, email: cred.user.email, role,
+          firstName: profile.firstName || '',
+          lastName:  profile.lastName  || '',
         }));
 
         btn.textContent = 'Success! Redirecting…';
@@ -445,7 +472,9 @@
 
       } catch (err) {
         _resetRc();
-        errorEl.textContent   = 'Authentication service unavailable. Please try again.';
+        errorEl.textContent   = err && err.code === 'auth/invalid-credential'
+          ? 'Incorrect email or password.'
+          : 'Authentication service unavailable. Please try again.';
         errorEl.style.display = 'block';
         _updateSubmitState();
         btn.textContent = 'Sign In to Admin Portal';

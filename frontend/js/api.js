@@ -10,6 +10,54 @@ const SupabaseAPI = (() => {
   const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
 
+  // Firebase (Firestore) keep in sync with frontend/js/auth.js's
+  // firebaseConfig. Added during the Firebase Auth migration only the
+  // `users` collection so far the rest of the data layer is still
+  // Supabase, untouched, until later migration phases.
+  const FIREBASE_CONFIG = {
+    apiKey:            'YOUR_FIREBASE_API_KEY',
+    authDomain:        'tickets-sa.firebaseapp.com',
+    projectId:         'tickets-sa',
+    storageBucket:     'tickets-sa.appspot.com',
+    messagingSenderId: 'YOUR_FIREBASE_SENDER_ID',
+    appId:             'YOUR_FIREBASE_APP_ID',
+  };
+  const FIREBASE_SDK_VERSION = '10.13.2';
+
+  let _firestore = null;
+  async function firestoreClient() {
+    if (_firestore) return _firestore;
+    if (!window.firebase) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app-compat.js`;
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore-compat.js`;
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+    _firestore = window.firebase.firestore();
+    return _firestore;
+  }
+
+  function normaliseFirestoreUser(id, data) {
+    return {
+      id,
+      firstName:        data.firstName || '',
+      lastName:         data.lastName  || '',
+      email:            data.email     || '',
+      role:             data.role      || 'attendee',
+      organisationName: data.organisationName || null,
+      createdAt:        data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
+    };
+  }
+
   let _client = null;
 
   async function client() {
@@ -536,6 +584,47 @@ const SupabaseAPI = (() => {
   //  PROFILE
   // ════════════════════════════════════════
 
+  // ════════════════════════════════════════
+  //  USERS (Firestore — see Firebase Auth migration)
+  // ════════════════════════════════════════
+
+  /** Current user's Firestore profile doc — the source of truth for display
+   *  data (firstName/lastName/organisationName) now that signup no longer
+   *  touches Supabase. `role` here is for display only; Auth.isAdmin()/
+   *  isOrganiser() read the verified custom claim, never this. */
+  async function getMyFirestoreProfile() {
+    const user = window.Auth?.getUser();
+    if (!user) return null;
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').doc(user.id).get();
+    if (!snap.exists) return user;
+    return normaliseFirestoreUser(user.id, snap.data());
+  }
+
+  /** All Firestore-backed users, for the admin Users tab. */
+  async function adminGetFirestoreUsers() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => normaliseFirestoreUser(d.id, d.data()));
+  }
+
+  /**
+   * The real fix for role promotion: calls firebase-set-role.js, which
+   * verifies (server-side, via the caller's Firebase ID token) that the
+   * requester is actually an admin, then sets the target user's custom
+   * claim — the thing Auth.isAdmin()/isOrganiser() actually read. Replaces
+   * the old adminUpdateUserRole, which only ever wrote a Supabase display
+   * field and never changed what the promoted user could do.
+   */
+  async function adminSetUserRole(userId, role) {
+    const res = await fetch('/.netlify/functions/firebase-set-role', {
+      method:  'POST',
+      headers: window.Auth?.headers ? window.Auth.headers() : { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ userId, role }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+  }
+
   async function getMyProfile() {
     const sb   = await client();
     const user = window.Auth?.getUser();
@@ -889,6 +978,7 @@ const SupabaseAPI = (() => {
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
     adminGetStats, adminGetUsers, adminUpdateUserRole,
+    getMyFirestoreProfile, adminGetFirestoreUsers, adminSetUserRole,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,

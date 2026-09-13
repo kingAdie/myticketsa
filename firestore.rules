@@ -1,0 +1,52 @@
+rules_version = '2';
+
+/* ================================================
+   TicketsSA Firestore Security Rules — Phase 1 (Auth)
+
+   Only the `users` collection exists in Firestore so far; every
+   other collection (events, tickets, accommodations, etc.) is
+   still on Supabase and untouched by this migration phase, so
+   there are deliberately no rules for them here yet.
+
+   Deploy: firebase deploy --only firestore:rules
+   (requires the Firebase CLI, logged into the `tickets-sa` project)
+   ================================================ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // A user may create ONLY their own doc, and must self-assign the
+      // 'attendee' role — this is what stops signup from being a vector for
+      // self-promotion. Real promotion only ever happens server-side, via
+      // firebase-set-role.js setting the custom claim (which this collection
+      // never grants access based on — see isAdmin() above, which reads the
+      // verified token claim, not this document).
+      allow create: if isOwner(userId)
+                    && request.resource.data.role == 'attendee';
+
+      // Owner can read/update their own doc, but can't touch their own
+      // `role` field that only firebase-set-role.js (Admin SDK, bypasses
+      // these rules entirely) is allowed to change.
+      allow read, update: if isOwner(userId)
+                          && request.resource.data.role == resource.data.role;
+
+      // Admins can read and update (including role) any user doc directly
+      // in Firestore if ever needed, though the app always goes through
+      // firebase-set-role.js so the custom claim stays in sync.
+      allow read, write: if isAdmin();
+    }
+  }
+}

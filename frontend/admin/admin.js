@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadUsers() {
     document.getElementById('adminUsersBody').innerHTML = `<div class="org-empty"><div class="spinner"></div></div>`;
     try {
-      allUsers = await SupabaseAPI.adminGetUsers();
+      allUsers = await SupabaseAPI.adminGetFirestoreUsers();
       renderUsersTable(allUsers);
     } catch (err) {
       document.getElementById('adminUsersBody').innerHTML =
@@ -424,10 +424,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const role = body.querySelector(`.role-select[data-id="${id}"]`)?.value;
         if (!role) return;
         try {
-          await SupabaseAPI.adminUpdateUserRole(id, role);
+          await SupabaseAPI.adminSetUserRole(id, role);
           Utils.showToast('Role updated!', 'success');
           // Refresh list so badge updates
-          allUsers = await SupabaseAPI.adminGetUsers();
+          allUsers = await SupabaseAPI.adminGetFirestoreUsers();
           renderUsersTable(allUsers);
         } catch (err) { Utils.showToast('Failed: ' + err.message, 'error'); }
       });
