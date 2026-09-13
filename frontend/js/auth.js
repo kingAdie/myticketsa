@@ -117,6 +117,7 @@ const Auth = (() => {
         await Promise.all([
           _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-auth-compat.js`),
           _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore-compat.js`),
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-storage-compat.js`),
         ]);
       }
       if (!window.firebase.apps.length) window.firebase.initializeApp(firebaseConfig);
@@ -755,6 +756,10 @@ const Auth = (() => {
     saveSession, logout, headers,
     openModal, closeModal, updateNavbar,
     requireAuth,
+    // Lets other modules (api.js's Firestore client, utils.js's Storage
+    // upload) reuse this same initialized Firebase app instead of each
+    // bootstrapping their own copy of the config + SDK loader.
+    getFirebaseApp: getFirebase,
   };
 
 })();

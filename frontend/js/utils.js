@@ -355,16 +355,21 @@ const Utils = (() => {
     });
   }
 
-  /* ---------- Upload to /api/upload → Cloudinary ---------- */
+  /* ---------- Upload to Firebase Storage ---------- */
 
   const UPLOAD_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   const UPLOAD_MAX_MB  = 5;
 
   /**
-   * Compress then upload a File to /api/upload, returning the Cloudinary URL.
+   * Compress then upload a File to Firebase Storage, returning its download
+   * URL. Used by both the listing wizards (wizard-core.js) and the admin
+   * panel's photo-upload widgets (admin.js) — previously wizard-core.js
+   * avoided this function entirely (it POSTed to a since-retired backend
+   * endpoint and stored base64 data URLs directly on the record instead);
+   * now that this actually uploads somewhere real, both paths share it.
    * @param {File}   file
    * @param {string} [folder='uploads']
-   * @returns {Promise<string>}  Cloudinary secure URL
+   * @returns {Promise<string>}  Firebase Storage download URL
    */
   async function uploadImage(file, folder = 'uploads') {
     if (!UPLOAD_ALLOWED.includes(file.type)) {
@@ -373,35 +378,19 @@ const Utils = (() => {
     if (file.size > UPLOAD_MAX_MB * 1024 * 1024) {
       throw new Error(`Image must be under ${UPLOAD_MAX_MB} MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
     }
+    if (typeof Auth === 'undefined' || !Auth.getFirebaseApp) {
+      throw new Error('Not ready to upload yet. Please try again.');
+    }
+    const user = Auth.getUser();
+    if (!user) throw new Error('Please sign in first.');
 
-    // Client-side compress first
     const compressed = await compressImage(file);
 
-    // Read as base64 data URL
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Failed to read file.'));
-      reader.onload  = (e) => resolve(e.target.result);
-      reader.readAsDataURL(compressed);
-    });
-
-    // POST to backend
-    const apiBase = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
-    const headers = { 'Content-Type': 'application/json' };
-    if (typeof Auth !== 'undefined' && typeof Auth.headers === 'function') {
-      Object.assign(headers, Auth.headers());
-    }
-
-    const res = await fetch(`${apiBase}/api/upload`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ data: base64, filename: compressed.name, mimeType: compressed.type, folder }),
-    });
-
-    const json = await res.json().catch(() => ({ success: false, error: 'Server returned invalid response.' }));
-    if (!json.success) throw new Error(json.error || 'Upload failed.');
-
-    return json.url;
+    const fb   = await Auth.getFirebaseApp();
+    const path = `uploads/${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${compressed.name}`;
+    const ref  = fb.storage().ref(path);
+    await ref.put(compressed, { contentType: compressed.type });
+    return await ref.getDownloadURL();
   }
 
   /* ---------- Public API ---------- */

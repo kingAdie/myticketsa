@@ -1,0 +1,32 @@
+rules_version = '2';
+
+/* ================================================
+   TicketsSA Firebase Storage Security Rules
+
+   Replaces base64-in-Firestore-document image storage (see Firebase
+   migration Phase 4). Images were never access-controlled before —
+   just embedded directly in already-public-by-default document
+   fields — so public read here matches existing behaviour exactly;
+   the actual hardening is on write.
+
+   Deploy: firebase deploy --only storage
+   (requires the Firebase CLI, logged into the `tickets-sa` project)
+   ================================================ */
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{folder}/{uid}/{fileName} {
+      allow read: if true;
+
+      // Matches the client-side checks already enforced in
+      // frontend/js/utils.js (UPLOAD_ALLOWED/UPLOAD_MAX_MB) and
+      // frontend/js/wizard-core.js (IMG_MAX_MB) — a defence-in-depth
+      // backstop, not a new restriction users will ever hit if the
+      // app itself is behaving.
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

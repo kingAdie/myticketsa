@@ -17,9 +17,11 @@
    ================================================ */
 
 const admin = require('firebase-admin');
+const { migrateImageField } = require('./lib/migrate-image');
 
 const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+const STORAGE_BUCKET     = 'tickets-sa.appspot.com';
 
 async function fetchAllDestinations() {
   const res = await fetch(
@@ -30,13 +32,18 @@ async function fetchAllDestinations() {
   return res.json();
 }
 
-function toFirestoreDestination(row) {
+async function toFirestoreDestination(row) {
+  // In practice these are already admin-typed URLs, not base64 (admin's own
+  // upload button was dead) — this is a defensive check, not the expected
+  // case, same helper used for events/accommodations regardless.
+  const image = await migrateImageField(row.image, `uploads/destination/migrated/${row.id}`);
+
   return {
     name:        row.name,
     description: row.description || null,
     province:    row.province,
     city:        row.city    || null,
-    image:       row.image   || null,
+    image,
     category:    row.category || 'Nature',
     entryFee:    parseFloat(row.entry_fee) || 0,
     website:     row.website  || null,
@@ -52,7 +59,10 @@ async function main() {
     console.error('Set FIREBASE_SERVICE_ACCOUNT_KEY (the service account JSON) in your shell first.');
     process.exit(1);
   }
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
+  admin.initializeApp({
+    credential:    admin.credential.cert(JSON.parse(raw)),
+    storageBucket: STORAGE_BUCKET,
+  });
   const db = admin.firestore();
   db.settings({ ignoreUndefinedProperties: true });
 
@@ -61,9 +71,14 @@ async function main() {
 
   const batchSize = 400; // Firestore batch write limit is 500
   for (let i = 0; i < rows.length; i += batchSize) {
+    const chunk = rows.slice(i, i + batchSize);
+    const docs = await Promise.all(chunk.map(async row => ({
+      id:   row.id,
+      data: await toFirestoreDestination(row),
+    })));
     const batch = db.batch();
-    for (const row of rows.slice(i, i + batchSize)) {
-      batch.set(db.collection('touristDestinations').doc(row.id), toFirestoreDestination(row));
+    for (const { id, data } of docs) {
+      batch.set(db.collection('touristDestinations').doc(id), data);
     }
     await batch.commit();
     console.log(`Wrote tourist destinations ${i + 1}-${Math.min(i + batchSize, rows.length)}`);

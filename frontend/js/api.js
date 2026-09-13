@@ -9,37 +9,15 @@
 
 const SupabaseAPI = (() => {
 
-  // Firebase (Firestore) keep in sync with frontend/js/auth.js's
-  // firebaseConfig.
-  const FIREBASE_CONFIG = {
-    apiKey:            'YOUR_FIREBASE_API_KEY',
-    authDomain:        'tickets-sa.firebaseapp.com',
-    projectId:         'tickets-sa',
-    storageBucket:     'tickets-sa.appspot.com',
-    messagingSenderId: 'YOUR_FIREBASE_SENDER_ID',
-    appId:             'YOUR_FIREBASE_APP_ID',
-  };
-  const FIREBASE_SDK_VERSION = '10.13.2';
-
+  // Firebase config + SDK loading lives in one place now: frontend/js/auth.js
+  // (loaded on every page this file is), reused here instead of duplicating
+  // it (see Firebase migration Phase 4). auth.js is always present alongside
+  // this file — confirmed across every consuming page.
   let _firestore = null;
   async function firestoreClient() {
     if (_firestore) return _firestore;
-    if (!window.firebase) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app-compat.js`;
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore-compat.js`;
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
-    _firestore = window.firebase.firestore();
+    const fb = await window.Auth.getFirebaseApp();
+    _firestore = fb.firestore();
     // Supabase/JSON.stringify silently dropped `undefined` fields (relied on
     // by admin.js's partial-update quick actions, e.g. adminUpdateEvent(id,
     // {}, {status})) — Firestore throws on them by default. This restores

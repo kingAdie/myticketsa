@@ -9,12 +9,15 @@
    Depends on: utils.js (Utils), auth.js (Auth).
    Styles:     css/wizard.css
 
-   IMAGES: images are compressed client-side and stored
-   as base64 data URLs on the record, matching the
-   existing organiser event form. Do NOT switch these to
-   Utils.uploadImage() it POSTs to /api/upload on the
-   retired Express backend, which is not part of the
-   live Netlify deploy and will fail silently.
+   IMAGES: uploaded via Utils.uploadImage() (Firebase
+   Storage, see Firebase migration Phase 4) — state[name]
+   holds the resulting download URL, not raw image data.
+   Previously these were compressed client-side and stored
+   as base64 data URLs directly on the record, since
+   Utils.uploadImage() POSTed to a since-retired backend
+   endpoint that wasn't part of the live deploy. That's
+   fixed now, so this wizard uses the same real upload path
+   admin.js's photo widgets already called.
    ================================================ */
 
 const WizardCore = (() => {
@@ -604,24 +607,18 @@ const WizardCore = (() => {
               continue;
             }
             try {
-              const compressed = await Utils.compressImage(file, { maxWidth: 1600, maxHeight: 1600 });
-              const dataUrl    = await new Promise((res, rej) => {
-                const r = new FileReader();
-                r.onerror = () => rej(new Error('read failed'));
-                r.onload  = (e) => res(e.target.result);
-                r.readAsDataURL(compressed);
-              });
+              const url = await Utils.uploadImage(file, cfg.category);
               if (multi) {
                 const arr = Array.isArray(state[name]) ? state[name].slice() : [];
                 if (arr.length >= max) { Utils.showToast(`You can add up to ${max} photos.`, 'info'); break; }
-                arr.push(dataUrl);
+                arr.push(url);
                 state[name] = arr;
               } else {
-                state[name] = dataUrl;
+                state[name] = url;
               }
               delete errors[name];
             } catch (e) {
-              Utils.showToast('That image could not be processed. Try another file.', 'error');
+              Utils.showToast(e?.message || 'That image could not be uploaded. Try another file.', 'error');
             }
           }
           saveDraft(true);
