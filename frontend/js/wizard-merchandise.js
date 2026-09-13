@@ -11,8 +11,6 @@
 (function () {
 
   if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
 
   const user = Auth.getUser() || {};
 

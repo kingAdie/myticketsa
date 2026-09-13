@@ -63,43 +63,37 @@
     <div class="mk-steps">
       <h2 class="section-title" style="margin-bottom:26px">How it works</h2>
 
-      <div class="mk-step">
-        <span class="mk-step__num">1</span>
-        <div>
+      <div class="mk-steps-grid">
+        <div class="mk-step">
+          <span class="mk-step__num">1</span>
           <div class="mk-step__title">Create your free account</div>
           <div class="mk-step__body">Takes under a minute. You only need an email address to start.</div>
         </div>
-      </div>
 
-      <div class="mk-step">
-        <span class="mk-step__num">2</span>
-        <div>
-          <div class="mk-step__title">We switch on your seller access</div>
-          <div class="mk-step__body">
-            A quick manual check keeps the marketplace trustworthy for buyers. Request access below and our
-            team enables your account usually within one working day. You will get an email as soon as it is on.
-          </div>
-        </div>
-      </div>
-
-      <div class="mk-step">
-        <span class="mk-step__num">3</span>
-        <div>
+        <div class="mk-step">
+          <span class="mk-step__num">2</span>
           <div class="mk-step__title">Create your listing</div>
           <div class="mk-step__body">
-            Pick what you are listing and answer only the questions that apply to it. No event fields on an
-            accommodation listing. Save a draft at any point and finish later.
+            No waiting on approval to get started. Pick what you are listing and answer only the questions
+            that apply to it — no event fields on an accommodation listing. Save a draft any time.
           </div>
         </div>
-      </div>
 
-      <div class="mk-step">
-        <span class="mk-step__num">4</span>
-        <div>
+        <div class="mk-step">
+          <span class="mk-step__num">3</span>
+          <div class="mk-step__title">We check it</div>
+          <div class="mk-step__body">
+            Every new listing is reviewed before it is visible to buyers — usually within one working day.
+            This keeps the marketplace trustworthy without slowing you down.
+          </div>
+        </div>
+
+        <div class="mk-step">
+          <span class="mk-step__num">4</span>
           <div class="mk-step__title">Go live and get paid directly</div>
           <div class="mk-step__body">
-            Once we approve your listing it appears on TicketsSA. Buyers pay you straight through your own
-            payment link or bank details TicketsSA does not sit between you and your money.
+            Once approved, your listing appears on TicketsSA. Buyers pay you straight through your own
+            payment link or bank details — TicketsSA does not sit between you and your money.
           </div>
         </div>
       </div>
@@ -123,7 +117,6 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/seller-apply.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   Auth.updateNavbar();
@@ -132,91 +125,17 @@ document.addEventListener('DOMContentLoaded', function () {
   var cta   = document.getElementById('sellCta');
   var panel = document.getElementById('accessPanel');
   var user  = Auth.isLoggedIn() ? Auth.getUser() : null;
-  var role  = user && user.role;
 
-  /* ── Already a seller ── */
-  if (role === 'organiser' || role === 'admin') {
+  /* ── Signed in: straight into listing, no access request ── */
+  if (user) {
     cta.innerHTML =
       '<a class="btn btn-primary btn-lg" href="create-listing.html">+ Create a listing</a>' +
       '<a class="btn btn-secondary btn-lg" href="dashboard.html">Go to Seller Hub</a>';
     panel.innerHTML =
-      '<div class="mk-panel__title">You are all set</div>' +
-      '<div class="mk-panel__body">Your account already has seller access. Head to your Seller Hub to manage ' +
-      'listings, or start a new one any time.</div>';
-    return;
-  }
-
-  /* ── Signed in, not yet a seller ── */
-  if (user) {
-    cta.innerHTML = '<button class="btn btn-primary btn-lg" id="requestBtn">Request seller access</button>';
-    panel.innerHTML =
-      '<div class="mk-panel__title">Request seller access</div>' +
-      '<div class="mk-panel__body">' +
-        'You are signed in as <strong>' + escapeHtml(user.email || '') + '</strong>. ' +
-        'Tell us roughly what you want to list and we will switch your account over usually within one working day.' +
-        '<div class="form-group" style="margin-top:16px">' +
-          '<label class="form-label" for="sellerWhat">What do you want to list?</label>' +
-          '<select class="form-select" id="sellerWhat">' +
-            '<option value="Events">Events and tickets</option>' +
-            '<option value="Accommodation">Accommodation</option>' +
-            '<option value="Experiences">Experiences and tours</option>' +
-            '<option value="Equipment">Equipment hire</option>' +
-            '<option value="Merchandise">Merchandise</option>' +
-            '<option value="Multiple">A mix of these</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="form-group" style="margin-top:14px">' +
-          '<label class="form-label" for="sellerPhone">Contact number</label>' +
-          '<input class="form-input" id="sellerPhone" type="tel" placeholder="e.g. 082 123 4567"/>' +
-        '</div>' +
-        '<div class="form-group" style="margin-top:14px">' +
-          '<label class="form-label" for="sellerAbout">Tell us about your business (optional)</label>' +
-          '<textarea class="form-textarea" id="sellerAbout" rows="3" placeholder="e.g. We run a 12-room guesthouse in Hazyview and host live music events."></textarea>' +
-        '</div>' +
-        '<button class="btn btn-primary" id="requestBtn2" style="margin-top:16px">Send request</button>' +
-      '</div>';
-
-    var submitting = false;
-    function sendRequest() {
-      if (submitting) return;
-      var phone = (document.getElementById('sellerPhone') || {}).value || '';
-      if (!phone.trim()) {
-        Utils.showToast('Please add a contact number so we can reach you.', 'error');
-        return;
-      }
-      submitting = true;
-      var btns = [document.getElementById('requestBtn'), document.getElementById('requestBtn2')].filter(Boolean);
-      btns.forEach(function (b) { b.disabled = true; b.textContent = 'Sending…'; });
-
-      SellerApply.submit('seller_access', {
-        title:        'Seller access request',
-        contactName:  [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email,
-        contactEmail: user.email,
-        contactPhone: phone.trim(),
-        details: SellerApply.detailsFrom([
-          ['Wants to list', (document.getElementById('sellerWhat') || {}).value],
-          ['About',         (document.getElementById('sellerAbout') || {}).value],
-          ['Account ID',    user.id],
-        ]),
-      }).then(function () {
-        panel.innerHTML =
-          '<div class="mk-panel__title">Request sent ✅</div>' +
-          '<div class="mk-panel__body">Thanks — we have your request and a confirmation is on its way to your inbox. ' +
-          'We will email you as soon as your seller access is switched on, usually within one working day.</div>';
-        cta.innerHTML = '<a class="btn btn-secondary btn-lg" href="index.html">Keep browsing</a>';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      }).catch(function (err) {
-        submitting = false;
-        btns.forEach(function (b) { b.disabled = false; b.textContent = 'Send request'; });
-        Utils.showToast(err.message || 'Could not send that. Please try again.', 'error', 6000);
-      });
-    }
-
-    document.getElementById('requestBtn').addEventListener('click', function () {
-      document.getElementById('accessPanel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      document.getElementById('sellerPhone').focus();
-    });
-    document.getElementById('requestBtn2').addEventListener('click', sendRequest);
+      '<div class="mk-panel__title">Every listing is checked before it goes public</div>' +
+      '<div class="mk-panel__body">You can start listing right away — no waiting on account approval. ' +
+      'New listings sit as pending until our team reviews them, usually within one working day, then they ' +
+      'go live automatically.</div>';
     return;
   }
 
@@ -225,24 +144,14 @@ document.addEventListener('DOMContentLoaded', function () {
     '<button class="btn btn-primary btn-lg" id="signupBtn">Create a free account</button>' +
     '<button class="btn btn-secondary btn-lg" id="loginBtn">I already have one</button>';
   panel.innerHTML =
-    '<div class="mk-panel__title">Already selling elsewhere?</div>' +
-    '<div class="mk-panel__body">Create an account first, then request seller access from this page and we will ' +
-    'get you set up. Questions? Email <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</div>';
+    '<div class="mk-panel__title">No approval wait to get started</div>' +
+    '<div class="mk-panel__body">Create an account and you can list right away. Each listing is reviewed before ' +
+    'it is visible to buyers, usually within one working day. Questions? Email ' +
+    '<a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</div>';
 
   document.getElementById('signupBtn').addEventListener('click', function () { Auth.openModal('signup'); });
   document.getElementById('loginBtn').addEventListener('click',  function () { Auth.openModal('login'); });
-
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  window.escapeHtml = escapeHtml;
 });
-
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 </script>
 </body>
 </html>

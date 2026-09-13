@@ -349,17 +349,13 @@
    API BASE works at port 5500 or 3000, file:// also handled
    ============================================================ */
 /* ============================================================
-   GUARD organisers and admins only
+   GUARD signed-in users only — anyone can access the Seller Hub
+   and start listing. Listings stay pending until we review them;
+   there is no separate "seller access" account gate any more.
    ============================================================ */
 (function() {
   if (!Auth.isLoggedIn()) {
     window.location.replace('index.html');
-    return;
-  }
-  var role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') {
-    // Regular customers go to their tickets page, not here
-    window.location.replace('my-tickets.html');
   }
 })();
 

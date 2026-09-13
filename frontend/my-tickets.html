@@ -359,25 +359,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  /* ── Sell entry point: different message depending on account type ── */
+  /* ── Sell entry point ── */
   (function renderSellStrip() {
-    const strip  = document.getElementById('sellStrip');
+    const strip = document.getElementById('sellStrip');
     if (!strip) return;
-    const seller = user.role === 'organiser' || user.role === 'admin';
     strip.innerHTML =
       '<div class="mk-panel" style="margin-top:32px">' +
-        '<div class="mk-panel__title">' +
-          (seller ? 'You sell on TicketsSA' : 'Sell on TicketsSA') + '</div>' +
+        '<div class="mk-panel__title">Sell on TicketsSA</div>' +
         '<div class="mk-panel__body">' +
-          (seller
-            ? 'Manage your events, stays, experiences and equipment from your Seller Hub.'
-            : 'Have an event, a guesthouse, a tour, equipment to hire or merchandise to sell? ' +
-              'List it on TicketsSA and reach customers across South Africa.') +
+          'Have an event, a guesthouse, a tour, equipment to hire or merchandise to sell? ' +
+          'List it and reach customers across South Africa — no approval wait to get started.' +
           '<div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">' +
-            (seller
-              ? '<a class="btn btn-primary" href="dashboard.html">Go to Seller Hub</a>' +
-                '<a class="btn btn-secondary" href="create-listing.html">+ Create Listing</a>'
-              : '<a class="btn btn-primary" href="sell.html">Find out how it works</a>') +
+            '<a class="btn btn-primary" href="create-listing.html">+ Create a listing</a>' +
+            '<a class="btn btn-secondary" href="dashboard.html">Go to Seller Hub</a>' +
           '</div>' +
         '</div>' +
       '</div>';

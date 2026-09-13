@@ -15,8 +15,6 @@
 (function () {
 
   if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
 
   const PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
 
