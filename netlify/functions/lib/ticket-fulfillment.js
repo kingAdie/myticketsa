@@ -12,27 +12,15 @@
    path reaches Paystack's "yes, this was paid" first.
    ================================================ */
 
-const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+const { getDb } = require('./firebase-admin');
 
 const FROM     = 'TicketsSA <support@mail.ticketssa.co.za>';
 const REPLY_TO = 'support@ticketssa.co.za';
 
-function sbHeaders() {
-  return {
-    apikey:         SUPABASE_ANON_KEY,
-    Authorization:  `Bearer ${SUPABASE_ANON_KEY}`,
-    'Content-Type': 'application/json',
-  };
-}
-
 async function findTicketByReference(reference) {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/tickets?payment_reference=eq.${encodeURIComponent(reference)}&select=id`,
-    { headers: sbHeaders() }
-  );
-  const rows = await res.json();
-  return Array.isArray(rows) && rows[0] ? rows[0].id : null;
+  const db   = getDb();
+  const snap = await db.collection('tickets').where('paymentReference', '==', reference).limit(1).get();
+  return snap.empty ? null : snap.docs[0].id;
 }
 
 function buildTicketRow(txn) {
@@ -45,43 +33,39 @@ function buildTicketRow(txn) {
 
   return {
     row: {
-      id:                 ticketId,
-      status:             'confirmed',
-      buyer_first_name:   buyer.firstName || '',
-      buyer_last_name:    buyer.lastName  || '',
-      buyer_email:        (buyer.email || '').toLowerCase(),
-      buyer_phone:        buyer.phone || null,
-      event_id:           meta.eventId,
-      event_title:        meta.eventTitle,
-      event_date:         meta.eventDate,
-      event_time:         meta.eventTime || null,
-      event_location:     meta.eventLocation,
-      event_city:         meta.eventCity,
-      event_image:        meta.eventImage || null,
-      ticket_type_id:     meta.ticketTypeId,
-      ticket_type_name:   meta.ticketTypeName,
-      ticket_price:       parseFloat(meta.ticketPrice) || 0,
-      quantity:           parseInt(meta.quantity, 10)  || 1,
-      subtotal:           parseFloat(meta.subtotal)    || 0,
-      service_fee:        parseFloat(meta.serviceFee)  || 0,
-      total:              parseFloat(meta.total)       || 0,
-      payment_method:     'paystack',
-      payment_reference:  txn.reference,
-      paid_at:            now,
-      qr_code_url:        qrCodeUrl,
-      booked_at:          now,
+      id:                ticketId,
+      status:            'confirmed',
+      buyerFirstName:    buyer.firstName || '',
+      buyerLastName:     buyer.lastName  || '',
+      buyerEmail:        (buyer.email || '').toLowerCase(),
+      buyerPhone:        buyer.phone || null,
+      eventId:           meta.eventId,
+      eventTitle:        meta.eventTitle,
+      eventDate:         meta.eventDate,
+      eventTime:         meta.eventTime || null,
+      eventLocation:     meta.eventLocation,
+      eventCity:         meta.eventCity,
+      eventImage:        meta.eventImage || null,
+      ticketTypeId:      meta.ticketTypeId,
+      ticketTypeName:    meta.ticketTypeName,
+      ticketPrice:       parseFloat(meta.ticketPrice) || 0,
+      quantity:          parseInt(meta.quantity, 10)  || 1,
+      subtotal:          parseFloat(meta.subtotal)    || 0,
+      serviceFee:        parseFloat(meta.serviceFee)  || 0,
+      total:             parseFloat(meta.total)       || 0,
+      paymentMethod:     'paystack',
+      paymentReference:  txn.reference,
+      paidAt:            now,
+      qrCodeUrl:         qrCodeUrl,
+      bookedAt:          now,
     },
     qrCodeUrl,
   };
 }
 
-async function insertTicket(row) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/tickets`, {
-    method:  'POST',
-    headers: { ...sbHeaders(), Prefer: 'return=representation' },
-    body:    JSON.stringify(row),
-  });
-  if (!res.ok) throw new Error(await res.text());
+async function insertTicket(ticketId, row) {
+  const db = getDb();
+  await db.collection('tickets').doc(ticketId).create(row);
 }
 
 /**
@@ -99,7 +83,7 @@ async function fulfilPaidTransaction(txn) {
   if (existingId) return { ticketId: existingId, created: false };
 
   const { row, qrCodeUrl } = buildTicketRow(txn);
-  await insertTicket(row);
+  await insertTicket(row.id, row);
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   if (RESEND_API_KEY) {
@@ -112,9 +96,9 @@ async function fulfilPaidTransaction(txn) {
         },
         body: JSON.stringify({
           from:     FROM,
-          to:       [row.buyer_email],
+          to:       [row.buyerEmail],
           reply_to: REPLY_TO,
-          subject:  `Your eTicket ${row.event_title} TicketsSA`,
+          subject:  `Your eTicket ${row.eventTitle} TicketsSA`,
           html:     buildTicketEmail({ ticketRow: row, qrCodeUrl }),
         }),
       });
@@ -179,8 +163,8 @@ function row(label, val) {
 }
 
 function buildTicketEmail({ ticketRow, qrCodeUrl }) {
-  const guestName = `${ticketRow.buyer_first_name} ${ticketRow.buyer_last_name}`.trim();
-  const when = `${escHtml(ticketRow.event_date)}${ticketRow.event_time ? ' at ' + escHtml(ticketRow.event_time) : ''}`;
+  const guestName = `${ticketRow.buyerFirstName} ${ticketRow.buyerLastName}`.trim();
+  const when = `${escHtml(ticketRow.eventDate)}${ticketRow.eventTime ? ' at ' + escHtml(ticketRow.eventTime) : ''}`;
   const total = `R${Number(ticketRow.total || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}`;
 
   return shell(`
@@ -188,15 +172,15 @@ function buildTicketEmail({ ticketRow, qrCodeUrl }) {
       Your eTicket is confirmed
     </h1>
     <p style="margin:0 0 24px;font-size:14px;color:#888888;text-align:center;">
-      Hi ${escHtml(ticketRow.buyer_first_name)}, thanks for your purchase. See you at ${escHtml(ticketRow.event_title)}!
+      Hi ${escHtml(ticketRow.buyerFirstName)}, thanks for your purchase. See you at ${escHtml(ticketRow.eventTitle)}!
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
       ${row('Ticket ID', `<span style="color:#4ade80;font-weight:700;">${escHtml(ticketRow.id)}</span>`)}
-      ${row('Event', escHtml(ticketRow.event_title))}
+      ${row('Event', escHtml(ticketRow.eventTitle))}
       ${row('When', when)}
-      ${row('Venue', `${escHtml(ticketRow.event_location)}, ${escHtml(ticketRow.event_city)}`)}
-      ${row('Ticket Type', `${escHtml(ticketRow.ticket_type_name)} × ${ticketRow.quantity}`)}
+      ${row('Venue', `${escHtml(ticketRow.eventLocation)}, ${escHtml(ticketRow.eventCity)}`)}
+      ${row('Ticket Type', `${escHtml(ticketRow.ticketTypeName)} × ${ticketRow.quantity}`)}
       ${row('Guest', escHtml(guestName))}
       ${row('Total Paid', total)}
     </table>

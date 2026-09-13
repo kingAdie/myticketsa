@@ -43,6 +43,12 @@ const SupabaseAPI = (() => {
     }
     if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
     _firestore = window.firebase.firestore();
+    // Supabase/JSON.stringify silently dropped `undefined` fields (relied on
+    // by admin.js's partial-update quick actions, e.g. adminUpdateEvent(id,
+    // {}, {status})) — Firestore throws on them by default. This restores
+    // the old silent-drop behaviour globally instead of auditing every call
+    // site individually.
+    _firestore.settings({ ignoreUndefinedProperties: true });
     return _firestore;
   }
 
@@ -89,38 +95,38 @@ const SupabaseAPI = (() => {
     return hhmm === '00:00' ? null : hhmm;
   }
 
-  function normaliseEvent(row) {
+  function normaliseEvent(id, doc) {
     return {
-      id:             row.id,
-      status:         row.status,
-      title:          row.title,
-      category:       row.category,
-      date:           row.event_date,
-      // events.event_time is NOT NULL, so listings with no published start time
-      // are stored as 00:00. Map that back to null here rather than showing a
-      // midnight start the organiser never advertised the UI renders "TBC".
-      time:           normaliseTime(row.event_time),
-      endTime:        normaliseTime(row.end_time),
-      location:       row.location,
-      city:           row.city,
-      province:       row.province   || null,
-      description:    row.description,
-      image:          row.image      || null,
-      price:          parseFloat(row.price) || 0,
-      featured:       !!row.featured,
-      sold_out:       !!row.sold_out,
-      organiser:      row.organiser_name,
-      organiserId:    row.organiser_id,
-      createdAt:      row.created_at,
-      updatedAt:      row.updated_at,
-      address:        row.address        || null,
-      paymentType:    row.payment_type   || null,
-      paymentLink:    row.payment_link   || null,
-      bankName:       row.bank_name      || null,
-      accountHolder:  row.account_holder || null,
-      accountNumber:  row.account_number || null,
-      branchCode:     row.branch_code    || null,
-      ticketTypes: (row.ticket_types || []).map(tt => ({
+      id,
+      status:         doc.status,
+      title:          doc.title,
+      category:       doc.category,
+      date:           doc.eventDate,
+      // Stored as null directly for Firestore-native events. Migrated rows may
+      // still carry Postgres's old "00:00 means no time published" sentinel
+      // (that column was NOT NULL) — normaliseTime bridges both.
+      time:           normaliseTime(doc.eventTime),
+      endTime:        normaliseTime(doc.endTime),
+      location:       doc.location,
+      city:           doc.city,
+      province:       doc.province   || null,
+      description:    doc.description,
+      image:          doc.image      || null,
+      price:          parseFloat(doc.price) || 0,
+      featured:       !!doc.featured,
+      sold_out:       !!doc.soldOut,
+      organiser:      doc.organiserName,
+      organiserId:    doc.organiserId,
+      createdAt:      doc.createdAt,
+      updatedAt:      doc.updatedAt || null,
+      address:        doc.address        || null,
+      paymentType:    doc.paymentType    || null,
+      paymentLink:    doc.paymentLink    || null,
+      bankName:       doc.bankName       || null,
+      accountHolder:  doc.accountHolder  || null,
+      accountNumber:  doc.accountNumber  || null,
+      branchCode:     doc.branchCode     || null,
+      ticketTypes: (doc.ticketTypes || []).map(tt => ({
         id:          tt.id,
         name:        tt.name,
         description: tt.description,
@@ -128,312 +134,231 @@ const SupabaseAPI = (() => {
         available:   tt.available,
         sold:        tt.sold || 0,
       })),
-      tags: (row.event_tags || []).map(t => t.tag),
+      tags: doc.tags || [],
     };
   }
 
-  function normaliseTicket(row) {
+  function normaliseTicket(id, doc) {
     return {
-      id:      row.id,
-      status:  row.status,
-      buyer:   { firstName: row.buyer_first_name, lastName: row.buyer_last_name, email: row.buyer_email, phone: row.buyer_phone },
-      event:   { id: row.event_id, title: row.event_title, date: row.event_date, time: row.event_time, location: row.event_location, city: row.event_city, image: row.event_image },
-      ticket:  { typeId: row.ticket_type_id, typeName: row.ticket_type_name, price: parseFloat(row.ticket_price), quantity: row.quantity },
-      pricing: { subtotal: parseFloat(row.subtotal), serviceFee: parseFloat(row.service_fee), total: parseFloat(row.total) },
-      payment: { reference: row.payment_reference, method: row.payment_method, paidAt: row.paid_at },
-      qrCodeUrl: row.qr_code_url,
-      bookedAt:  row.booked_at,
+      id,
+      status:  doc.status,
+      buyer:   { firstName: doc.buyerFirstName, lastName: doc.buyerLastName, email: doc.buyerEmail, phone: doc.buyerPhone },
+      event:   { id: doc.eventId, title: doc.eventTitle, date: doc.eventDate, time: doc.eventTime, location: doc.eventLocation, city: doc.eventCity, image: doc.eventImage },
+      ticket:  { typeId: doc.ticketTypeId, typeName: doc.ticketTypeName, price: parseFloat(doc.ticketPrice), quantity: doc.quantity },
+      pricing: { subtotal: parseFloat(doc.subtotal), serviceFee: parseFloat(doc.serviceFee), total: parseFloat(doc.total) },
+      payment: { reference: doc.paymentReference, method: doc.paymentMethod, paidAt: doc.paidAt },
+      qrCodeUrl: doc.qrCodeUrl || null,
+      bookedAt:  doc.bookedAt,
     };
   }
 
   // ════════════════════════════════════════
-  //  EVENTS
+  //  EVENTS (Firestore — see Firebase migration Phase 2)
   // ════════════════════════════════════════
 
   async function getEvents(filters = {}) {
-    const sb = await client();
-    let q = sb.from('events').select('*, ticket_types(*), event_tags(*)');
+    const db = await firestoreClient();
+    let q = db.collection('events');
 
     if (filters.organiserId) {
       // Organiser sees all their own events (any status)
-      q = q.eq('organiser_id', filters.organiserId);
-      if (filters.status) q = q.eq('status', filters.status);
+      q = q.where('organiserId', '==', filters.organiserId);
+      if (filters.status) q = q.where('status', '==', filters.status);
     } else if (filters.adminAll) {
       // Admin sees all events regardless of status
-      if (filters.status) q = q.eq('status', filters.status);
-      if (filters.category) q = q.eq('category', filters.category);
+      if (filters.status) q = q.where('status', '==', filters.status);
+      if (filters.category) q = q.where('category', '==', filters.category);
     } else {
       // Public sees only published events
-      q = q.eq('status', 'published');
-      if (filters.category) q = q.eq('category', filters.category);
-      if (filters.featured)  q = q.eq('featured', true);
+      q = q.where('status', '==', 'published');
+      if (filters.category) q = q.where('category', '==', filters.category);
+      if (filters.featured)  q = q.where('featured', '==', true);
     }
 
-    q = q.order('featured', { ascending: false }).order('event_date', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data || []).map(normaliseEvent);
+    q = q.orderBy('featured', 'desc').orderBy('eventDate', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => normaliseEvent(d.id, d.data()));
   }
 
   async function getEvent(id) {
-    const sb = await client();
-    const { data, error } = await sb
-      .from('events')
-      .select('*, ticket_types(*), event_tags(*)')
-      .eq('id', id)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? normaliseEvent(data) : null;
+    const db  = await firestoreClient();
+    const doc = await db.collection('events').doc(id).get();
+    return doc.exists ? normaliseEvent(doc.id, doc.data()) : null;
+  }
+
+  function buildTicketTypes(ticketTypes, eventId, { resetSold } = {}) {
+    return (Array.isArray(ticketTypes) ? ticketTypes : []).map((tt, i) => ({
+      id:          tt.id || `TT-${eventId}-${i + 1}`,
+      name:        tt.name,
+      description: tt.description || tt.name,
+      price:       parseFloat(tt.price) || 0,
+      available:   parseInt(tt.available) || 100,
+      sold:        resetSold ? 0 : (tt.sold || 0),
+    }));
+  }
+
+  function buildTags(tags) {
+    return (Array.isArray(tags) ? tags : []).filter(t => t?.trim()).map(t => t.trim());
   }
 
   async function createEvent(eventData) {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
+    const now = new Date().toISOString();
 
-    const { error: evtErr } = await sb.from('events').insert({
-      id:             eventId,
+    await db.collection('events').doc(eventId).create({
       status:         'pending',
       // Organiser-supplied artwork. Events land as `pending`, so an admin still
       // reviews (and can replace) the image before anything is published.
       image:          eventData.image || null,
       title:          eventData.title,
       category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
+      eventDate:      eventData.date,
+      eventTime:      eventData.time     || null,
+      endTime:        eventData.endTime || eventData.time || null,
       location:       eventData.location,
       city:           eventData.city,
       province:       eventData.province  || null,
       description:    eventData.description,
       price:          parseFloat(eventData.price) || 0,
       featured:       false,
-      sold_out:       false,
-      organiser_name: user.organisationName || `${user.firstName} ${user.lastName}`,
-      organiser_id:   user.id,
+      soldOut:        false,
+      organiserName:  user.organisationName || `${user.firstName} ${user.lastName}`,
+      organiserId:    user.id,
       address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
+      paymentType:    eventData.paymentType    || null,
+      paymentLink:    eventData.paymentLink    || null,
+      bankName:       eventData.bankName       || null,
+      accountHolder:  eventData.accountHolder  || null,
+      accountNumber:  eventData.accountNumber  || null,
+      branchCode:     eventData.branchCode     || null,
+      ticketTypes:    buildTicketTypes(eventData.ticketTypes, eventId, { resetSold: true }),
+      tags:           buildTags(eventData.tags),
+      createdAt:      now,
+      updatedAt:      now,
     });
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes) && eventData.ticketTypes.length > 0) {
-      const { error: ttErr } = await sb.from('ticket_types').insert(
-        eventData.ticketTypes.map((tt, i) => ({
-          id:          tt.id || `TT-${eventId}-${i + 1}`,
-          event_id:    eventId,
-          name:        tt.name,
-          description: tt.description || tt.name,
-          price:       parseFloat(tt.price) || 0,
-          available:   parseInt(tt.available) || 100,
-          sort_order:  i + 1,
-        }))
-      );
-      if (ttErr) throw ttErr;
-    }
-
-    if (Array.isArray(eventData.tags) && eventData.tags.length > 0) {
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: eventId, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
 
     return { id: eventId, status: 'pending', ...eventData };
   }
 
   async function updateEvent(id, eventData) {
-    const sb = await client();
+    const db = await firestoreClient();
 
     // Only overwrite the image when the organiser actually supplied a new one,
     // so an admin-curated image is never wiped by an edit that left it alone.
     const imagePatch = eventData.image ? { image: eventData.image } : {};
 
-    const { error: evtErr } = await sb.from('events').update({
+    const fields = {
       ...imagePatch,
       title:          eventData.title,
       category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
+      eventDate:      eventData.date,
+      eventTime:      eventData.time     || null,
+      endTime:        eventData.endTime || eventData.time || null,
       location:       eventData.location,
       city:           eventData.city,
       province:       eventData.province  || null,
       description:    eventData.description,
       price:          parseFloat(eventData.price) || 0,
       address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
-      updated_at:     new Date().toISOString(),
-    }).eq('id', id);
-    if (evtErr) throw evtErr;
+      paymentType:    eventData.paymentType    || null,
+      paymentLink:    eventData.paymentLink    || null,
+      bankName:       eventData.bankName       || null,
+      accountHolder:  eventData.accountHolder  || null,
+      accountNumber:  eventData.accountNumber  || null,
+      branchCode:     eventData.branchCode     || null,
+      updatedAt:      new Date().toISOString(),
+    };
+    if (Array.isArray(eventData.ticketTypes)) fields.ticketTypes = buildTicketTypes(eventData.ticketTypes, id);
+    if (Array.isArray(eventData.tags))        fields.tags        = buildTags(eventData.tags);
 
-    if (Array.isArray(eventData.ticketTypes)) {
-      await sb.from('ticket_types').delete().eq('event_id', id);
-      if (eventData.ticketTypes.length > 0) {
-        const { error: ttErr } = await sb.from('ticket_types').insert(
-          eventData.ticketTypes.map((tt, i) => ({
-            id:          tt.id || `TT-${id}-${i + 1}`,
-            event_id:    id,
-            name:        tt.name,
-            description: tt.description || tt.name,
-            price:       parseFloat(tt.price) || 0,
-            available:   parseInt(tt.available) || 100,
-            sort_order:  i + 1,
-          }))
-        );
-        if (ttErr) throw ttErr;
-      }
-    }
-
-    if (Array.isArray(eventData.tags)) {
-      await sb.from('event_tags').delete().eq('event_id', id);
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: id, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
-
+    await db.collection('events').doc(id).update(fields);
     return eventData;
   }
 
   async function deleteEvent(id) {
-    const sb = await client();
-    const { error } = await sb.from('events').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('events').doc(id).delete();
   }
 
   async function adminCreateEvent(eventData, options = {}) {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
+    const now = new Date().toISOString();
 
-    const { error: evtErr } = await sb.from('events').insert({
-      id:             eventId,
-      status:         options.status   ?? 'published',
-      featured:       options.featured ?? false,
-      sold_out:       false,
-      title:          eventData.title,
-      category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
-      location:       eventData.location,
-      city:           eventData.city,
-      province:       eventData.province  || null,
-      description:    eventData.description,
-      image:          eventData.image     || null,
-      price:          parseFloat(eventData.price) || 0,
-      organiser_name: options.organiserName || user.organisationName || `${user.firstName} ${user.lastName}`,
-      organiser_id:   user.id,
-      address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
+    await db.collection('events').doc(eventId).create({
+      status:        options.status   ?? 'published',
+      featured:      options.featured ?? false,
+      soldOut:       false,
+      title:         eventData.title,
+      category:      eventData.category,
+      eventDate:     eventData.date,
+      eventTime:     eventData.time     || null,
+      endTime:       eventData.endTime || eventData.time || null,
+      location:      eventData.location,
+      city:          eventData.city,
+      province:      eventData.province  || null,
+      description:   eventData.description,
+      image:         eventData.image     || null,
+      price:         parseFloat(eventData.price) || 0,
+      organiserName: options.organiserName || user.organisationName || `${user.firstName} ${user.lastName}`,
+      organiserId:   user.id,
+      address:       eventData.address        || null,
+      paymentType:   eventData.paymentType    || null,
+      paymentLink:   eventData.paymentLink    || null,
+      bankName:      eventData.bankName       || null,
+      accountHolder: eventData.accountHolder  || null,
+      accountNumber: eventData.accountNumber  || null,
+      branchCode:    eventData.branchCode     || null,
+      ticketTypes:   buildTicketTypes(eventData.ticketTypes, eventId, { resetSold: true }),
+      tags:          buildTags(eventData.tags),
+      createdAt:     now,
+      updatedAt:     now,
     });
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes) && eventData.ticketTypes.length > 0) {
-      const { error: ttErr } = await sb.from('ticket_types').insert(
-        eventData.ticketTypes.map((tt, i) => ({
-          id:          tt.id || `TT-${eventId}-${i + 1}`,
-          event_id:    eventId,
-          name:        tt.name,
-          description: tt.description || tt.name,
-          price:       parseFloat(tt.price) || 0,
-          available:   parseInt(tt.available) || 100,
-          sort_order:  i + 1,
-        }))
-      );
-      if (ttErr) throw ttErr;
-    }
-
-    if (Array.isArray(eventData.tags) && eventData.tags.length > 0) {
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: eventId, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
 
     return { id: eventId, ...eventData };
   }
 
   async function adminUpdateEvent(id, eventData, options = {}) {
-    const sb = await client();
+    const db = await firestoreClient();
 
     const fields = {
-      title:          eventData.title,
-      category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
-      location:       eventData.location,
-      city:           eventData.city,
-      province:       eventData.province  || null,
-      description:    eventData.description,
-      price:          parseFloat(eventData.price) || 0,
-      address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
-      updated_at:     new Date().toISOString(),
+      title:         eventData.title,
+      category:      eventData.category,
+      eventDate:     eventData.date,
+      eventTime:     eventData.time     || null,
+      endTime:       eventData.endTime || eventData.time || null,
+      location:      eventData.location,
+      city:          eventData.city,
+      province:      eventData.province  || null,
+      description:   eventData.description,
+      price:         parseFloat(eventData.price) || 0,
+      address:       eventData.address        || null,
+      paymentType:   eventData.paymentType    || null,
+      paymentLink:   eventData.paymentLink    || null,
+      bankName:      eventData.bankName       || null,
+      accountHolder: eventData.accountHolder  || null,
+      accountNumber: eventData.accountNumber  || null,
+      branchCode:    eventData.branchCode     || null,
+      updatedAt:     new Date().toISOString(),
     };
-    if (eventData.image)          fields.image          = eventData.image;
-    if (options.organiserName)    fields.organiser_name = options.organiserName;
-    if (options.status !== undefined) fields.status     = options.status;
-    if (options.featured !== undefined) fields.featured = options.featured;
+    if (eventData.image)                fields.image         = eventData.image;
+    if (options.organiserName)          fields.organiserName = options.organiserName;
+    if (options.status !== undefined)   fields.status        = options.status;
+    if (options.featured !== undefined) fields.featured      = options.featured;
+    if (Array.isArray(eventData.ticketTypes)) fields.ticketTypes = buildTicketTypes(eventData.ticketTypes, id);
+    if (Array.isArray(eventData.tags))        fields.tags        = buildTags(eventData.tags);
 
-    const { error: evtErr } = await sb.from('events').update(fields).eq('id', id);
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes)) {
-      await sb.from('ticket_types').delete().eq('event_id', id);
-      if (eventData.ticketTypes.length > 0) {
-        const { error: ttErr } = await sb.from('ticket_types').insert(
-          eventData.ticketTypes.map((tt, i) => ({
-            id:          tt.id || `TT-${id}-${i + 1}`,
-            event_id:    id,
-            name:        tt.name,
-            description: tt.description || tt.name,
-            price:       parseFloat(tt.price) || 0,
-            available:   parseInt(tt.available) || 100,
-            sort_order:  i + 1,
-          }))
-        );
-        if (ttErr) throw ttErr;
-      }
-    }
-
-    if (Array.isArray(eventData.tags)) {
-      await sb.from('event_tags').delete().eq('event_id', id);
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: id, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
-
+    // Firestore silently drops `undefined` values here (ignoreUndefinedProperties,
+    // set in firestoreClient()) — this is what lets admin.js's quick actions keep
+    // calling this with an empty eventData ({}) to patch only status/featured.
+    await db.collection('events').doc(id).update(fields);
     return eventData;
   }
 
@@ -496,88 +421,91 @@ const SupabaseAPI = (() => {
   /** Single ticket by id, for success.html when it lands here with no local
    *  booking state (e.g. returning from Paystack's hosted checkout). */
   async function getTicket(id) {
-    const sb = await client();
-    const { data, error } = await sb.from('tickets').select('*').eq('id', id).maybeSingle();
-    if (error) throw error;
-    return data ? normaliseTicket(data) : null;
+    const db  = await firestoreClient();
+    const doc = await db.collection('tickets').doc(id).get();
+    return doc.exists ? normaliseTicket(doc.id, doc.data()) : null;
   }
 
   async function getMyTickets() {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('tickets')
-      .select('*')
-      .eq('buyer_email', user.email.toLowerCase())
-      .order('booked_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(normaliseTicket);
+    const snap = await db.collection('tickets')
+      .where('buyerEmail', '==', user.email.toLowerCase())
+      .orderBy('bookedAt', 'desc')
+      .get();
+    return snap.docs.map(d => normaliseTicket(d.id, d.data()));
   }
 
   /**
    * Tickets people have booked on the signed-in seller's own events.
    * Two hops: fetch my event ids, then the tickets against them. Returns []
-   * rather than throwing if row-level security blocks the read, so the Seller
+   * rather than throwing if a Security Rule blocks the read, so the Seller
    * Hub can show an explanatory empty state instead of an error.
    */
   async function getSalesForMyEvents() {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) return [];
 
-    const { data: myEvents, error: evErr } = await sb
-      .from('events').select('id, title').eq('organiser_id', user.id);
-    if (evErr || !myEvents?.length) return [];
+    try {
+      const eventsSnap = await db.collection('events').where('organiserId', '==', user.id).get();
+      if (eventsSnap.empty) return [];
+      const ids = eventsSnap.docs.map(d => d.id);
 
-    const ids = myEvents.map(e => e.id);
-    const { data, error } = await sb
-      .from('tickets').select('*')
-      .in('event_id', ids)
-      .order('booked_at', { ascending: false });
-    if (error) return [];
-    return (data || []).map(normaliseTicket);
+      // Firestore's client-SDK 'in' operator caps at 30 values per query.
+      const chunks = [];
+      for (let i = 0; i < ids.length; i += 30) chunks.push(ids.slice(i, i + 30));
+
+      const results = await Promise.all(chunks.map(chunk =>
+        db.collection('tickets').where('eventId', 'in', chunk).orderBy('bookedAt', 'desc').get()
+      ));
+      const docs = results.flatMap(snap => snap.docs);
+      docs.sort((a, b) => (b.data().bookedAt || '').localeCompare(a.data().bookedAt || ''));
+      return docs.map(d => normaliseTicket(d.id, d.data()));
+    } catch (_) {
+      return [];
+    }
   }
 
   async function submitTicket(payload) {
-    const sb = await client();
+    const db = await firestoreClient();
 
-    const ticketId  = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const subtotal  = payload.ticketPrice * payload.quantity;
+    const ticketId   = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const subtotal   = payload.ticketPrice * payload.quantity;
     const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
-    const total      = Math.round((subtotal + serviceFee) * 100) / 100;
-    const now        = new Date().toISOString();
+    const total       = Math.round((subtotal + serviceFee) * 100) / 100;
+    const now         = new Date().toISOString();
 
-    const { data, error } = await sb.from('tickets').insert({
-      id:                 ticketId,
-      status:             'confirmed',
-      buyer_first_name:   payload.firstName,
-      buyer_last_name:    payload.lastName,
-      buyer_email:        payload.email.toLowerCase(),
-      buyer_phone:        payload.phone        || null,
-      event_id:           payload.eventId,
-      event_title:        payload.eventTitle,
-      event_date:         payload.eventDate,
-      event_time:         payload.eventTime    || null,
-      event_location:     payload.eventLocation,
-      event_city:         payload.eventCity,
-      event_image:        payload.eventImage   || null,
-      ticket_type_id:     payload.ticketTypeId,
-      ticket_type_name:   payload.ticketTypeName,
-      ticket_price:       payload.ticketPrice,
-      quantity:           payload.quantity,
+    const row = {
+      status:            'confirmed',
+      buyerFirstName:    payload.firstName,
+      buyerLastName:     payload.lastName,
+      buyerEmail:        payload.email.toLowerCase(),
+      buyerPhone:        payload.phone        || null,
+      eventId:           payload.eventId,
+      eventTitle:        payload.eventTitle,
+      eventDate:         payload.eventDate,
+      eventTime:         payload.eventTime    || null,
+      eventLocation:     payload.eventLocation,
+      eventCity:         payload.eventCity,
+      eventImage:        payload.eventImage   || null,
+      ticketTypeId:      payload.ticketTypeId,
+      ticketTypeName:    payload.ticketTypeName,
+      ticketPrice:       payload.ticketPrice,
+      quantity:          payload.quantity,
       subtotal,
-      service_fee:        serviceFee,
+      serviceFee,
       total,
-      payment_method:     'pending',
-      payment_reference:  null,
-      paid_at:            null,
-      qr_code_url:        null,
-      booked_at:          now,
-    }).select().single();
+      paymentMethod:     'pending',
+      paymentReference:  null,
+      paidAt:            null,
+      qrCodeUrl:         null,
+      bookedAt:          now,
+    };
 
-    if (error) throw error;
-    return { ...normaliseTicket(data), pricing: { subtotal, serviceFee, total } };
+    await db.collection('tickets').doc(ticketId).create(row);
+    return { ...normaliseTicket(ticketId, row), pricing: { subtotal, serviceFee, total } };
   }
 
   // ════════════════════════════════════════
@@ -650,24 +578,33 @@ const SupabaseAPI = (() => {
   //  ADMIN Supabase-direct (no Railway)
   // ════════════════════════════════════════
 
+  /**
+   * events/tickets/users counts moved to Firestore (see Firebase migration
+   * Phase 2) — profiles is stale for user counts since new signups no longer
+   * create a Supabase profiles row at all. equipment_requests stays Supabase
+   * (not migrated yet).
+   */
   async function adminGetStats() {
     const sb = await client();
-    const [evRes, profRes, tickRes, reqRes] = await Promise.all([
-      sb.from('events').select('id, status'),
-      sb.from('profiles').select('id, role'),
-      sb.from('tickets').select('id', { count: 'exact', head: true }),
+    const db = await firestoreClient();
+
+    const [reqRes, totalEvents, published, pending, tickets, users, organisers] = await Promise.all([
       sb.from('equipment_requests').select('id, status'),
+      db.collection('events').count().get(),
+      db.collection('events').where('status', '==', 'published').count().get(),
+      db.collection('events').where('status', '==', 'pending').count().get(),
+      db.collection('tickets').count().get(),
+      db.collection('users').count().get(),
+      db.collection('users').where('role', '==', 'organiser').count().get(),
     ]);
-    const events   = evRes.data   || [];
-    const profiles = profRes.data || [];
-    const requests = reqRes.data  || [];
+    const requests = reqRes.data || [];
     return {
-      totalEvents:     events.length,
-      publishedEvents: events.filter(e => e.status === 'published').length,
-      pendingEvents:   events.filter(e => e.status === 'pending').length,
-      ticketsSold:     tickRes.count || 0,
-      totalUsers:      profiles.length,
-      organisers:      profiles.filter(p => p.role === 'organiser').length,
+      totalEvents:     totalEvents.data().count,
+      publishedEvents: published.data().count,
+      pendingEvents:   pending.data().count,
+      ticketsSold:     tickets.data().count,
+      totalUsers:      users.data().count,
+      organisers:      organisers.data().count,
       pendingRequests: requests.filter(r => r.status === 'pending').length,
     };
   }

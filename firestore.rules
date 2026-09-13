@@ -1,12 +1,15 @@
 rules_version = '2';
 
 /* ================================================
-   TicketsSA Firestore Security Rules — Phase 1 (Auth)
+   TicketsSA Firestore Security Rules — Phase 1 (Auth) + Phase 2 (events/tickets)
 
-   Only the `users` collection exists in Firestore so far; every
-   other collection (events, tickets, accommodations, etc.) is
-   still on Supabase and untouched by this migration phase, so
-   there are deliberately no rules for them here yet.
+   `accommodations`/`accommodation_bookings`/`tourist_destinations`/
+   `equipment_requests` are still on Supabase (Phase 3), so there are
+   deliberately no rules for them here yet.
+
+   This is the FIRST real access control this data has ever had — the
+   Supabase anon-key client never attached an auth session, so
+   everything was effectively client-side-only "security" before this.
 
    Deploy: firebase deploy --only firestore:rules
    (requires the Firebase CLI, logged into the `tickets-sa` project)
@@ -37,16 +40,86 @@ service cloud.firestore {
       allow create: if isOwner(userId)
                     && request.resource.data.role == 'attendee';
 
-      // Owner can read/update their own doc, but can't touch their own
-      // `role` field that only firebase-set-role.js (Admin SDK, bypasses
-      // these rules entirely) is allowed to change.
-      allow read, update: if isOwner(userId)
-                          && request.resource.data.role == resource.data.role;
+      // Owner can read their own doc freely...
+      allow read: if isOwner(userId) || isAdmin();
 
-      // Admins can read and update (including role) any user doc directly
-      // in Firestore if ever needed, though the app always goes through
-      // firebase-set-role.js so the custom claim stays in sync.
-      allow read, write: if isAdmin();
+      // ...but can't touch their own `role` field via update — `request.
+      // resource` (the incoming write) isn't defined for reads, which is why
+      // this check has to live in its own `update` rule rather than combined
+      // with `read` above (an earlier version of this rule mistakenly
+      // referenced request.resource.data on a read, which would have thrown
+      // and denied every owner from reading their own profile — caught while
+      // extending these rules for Phase 2, fixed here). Real role changes
+      // only ever happen server-side via firebase-set-role.js (Admin SDK,
+      // bypasses these rules entirely).
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role)
+                    || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      // Published events are public. Draft/pending/rejected events are only
+      // visible to their organiser or an admin — closes a gap that existed
+      // under Supabase (status filtering was app-side only, not enforced by
+      // the anon-key client).
+      allow read: if resource.data.status == 'published'
+                  || isOwner(resource.data.organiserId)
+                  || isAdmin();
+
+      // Organiser (or admin, creating on their own behalf via the admin
+      // panel) becomes the owner of whatever they create.
+      allow create: if isSignedIn()
+                    && request.resource.data.organiserId == request.auth.uid;
+
+      // An owner can edit their own event, but can't self-publish or
+      // self-feature by writing directly to Firestore — updateEvent() (the
+      // organiser-facing function) never touches these fields either, this
+      // just closes the same gap for anyone bypassing the app. Only
+      // adminUpdateEvent() (admin.js) is meant to flip status/featured.
+      allow update: if (isOwner(resource.data.organiserId)
+                        && request.resource.data.status   == resource.data.status
+                        && request.resource.data.featured == resource.data.featured)
+                    || isAdmin();
+
+      allow delete: if isOwner(resource.data.organiserId) || isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      // Reads are public by design, matching today's actual behaviour
+      // (the Supabase anon-key client already had no read restriction on
+      // this table) — a ticket id is an unguessable random string, and
+      // buyers are frequently not signed in at all (guest checkout), so
+      // success.html's getTicket(id) must work without an auth session.
+      // Hardening ticket-read privacy is a separate, later decision — this
+      // phase's security work is about write integrity (below).
+      allow read: if true;
+
+      // submitTicket()'s client path (free/link/bank events only) must look
+      // like a legitimate UNPAID honour-system booking, never a forged
+      // "already paid via Paystack" record. Paystack tickets are only ever
+      // written server-side via the Admin SDK (ticket-fulfillment.js),
+      // which bypasses these rules entirely — no client create path should
+      // ever be able to produce paymentMethod == 'paystack'.
+      allow create: if request.resource.data.status           == 'confirmed'
+                    && request.resource.data.paymentMethod     == 'pending'
+                    && request.resource.data.paymentReference  == null
+                    && request.resource.data.paidAt            == null
+                    && request.resource.data.qrCodeUrl          == null
+                    && request.resource.data.quantity is int
+                    && request.resource.data.quantity > 0
+                    && request.resource.data.ticketPrice is number
+                    && request.resource.data.ticketPrice >= 0
+                    && request.resource.data.subtotal   is number
+                    && request.resource.data.serviceFee is number
+                    && request.resource.data.total      is number
+                    && request.resource.data.buyerEmail is string
+                    && request.resource.data.buyerEmail.size() > 0
+                    && request.resource.data.eventId    is string
+                    && request.resource.data.eventId.size() > 0;
+
+      // Nothing in the app edits a ticket after creation today.
+      allow update, delete: if isAdmin();
     }
   }
 }

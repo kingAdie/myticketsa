@@ -14,6 +14,7 @@
 const admin = require('firebase-admin');
 
 let _app = null;
+let _db  = null;
 
 function getAdminApp() {
   if (_app) return _app;
@@ -37,4 +38,15 @@ function getAdminApp() {
   return _app;
 }
 
-module.exports = { admin, getAdminApp };
+/** Firestore handle with the same ignoreUndefinedProperties setting used
+ *  client-side (frontend/js/api.js's firestoreClient()) — Supabase/JSON
+ *  silently dropped `undefined` fields; Firestore throws on them by default. */
+function getDb() {
+  if (_db) return _db;
+  getAdminApp();
+  _db = admin.firestore();
+  _db.settings({ ignoreUndefinedProperties: true });
+  return _db;
+}
+
+module.exports = { admin, getAdminApp, getDb };

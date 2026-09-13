@@ -6,15 +6,14 @@
 
    Called from checkout.js when the event's payment type is
    'paystack'. Never trusts a client-supplied price the
-   ticket type's price is re-fetched from Supabase here so a
+   ticket type's price is re-fetched from Firestore here so a
    tampered request can't buy a ticket for less than it costs.
    Returns a Paystack-hosted checkout URL for the browser to
    redirect to. The actual ticket row is only created once
    paystack-verify.js confirms the payment succeeded.
    ================================================ */
 
-const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+const { getDb } = require('./lib/firebase-admin');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -55,15 +54,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: 'Invalid email address' };
   }
 
-  // ── Authoritative price lookup never trust a client-supplied amount ──
+  // Authoritative price lookup never trust a client-supplied amount.
+  // Reads via the Admin SDK (not a client-SDK read gated by the "published
+  // only" Security Rule) so an organiser flipping the event's status
+  // mid-checkout can't break a buyer's in-flight price lookup.
   let ticketType;
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/ticket_types?id=eq.${encodeURIComponent(ticketTypeId)}&event_id=eq.${encodeURIComponent(eventId)}&select=id,name,price`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
-    );
-    const rows = await res.json();
-    ticketType = Array.isArray(rows) ? rows[0] : null;
+    const db  = getDb();
+    const doc = await db.collection('events').doc(eventId).get();
+    if (!doc.exists) return { statusCode: 400, body: 'Event not found' };
+    const ticketTypes = doc.data().ticketTypes || [];
+    ticketType = ticketTypes.find(tt => tt.id === ticketTypeId) || null;
   } catch (err) {
     console.error('[paystack-initialize] ticket type lookup failed:', err);
     return { statusCode: 502, body: 'Could not verify ticket price' };
