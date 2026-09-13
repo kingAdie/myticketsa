@@ -1,19 +1,16 @@
 ﻿/* ================================================
-   TicketsSA Supabase Data Layer (api.js)
-   All data operations go directly to Supabase.
-   No backend server needed for reads or organiser writes.
-   Backend is only called for: checkout, admin operations.
+   TicketsSA Data Layer (api.js)
+   All data operations go directly to Firestore no backend server
+   needed for reads or organiser writes. Migrated off Supabase in
+   three phases (auth, events/tickets, then everything else — see
+   project memory for the full history); no Supabase dependency
+   remains in this file.
    ================================================ */
 
 const SupabaseAPI = (() => {
 
-  const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
-
   // Firebase (Firestore) keep in sync with frontend/js/auth.js's
-  // firebaseConfig. Added during the Firebase Auth migration only the
-  // `users` collection so far the rest of the data layer is still
-  // Supabase, untouched, until later migration phases.
+  // firebaseConfig.
   const FIREBASE_CONFIG = {
     apiKey:            'YOUR_FIREBASE_API_KEY',
     authDomain:        'tickets-sa.firebaseapp.com',
@@ -62,23 +59,6 @@ const SupabaseAPI = (() => {
       organisationName: data.organisationName || null,
       createdAt:        data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
     };
-  }
-
-  let _client = null;
-
-  async function client() {
-    if (_client) return _client;
-    if (!window.supabase) {
-      await new Promise((resolve, reject) => {
-        const s   = document.createElement('script');
-        s.src     = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-        s.onload  = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return _client;
   }
 
   // ── ID generator ────────────────────────────────────────────────────────
@@ -366,56 +346,100 @@ const SupabaseAPI = (() => {
   //  SERVICE REQUESTS
   // ════════════════════════════════════════
 
+  // Equipment requests have no normalise*() mapper in the Supabase version
+  // either — consumers (dashboard.html, my-tickets.html, admin.js) read raw
+  // snake_case fields directly. Keeping that exact shape here is what lets
+  // those files stay unchanged; storage internally is still camelCase for
+  // consistency with every other Firestore collection.
+  function toRawServiceRequest(id, doc) {
+    return {
+      id,
+      user_id:       doc.userId,
+      service_id:    doc.serviceId,
+      service_name:  doc.serviceName,
+      event_date:    doc.eventDate,
+      duration:      doc.duration      || null,
+      location:      doc.location,
+      quantity:      doc.quantity,
+      details:       doc.details        || null,
+      contact_phone: doc.contactPhone,
+      budget_range:  doc.budgetRange    || null,
+      status:        doc.status,
+      created_at:    doc.createdAt,
+    };
+  }
+
   async function submitServiceRequest(data) {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data: result, error } = await sb.from('equipment_requests').insert({
-      user_id:       user.id,
-      service_id:    data.serviceId,
-      service_name:  data.serviceName,
-      event_date:    data.eventDate,
-      duration:      data.duration      || null,
-      location:      data.location,
-      quantity:      parseInt(data.quantity) || 1,
-      details:       data.details        || null,
-      contact_phone: data.contactPhone,
-      budget_range:  data.budgetRange    || null,
-      status:        'pending',
-    }).select().single();
-    if (error) throw error;
-    return result;
+    const id  = makeId('REQ');
+    const row = {
+      userId:       user.id,
+      serviceId:    data.serviceId,
+      serviceName:  data.serviceName,
+      eventDate:    data.eventDate,
+      duration:     data.duration      || null,
+      location:     data.location,
+      quantity:     parseInt(data.quantity) || 1,
+      details:      data.details        || null,
+      contactPhone: data.contactPhone,
+      budgetRange:  data.budgetRange    || null,
+      status:       'pending',
+      createdAt:    new Date().toISOString(),
+    };
+    await db.collection('equipmentRequests').doc(id).create(row);
+    return toRawServiceRequest(id, row);
   }
 
   async function getMyServiceRequests() {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('equipment_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const snap = await db.collection('equipmentRequests')
+      .where('userId', '==', user.id)
+      .orderBy('createdAt', 'desc')
+      .get();
+    return snap.docs.map(d => toRawServiceRequest(d.id, d.data()));
   }
 
   // ════════════════════════════════════════
   //  TICKETS
   // ════════════════════════════════════════
 
+  // accommodation_bookings also has no normalise*() mapper in the Supabase
+  // version — my-tickets.html and admin.js both read raw snake_case fields.
+  function toRawBooking(id, doc) {
+    return {
+      id,
+      accommodation_id:   doc.accommodationId,
+      accommodation_name: doc.accommodationName,
+      space_type_name:    doc.spaceTypeName,
+      price_per_night:    doc.pricePerNight,
+      check_in_date:      doc.checkInDate,
+      check_out_date:     doc.checkOutDate,
+      nights:             doc.nights,
+      guests:             doc.guests,
+      total_price:        doc.totalPrice,
+      customer_name:      doc.customerName,
+      customer_email:     doc.customerEmail,
+      customer_phone:     doc.customerPhone || null,
+      special_requests:   doc.specialRequests || null,
+      status:             doc.status,
+      created_at:         doc.createdAt,
+    };
+  }
+
   async function getMyAccommodationBookings() {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('accommodation_bookings')
-      .select('*')
-      .eq('customer_email', user.email.toLowerCase())
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const snap = await db.collection('accommodationBookings')
+      .where('customerEmail', '==', user.email.toLowerCase())
+      .orderBy('createdAt', 'desc')
+      .get();
+    return snap.docs.map(d => toRawBooking(d.id, d.data()));
   }
 
   /** Single ticket by id, for success.html when it lands here with no local
@@ -553,51 +577,28 @@ const SupabaseAPI = (() => {
     if (!res.ok) throw new Error(await res.text());
   }
 
-  async function getMyProfile() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
-    if (!user) return null;
-    const { data, error } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (error || !data) return user;
-    return {
-      id:               data.id,
-      email:            data.email,
-      firstName:        data.first_name,
-      lastName:         data.last_name,
-      role:             data.role,
-      organisationName: data.organisation_name,
-      createdAt:        data.created_at,
-    };
-  }
-
   // ════════════════════════════════════════
-  //  ADMIN Supabase-direct (no Railway)
+  //  ADMIN
   // ════════════════════════════════════════
 
   /**
-   * events/tickets/users counts moved to Firestore (see Firebase migration
-   * Phase 2) — profiles is stale for user counts since new signups no longer
-   * create a Supabase profiles row at all. equipment_requests stays Supabase
-   * (not migrated yet).
+   * Fully Firestore as of the Firebase migration's Phase 3 — no Supabase
+   * dependency left in this function at all. profiles/equipment_requests
+   * counts moved off Supabase since profiles stopped getting new rows the
+   * moment Phase 1 shipped (signups no longer touch Supabase Auth).
    */
   async function adminGetStats() {
-    const sb = await client();
     const db = await firestoreClient();
 
-    const [reqRes, totalEvents, published, pending, tickets, users, organisers] = await Promise.all([
-      sb.from('equipment_requests').select('id, status'),
+    const [totalEvents, published, pending, tickets, users, organisers, pendingRequests] = await Promise.all([
       db.collection('events').count().get(),
       db.collection('events').where('status', '==', 'published').count().get(),
       db.collection('events').where('status', '==', 'pending').count().get(),
       db.collection('tickets').count().get(),
       db.collection('users').count().get(),
       db.collection('users').where('role', '==', 'organiser').count().get(),
+      db.collection('equipmentRequests').where('status', '==', 'pending').count().get(),
     ]);
-    const requests = reqRes.data || [];
     return {
       totalEvents:     totalEvents.data().count,
       publishedEvents: published.data().count,
@@ -605,216 +606,207 @@ const SupabaseAPI = (() => {
       ticketsSold:     tickets.data().count,
       totalUsers:      users.data().count,
       organisers:      organisers.data().count,
-      pendingRequests: requests.filter(r => r.status === 'pending').length,
+      pendingRequests: pendingRequests.data().count,
     };
   }
 
-  async function adminGetUsers() {
-    const sb = await client();
-    const { data, error } = await sb
-      .from('profiles')
-      .select('id, first_name, last_name, email, role, organisation_name, created_at')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(p => ({
-      id:               p.id,
-      firstName:        p.first_name  || '',
-      lastName:         p.last_name   || '',
-      email:            p.email       || '',
-      role:             p.role        || 'attendee',
-      organisationName: p.organisation_name || null,
-      createdAt:        p.created_at,
-    }));
-  }
 
-  async function adminUpdateUserRole(userId, role) {
-    const sb = await client();
-    const { error } = await sb.from('profiles').update({ role }).eq('id', userId);
-    if (error) throw error;
-  }
-
+  /** Joined against Firestore's `users` collection, not Supabase `profiles`
+   *  it stopped getting new rows the moment signup stopped touching Supabase
+   *  Auth at all (see Firebase Auth migration). */
   async function adminGetServiceRequests() {
-    const sb = await client();
-    const { data: requests, error } = await sb
-      .from('equipment_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    if (!requests?.length) return [];
+    const db   = await firestoreClient();
+    const snap = await db.collection('equipmentRequests').orderBy('createdAt', 'desc').get();
+    if (snap.empty) return [];
 
-    // Join user profiles
-    const userIds = [...new Set(requests.map(r => r.user_id).filter(Boolean))];
-    let profileMap = {};
-    if (userIds.length) {
-      const { data: profiles } = await sb
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .in('id', userIds);
-      (profiles || []).forEach(p => { profileMap[p.id] = p; });
-    }
+    const requests = snap.docs.map(d => toRawServiceRequest(d.id, d.data()));
+    const userIds  = [...new Set(requests.map(r => r.user_id).filter(Boolean))];
+    const entries  = await Promise.all(userIds.map(async uid => {
+      const doc = await db.collection('users').doc(uid).get();
+      return [uid, doc.exists ? doc.data() : null];
+    }));
+    const profileMap = Object.fromEntries(entries.filter(([, v]) => v));
 
     return requests.map(r => ({
       ...r,
-      first_name: profileMap[r.user_id]?.first_name || '',
-      last_name:  profileMap[r.user_id]?.last_name  || '',
-      email:      profileMap[r.user_id]?.email       || '',
+      first_name: profileMap[r.user_id]?.firstName || '',
+      last_name:  profileMap[r.user_id]?.lastName  || '',
+      email:      profileMap[r.user_id]?.email      || '',
     }));
   }
 
   async function adminUpdateServiceRequestStatus(id, status) {
-    const sb = await client();
-    const { error } = await sb
-      .from('equipment_requests')
-      .update({ status })
-      .eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('equipmentRequests').doc(id).update({ status });
   }
 
   // ════════════════════════════════════════
   //  ACCOMMODATIONS (public)
   // ════════════════════════════════════════
 
-  function normaliseAccommodation(row) {
+  function normaliseAccommodation(id, doc) {
     return {
-      id:           row.id,
-      name:         row.name,
-      description:  row.description   || '',
-      province:     row.province,
-      city:         row.city,
-      address:      row.address        || null,
-      checkInTime:  row.check_in_time  || '14:00',
-      checkOutTime: row.check_out_time || '10:00',
-      priceFrom:    parseFloat(row.price_from) || 0,
-      starRating:   row.star_rating    || 0,
-      amenities:    row.amenities      || [],
-      spaceTypes:   row.space_types    || [],
-      images:       row.images         || [],
-      contactEmail: row.contact_email  || null,
-      contactPhone: row.contact_phone  || null,
-      website:      row.website        || null,
-      bookingUrl:   row.booking_url    || null,
-      featured:     !!row.featured,
-      status:       row.status,
-      createdAt:    row.created_at,
+      id,
+      name:         doc.name,
+      description:  doc.description   || '',
+      province:     doc.province,
+      city:         doc.city,
+      address:      doc.address        || null,
+      checkInTime:  doc.checkInTime  || '14:00',
+      checkOutTime: doc.checkOutTime || '10:00',
+      priceFrom:    parseFloat(doc.priceFrom) || 0,
+      starRating:   doc.starRating    || 0,
+      amenities:    doc.amenities      || [],
+      spaceTypes:   doc.spaceTypes    || [],
+      images:       doc.images         || [],
+      contactEmail: doc.contactEmail  || null,
+      contactPhone: doc.contactPhone  || null,
+      website:      doc.website        || null,
+      bookingUrl:   doc.bookingUrl    || null,
+      featured:     !!doc.featured,
+      status:       doc.status,
+      createdAt:    doc.createdAt,
     };
   }
 
+  // tourist_destinations has no normalise*() mapper in the Supabase version
+  // either — accommodations.html and admin.js both read raw fields (e.g.
+  // `entry_fee`, not `entryFee`) directly.
+  function toRawDestination(id, doc) {
+    return {
+      id,
+      name:        doc.name,
+      description: doc.description || null,
+      province:    doc.province,
+      city:        doc.city    || null,
+      image:       doc.image   || null,
+      category:    doc.category || 'Nature',
+      entry_fee:   doc.entryFee || 0,
+      website:     doc.website  || null,
+      featured:    !!doc.featured,
+      status:      doc.status,
+      created_at:  doc.createdAt,
+    };
+  }
+
+  /** Space types are stored as {name, price, capacity} only — the wizard used
+   *  to also write placeType/bedrooms/beds/bathrooms, but nothing anywhere
+   *  ever reads those back, so they're dropped here rather than carried
+   *  forward as dead data with no schema to catch the drift. */
+  function buildSpaceTypes(spaceTypes) {
+    return (Array.isArray(spaceTypes) ? spaceTypes : []).map(st => ({
+      name:     st.name,
+      price:    parseFloat(st.price) || 0,
+      capacity: st.capacity != null ? parseInt(st.capacity) : null,
+    }));
+  }
+
   async function getAccommodations(filters = {}) {
-    const sb = await client();
-    let q = sb.from('accommodations').select('*');
-    if (filters.province) q = q.eq('province', filters.province);
-    if (filters.adminAll) { /* no status filter */ }
-    else q = q.eq('status', 'published');
-    q = q.order('featured', { ascending: false }).order('name', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data || []).map(normaliseAccommodation);
+    const db = await firestoreClient();
+    let q = db.collection('accommodations');
+    if (filters.province) q = q.where('province', '==', filters.province);
+    if (!filters.adminAll) q = q.where('status', '==', 'published');
+    q = q.orderBy('featured', 'desc').orderBy('name', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => normaliseAccommodation(d.id, d.data()));
   }
 
   async function getAccommodation(id) {
-    const sb = await client();
-    const { data, error } = await sb.from('accommodations').select('*').eq('id', id).maybeSingle();
-    if (error) throw error;
-    return data ? normaliseAccommodation(data) : null;
+    const db  = await firestoreClient();
+    const doc = await db.collection('accommodations').doc(id).get();
+    return doc.exists ? normaliseAccommodation(doc.id, doc.data()) : null;
   }
 
   async function getTouristDestinations(filters = {}) {
-    const sb = await client();
-    let q = sb.from('tourist_destinations').select('*');
-    if (filters.province) q = q.eq('province', filters.province);
-    if (filters.adminAll) { /* no status filter */ }
-    else q = q.eq('status', 'published');
-    q = q.order('featured', { ascending: false }).order('name', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
+    const db = await firestoreClient();
+    let q = db.collection('touristDestinations');
+    if (filters.province) q = q.where('province', '==', filters.province);
+    if (!filters.adminAll) q = q.where('status', '==', 'published');
+    q = q.orderBy('featured', 'desc').orderBy('name', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => toRawDestination(d.id, d.data()));
   }
 
   async function submitAccommodationBooking(b) {
-    const sb = await client();
+    const db     = await firestoreClient();
     const nights = Math.max(1, Math.round((new Date(b.checkOutDate) - new Date(b.checkInDate)) / 86400000));
-    const id     = `BK-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-    const { data, error } = await sb.from('accommodation_bookings').insert({
-      id,
-      accommodation_id:   b.accommodationId,
-      accommodation_name: b.accommodationName,
-      space_type_name:    b.spaceTypeName,
-      price_per_night:    b.pricePerNight || 0,
-      check_in_date:      b.checkInDate,
-      check_out_date:     b.checkOutDate,
+    const id     = makeId('BK');
+    const row = {
+      accommodationId:   b.accommodationId,
+      accommodationName: b.accommodationName,
+      spaceTypeName:     b.spaceTypeName,
+      pricePerNight:     b.pricePerNight || 0,
+      checkInDate:       b.checkInDate,
+      checkOutDate:      b.checkOutDate,
       nights,
-      guests:             b.guests        || 1,
-      total_price:        (b.pricePerNight || 0) * nights,
-      customer_name:      b.customerName,
-      customer_email:     b.customerEmail,
-      customer_phone:     b.customerPhone || null,
-      special_requests:   b.specialRequests || null,
-      status:             'pending',
-    }).select().single();
-    if (error) throw error;
-    return data;
+      guests:            b.guests        || 1,
+      totalPrice:        (b.pricePerNight || 0) * nights,
+      customerName:      b.customerName,
+      customerEmail:     b.customerEmail,
+      customerPhone:     b.customerPhone || null,
+      specialRequests:   b.specialRequests || null,
+      status:            'pending',
+      createdAt:         new Date().toISOString(),
+    };
+    await db.collection('accommodationBookings').doc(id).create(row);
+    return toRawBooking(id, row);
   }
 
   /**
    * Seller-submitted accommodation listing. Always lands as `pending` so it
    * goes through the same admin review queue as an admin-created one.
-   *
-   * NOTE: `accommodations` may not have an `owner_id` column yet (it was an
-   * admin-only table historically). We try the insert with owner_id and, if
-   * the column is missing, retry without it so submissions still succeed the
-   * listing is then only visible/manageable from the admin panel until the
-   * column is added.
+   * `ownerId` is always set here — the Supabase version had to defensively
+   * retry without it since the column's existence was uncertain; Firestore
+   * has no such ambiguity, and the Security Rule requires it on create.
    */
   async function createAccommodation(data) {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) throw new Error('Please sign in to list accommodation.');
 
-    const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+    const newId = makeId('ACC');
+    const now   = new Date().toISOString();
     const row = {
-      id:             newId,
-      name:           data.name,
-      description:    data.description   || null,
-      province:       data.province,
-      city:           data.city,
-      address:        data.address       || null,
-      check_in_time:  data.checkInTime   || '14:00',
-      check_out_time: data.checkOutTime  || '10:00',
-      price_from:     parseFloat(data.priceFrom) || 0,
-      amenities:      Array.isArray(data.amenities) ? data.amenities : [],
-      space_types:    Array.isArray(data.spaceTypes) ? data.spaceTypes : [],
-      images:         Array.isArray(data.images) ? data.images : [],
-      contact_email:  data.contactEmail  || user.email || null,
-      contact_phone:  data.contactPhone  || null,
-      website:        data.website       || null,
-      star_rating:    parseInt(data.starRating) || 0,
-      featured:       false,
-      status:         'pending',
+      name:          data.name,
+      description:   data.description   || null,
+      province:      data.province,
+      city:          data.city,
+      address:       data.address       || null,
+      checkInTime:   data.checkInTime   || '14:00',
+      checkOutTime:  data.checkOutTime  || '10:00',
+      priceFrom:     parseFloat(data.priceFrom) || 0,
+      amenities:     Array.isArray(data.amenities) ? data.amenities : [],
+      spaceTypes:    buildSpaceTypes(data.spaceTypes),
+      images:        Array.isArray(data.images) ? data.images : [],
+      contactEmail:  data.contactEmail  || user.email || null,
+      contactPhone:  data.contactPhone  || null,
+      website:       data.website       || null,
+      starRating:    parseInt(data.starRating) || 0,
+      featured:      false,
+      status:        'pending',
+      ownerId:       user.id,
+      createdAt:     now,
+      updatedAt:     now,
     };
 
-    let { error } = await sb.from('accommodations').insert({ ...row, owner_id: user.id });
-
-    if (error && /owner_id/i.test(error.message || '')) {
-      // Column not present on this database retry without it.
-      ({ error } = await sb.from('accommodations').insert(row));
-    }
-    if (error) throw error;
-
+    await db.collection('accommodations').doc(newId).create(row);
     return { id: newId, ...data, status: 'pending' };
   }
 
-  /** Accommodation listings owned by the signed-in seller (empty if no owner_id column). */
+  /** Accommodation listings owned by the signed-in seller. */
   async function getMyAccommodations() {
-    const sb   = await client();
+    const db   = await firestoreClient();
     const user = window.Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('accommodations')
-      .select('*')
-      .eq('owner_id', user.id)
-      .order('created_at', { ascending: false });
-    if (error) return [];            // column missing → caller shows the explanatory note
-    return (data || []).map(normaliseAccommodation);
+    try {
+      const snap = await db.collection('accommodations')
+        .where('ownerId', '==', user.id)
+        .orderBy('createdAt', 'desc')
+        .get();
+      return snap.docs.map(d => normaliseAccommodation(d.id, d.data()));
+    } catch (_) {
+      return [];
+    }
   }
 
   // ════════════════════════════════════════
@@ -822,58 +814,53 @@ const SupabaseAPI = (() => {
   // ════════════════════════════════════════
 
   async function adminSaveAccommodation(id, data) {
-    const sb  = await client();
+    const db  = await firestoreClient();
     const row = {
-      name:           data.name,
-      description:    data.description   || null,
-      province:       data.province,
-      city:           data.city,
-      address:        data.address       || null,
-      check_in_time:  data.checkInTime   || '14:00',
-      check_out_time: data.checkOutTime  || '10:00',
-      price_from:     parseFloat(data.priceFrom) || 0,
-      amenities:      Array.isArray(data.amenities) ? data.amenities : (data.amenities || '').split(',').map(a => a.trim()).filter(Boolean),
-      space_types:    data.spaceTypes    || [],
-      images:         Array.isArray(data.images) ? data.images : (data.images || '').split(',').map(i => i.trim()).filter(Boolean),
-      contact_email:  data.contactEmail  || null,
-      contact_phone:  data.contactPhone  || null,
-      website:        data.website       || null,
-      star_rating:    parseInt(data.starRating) || 0,
-      booking_url:    data.bookingUrl    || null,
-      featured:       !!data.featured,
-      status:         data.status        || 'published',
-      updated_at:     new Date().toISOString(),
+      name:          data.name,
+      description:   data.description   || null,
+      province:      data.province,
+      city:          data.city,
+      address:       data.address       || null,
+      checkInTime:   data.checkInTime   || '14:00',
+      checkOutTime:  data.checkOutTime  || '10:00',
+      priceFrom:     parseFloat(data.priceFrom) || 0,
+      amenities:     Array.isArray(data.amenities) ? data.amenities : (data.amenities || '').split(',').map(a => a.trim()).filter(Boolean),
+      spaceTypes:    buildSpaceTypes(data.spaceTypes),
+      images:        Array.isArray(data.images) ? data.images : (data.images || '').split(',').map(i => i.trim()).filter(Boolean),
+      contactEmail:  data.contactEmail  || null,
+      contactPhone:  data.contactPhone  || null,
+      website:       data.website       || null,
+      starRating:    parseInt(data.starRating) || 0,
+      bookingUrl:    data.bookingUrl    || null,
+      featured:      !!data.featured,
+      status:        data.status        || 'published',
+      updatedAt:     new Date().toISOString(),
     };
     if (id) {
-      const { error } = await sb.from('accommodations').update(row).eq('id', id);
-      if (error) throw error;
+      await db.collection('accommodations').doc(id).update(row);
     } else {
-      const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-      const { error } = await sb.from('accommodations').insert({ id: newId, ...row });
-      if (error) throw error;
+      const newId = makeId('ACC');
+      await db.collection('accommodations').doc(newId).create({ ...row, ownerId: null, createdAt: row.updatedAt });
     }
   }
 
   async function adminDeleteAccommodation(id) {
-    const sb = await client();
-    const { error } = await sb.from('accommodations').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('accommodations').doc(id).delete();
   }
 
   async function adminGetAccommodationBookings(filters = {}) {
-    const sb = await client();
-    let q = sb.from('accommodation_bookings').select('*');
-    if (filters.status) q = q.eq('status', filters.status);
-    q = q.order('created_at', { ascending: false });
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
+    const db = await firestoreClient();
+    let q = db.collection('accommodationBookings');
+    if (filters.status) q = q.where('status', '==', filters.status);
+    q = q.orderBy('createdAt', 'desc');
+    const snap = await q.get();
+    return snap.docs.map(d => toRawBooking(d.id, d.data()));
   }
 
   async function adminUpdateBookingStatus(id, status) {
-    const sb = await client();
-    const { error } = await sb.from('accommodation_bookings').update({ status }).eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('accommodationBookings').doc(id).update({ status });
   }
 
   // ════════════════════════════════════════
@@ -881,40 +868,37 @@ const SupabaseAPI = (() => {
   // ════════════════════════════════════════
 
   async function adminSaveTouristDestination(id, data) {
-    const sb  = await client();
+    const db  = await firestoreClient();
     const row = {
-      name:      data.name,
+      name:        data.name,
       description: data.description || null,
-      province:  data.province,
-      city:      data.city       || null,
-      image:     data.image      || null,
-      category:  data.category   || 'Nature',
-      entry_fee: parseFloat(data.entryFee) || 0,
-      website:   data.website    || null,
-      featured:  !!data.featured,
-      status:    data.status     || 'published',
+      province:    data.province,
+      city:        data.city       || null,
+      image:       data.image      || null,
+      category:    data.category   || 'Nature',
+      entryFee:    parseFloat(data.entryFee) || 0,
+      website:     data.website    || null,
+      featured:    !!data.featured,
+      status:      data.status     || 'published',
     };
     if (id) {
-      const { error } = await sb.from('tourist_destinations').update(row).eq('id', id);
-      if (error) throw error;
+      await db.collection('touristDestinations').doc(id).update(row);
     } else {
-      const newId = `TD-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-      const { error } = await sb.from('tourist_destinations').insert({ id: newId, ...row });
-      if (error) throw error;
+      const newId = makeId('TD');
+      await db.collection('touristDestinations').doc(newId).create({ ...row, createdAt: new Date().toISOString() });
     }
   }
 
   async function adminDeleteTouristDestination(id) {
-    const sb = await client();
-    const { error } = await sb.from('tourist_destinations').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('touristDestinations').doc(id).delete();
   }
 
   return {
     getEvents, getEvent,
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
-    adminGetStats, adminGetUsers, adminUpdateUserRole,
+    adminGetStats,
     getMyFirestoreProfile, adminGetFirestoreUsers, adminSetUserRole,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
@@ -926,7 +910,6 @@ const SupabaseAPI = (() => {
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
     getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
-    getMyProfile,
   };
 
 })();
