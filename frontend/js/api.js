@@ -445,6 +445,15 @@ const SupabaseAPI = (() => {
     return data || [];
   }
 
+  /** Single ticket by id, for success.html when it lands here with no local
+   *  booking state (e.g. returning from Paystack's hosted checkout). */
+  async function getTicket(id) {
+    const sb = await client();
+    const { data, error } = await sb.from('tickets').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data ? normaliseTicket(data) : null;
+  }
+
   async function getMyTickets() {
     const sb   = await client();
     const user = window.Auth?.getUser();
@@ -889,7 +898,7 @@ const SupabaseAPI = (() => {
     adminGetAccommodationBookings, adminUpdateBookingStatus,
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
-    getMyTickets, submitTicket, getSalesForMyEvents,
+    getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
     getMyProfile,
   };
 

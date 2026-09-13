@@ -14,8 +14,6 @@
 (function () {
 
   if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
 
   const PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
 
@@ -110,7 +108,8 @@
         { name: 'paymentType', label: 'Payment method', type: 'cards', required: true,
           requiredMsg: 'Choose how guests should pay you.',
           options: [
-            { value: 'link', icon: '🔗', label: 'Payment link',  sub: 'Yoco, PayFast, SnapScan or similar.' },
+            { value: 'paystack', icon: '💳', label: 'Card & instant EFT', sub: 'TicketsSA takes payment for you via Paystack and issues the confirmation automatically.' },
+            { value: 'link', icon: '🔗', label: 'Payment link',  sub: 'Yoco, SnapScan or similar.' },
             { value: 'bank', icon: '🏦', label: 'Bank transfer', sub: 'Guests EFT you directly.' },
             { value: 'free', icon: '🎁', label: 'Free',          sub: 'No payment needed to join.' },
           ] },
@@ -121,6 +120,8 @@
         { name: 'accountHolder', label: 'Account holder', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'Name on the account' },
         { name: 'accountNumber', label: 'Account number', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 62012345678' },
         { name: 'branchCode',    label: 'Branch code',    type: 'text', showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 250655' },
+        { name: '_paystackNote', type: 'info', showIf: s => s.paymentType === 'paystack',
+          html: 'Guests pay by card or instant EFT at checkout and get their confirmation automatically. Payment is collected into TicketsSA\'s account our team will contact you about payout arrangements.' },
       ],
     },
   ];

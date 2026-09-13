@@ -172,37 +172,37 @@ const Auth = (() => {
     if (user) {
       const adm = isAdmin();
       const org = isOrganiser();
-      const accountHref  = up + ((adm || org) ? 'dashboard.html' : 'my-tickets.html');
-      const accountLabel = (adm || org) ? 'Seller Hub' : 'My TicketsSA';
       actions.innerHTML = `
-        <a href="${accountHref}" class="btn btn-ghost btn-sm">${accountLabel}</a>
         <div class="nav-user" id="navUserMenu">
           <button class="btn btn-primary btn-sm nav-user__btn" id="navUserBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            ${escHtml(user.firstName || user.email.split('@')[0])}
+            My TicketsSA
           </button>
           <div class="nav-user__dropdown" id="navUserDropdown">
             <div class="nav-user__name">${escHtml(user.firstName)} ${escHtml(user.lastName)}</div>
             <div class="nav-user__email">${escHtml(user.email)}</div>
             <div class="nav-user__divider"></div>
-            <a href="${up}dashboard.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              Seller Hub
+            <div class="nav-user__choice-label">I want to&hellip;</div>
+            <a href="${up}my-tickets.html" class="nav-user__link nav-user__link--choice nav-user__link--buy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
+              <span><strong>Buy</strong><br>My Tickets &amp; Bookings</span>
+            </a>
+            <a href="${up}dashboard.html" class="nav-user__link nav-user__link--choice nav-user__link--sell">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span><strong>Sell</strong><br>Seller Hub</span>
+            </a>
+            <div class="nav-user__divider"></div>
+            <a href="${up}create-listing.html" class="nav-user__link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Listing
             </a>
             ${org ? `<a href="${up}organiser.html" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
               My Events
             </a>` : ''}
-            ${org ? `<a href="${up}create-listing.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Create Listing
-            </a>` : `<a href="${up}sell.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-              Sell on TicketsSA
-            </a>`}
             ${adm ? `<a href="${up}admin/" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               Admin Portal
@@ -534,7 +534,11 @@ const Auth = (() => {
       if (_pendingCallback) {
         _runPending();
       } else {
-        const dest = (user.role === 'organiser' || user.role === 'admin') ? 'dashboard.html' : 'index.html';
+        const d  = window.location.pathname.replace(/^\/|\/$/g, '').split('/').length - 1;
+        const up = d > 0 ? '../'.repeat(d) : '';
+        const dest = user.role === 'admin'     ? up + 'admin/index.html'
+                   : user.role === 'organiser' ? up + 'dashboard.html'
+                   :                             up + 'index.html';
         setTimeout(() => window.location.href = dest, 800);
       }
 
@@ -592,7 +596,7 @@ const Auth = (() => {
       if (!data.session) {
         closeModal();
         if (typeof Utils !== 'undefined')
-          Utils.showToast('Account created! Check your email to confirm before logging in.', 'success', 6000);
+          Utils.showToast('Account created! Please log in.', 'success', 5000);
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }

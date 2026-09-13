@@ -1,11 +1,18 @@
 
 /* ================================================
    TicketsSA Checkout
-   Books the ticket directly (client → Supabase) and
-   confirms it immediately. TicketsSA doesn't process
-   payment itself the organiser collects payment directly
-   from the buyer via their own payment link or bank
-   details, shown here and on the confirmation page.
+
+   Most events: TicketsSA doesn't process payment the
+   organiser collects it directly (their own payment link or
+   bank details, shown here and on the confirmation page), and
+   the ticket is booked (client → Supabase) and confirmed
+   immediately.
+
+   'paystack' events are the exception: TicketsSA collects
+   payment itself. The buyer is handed off to Paystack's hosted
+   checkout, and the ticket is only created server-side, by
+   paystack-verify.js, once the payment is confirmed see
+   handlePaystackSubmit() below.
    ================================================ */
 
 /* global Utils, Auth, SupabaseAPI */
@@ -24,6 +31,18 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPaymentMethodBox(selection);
   setupBackLink(selection);
   initForm(selection);
+  reportPaystackReturn();
+
+  // ── Paystack bounced the buyer back here after a failed/cancelled payment ──
+  function reportPaystackReturn() {
+    const status = new URLSearchParams(window.location.search).get('payment');
+    if (!status) return;
+    const msg = status === 'failed'
+      ? 'Your payment was not completed. Please try again.'
+      : 'Something went wrong starting your payment. Please try again or contact support.';
+    Utils.showToast(msg, 'error', 7000);
+    history.replaceState(null, '', window.location.pathname);
+  }
 
   // ── Order summary ─────────────────────────────────────────────────────
   function renderSummary(sel) {
@@ -77,6 +96,19 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>`;
       if (btn) btn.textContent = 'Reserve My Ticket';
+
+    } else if (sel.paymentType === 'paystack') {
+      box.innerHTML = `
+        <div class="pay-method-box">
+          <div class="pay-method-box__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <p class="pay-method-box__title">Pay Securely with Paystack</p>
+            <p class="pay-method-box__sub">Card, Instant EFT and more. You'll be taken to Paystack's secure checkout, then straight back here with your eTicket.</p>
+          </div>
+        </div>`;
+      if (btn) btn.textContent = `Pay ${Utils.formatCurrency(sel.grandTotal || sel.total)}`;
 
     } else if (sel.paymentType === 'bank' && sel.bankName) {
       box.innerHTML = `
@@ -187,6 +219,11 @@ document.addEventListener('DOMContentLoaded', () => {
       quantity:       sel.quantity,
     };
 
+    if (sel.paymentType === 'paystack') {
+      handlePaystackSubmit(payload, btn, idleLabel);
+      return;
+    }
+
     try {
       // Ticket is booked directly against Supabase and confirmed immediately.
       // TicketsSA doesn't process payment the organiser collects it directly
@@ -228,6 +265,28 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('[Checkout] Booking error:', err?.message || err);
       Utils.showToast('Could not complete your booking. Please try again.', 'error', 6000);
+      if (btn) { btn.disabled = false; btn.textContent = idleLabel; }
+    }
+  }
+
+  // ── Paystack: hand off to the hosted checkout ───────────────────────────
+  // No ticket is booked here paystack-verify.js only creates it once
+  // Paystack confirms the payment actually succeeded.
+  async function handlePaystackSubmit(payload, btn, idleLabel) {
+    try {
+      const res = await fetch('/.netlify/functions/paystack-initialize', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      if (!data.authorizationUrl) throw new Error('No checkout URL returned');
+
+      window.location.href = data.authorizationUrl;
+    } catch (err) {
+      console.error('[Checkout] Paystack init error:', err?.message || err);
+      Utils.showToast('Could not start payment. Please try again.', 'error', 6000);
       if (btn) { btn.disabled = false; btn.textContent = idleLabel; }
     }
   }

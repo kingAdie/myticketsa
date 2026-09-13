@@ -59,7 +59,7 @@ exports.handler = async (event) => {
         from:     FROM,
         to:       [email, ADMIN_NOTIFICATION_EMAIL],
         reply_to: REPLY_TO,
-        subject:  `Mbombela VIP Hospitality Booking Request — ${ref}`,
+        subject:  `Mbombela Seasonal Hospitality Booking Request — ${ref}`,
         html,
       }),
     });
@@ -148,10 +148,10 @@ function buildBookingEmail({ firstName, lastName, email, phone, guests, message,
     </table>
 
     <h1 style="margin:0 0 8px;font-size:22px;font-weight:800;letter-spacing:-0.03em;color:#ffffff;text-align:center;">
-      Mbombela VIP Hospitality Booking Request
+      Mbombela Seasonal Hospitality Booking Request
     </h1>
     <p style="margin:0 0 24px;font-size:14px;color:#888888;text-align:center;">
-      Hi ${escHtml(firstName)}, thanks for your interest in the Mbombela Stadium Premium VIP Hospitality Package.
+      Hi ${escHtml(firstName)}, thanks for your interest in the Mbombela Stadium Seasonal Hospitality Package.
       Our team will be in touch shortly to confirm availability and payment.
     </p>
 
