@@ -36,8 +36,12 @@ const fs   = require('fs');
 const path = require('path');
 const admin = require('firebase-admin');
 
-const USERS_FILE      = path.join(__dirname, 'supabase-users-export.json');
-const IDENTITIES_FILE = path.join(__dirname, 'supabase-identities-export.json');
+// Overridable via env so these real-PII exports never have to sit inside
+// the repo's own scripts/ directory (git-tracked - a stray `git add -A`
+// would happily commit real users' emails otherwise). Defaults preserved
+// for anyone following the instructions above as originally written.
+const USERS_FILE      = process.env.SUPABASE_USERS_EXPORT_PATH      || path.join(__dirname, 'supabase-users-export.json');
+const IDENTITIES_FILE = process.env.SUPABASE_IDENTITIES_EXPORT_PATH || path.join(__dirname, 'supabase-identities-export.json');
 
 function loadJson(file, { required }) {
   if (!fs.existsSync(file)) {
