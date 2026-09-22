@@ -21,7 +21,7 @@ const { migrateImageField } = require('./lib/migrate-image');
 
 const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
-const STORAGE_BUCKET     = 'tickets-sa.appspot.com';
+const STORAGE_BUCKET     = 'tickets-sa.firebasestorage.app';
 
 async function fetchAllDestinations() {
   const res = await fetch(
