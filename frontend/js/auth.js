@@ -22,12 +22,12 @@ const Auth = (() => {
   // These values are public/safe to embed client-side (same trust model as
   // the old Supabase anon key) — fill them in from your `tickets-sa` project.
   const firebaseConfig = {
-    apiKey:            'YOUR_FIREBASE_API_KEY',
+    apiKey:            'AIzaSyBG0O0MIOGa_8X1H-xUS1mz9r41TateJBE',
     authDomain:        'tickets-sa.firebaseapp.com',
     projectId:         'tickets-sa',
-    storageBucket:     'tickets-sa.appspot.com',
-    messagingSenderId: 'YOUR_FIREBASE_SENDER_ID',
-    appId:             'YOUR_FIREBASE_APP_ID',
+    storageBucket:     'tickets-sa.firebasestorage.app',
+    messagingSenderId: '1033978636742',
+    appId:             '1:1033978636742:web:ea98ebe89d6daf3ce32ac7',
   };
   const FIREBASE_SDK_VERSION = '10.13.2';
 
