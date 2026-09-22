@@ -16,7 +16,7 @@ const SupabaseAPI = (() => {
   let _firestore = null;
   async function firestoreClient() {
     if (_firestore) return _firestore;
-    const fb = await window.Auth.getFirebaseApp();
+    const fb = await Auth.getFirebaseApp();
     _firestore = fb.firestore();
     // Supabase/JSON.stringify silently dropped `undefined` fields (relied on
     // by admin.js's partial-update quick actions, e.g. adminUpdateEvent(id,
@@ -161,7 +161,7 @@ const SupabaseAPI = (() => {
 
   async function createEvent(eventData) {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
@@ -244,7 +244,7 @@ const SupabaseAPI = (() => {
 
   async function adminCreateEvent(eventData, options = {}) {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
@@ -349,7 +349,7 @@ const SupabaseAPI = (() => {
 
   async function submitServiceRequest(data) {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const id  = makeId('REQ');
@@ -373,7 +373,7 @@ const SupabaseAPI = (() => {
 
   async function getMyServiceRequests() {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return [];
     const snap = await db.collection('equipmentRequests')
       .where('userId', '==', user.id)
@@ -411,7 +411,7 @@ const SupabaseAPI = (() => {
 
   async function getMyAccommodationBookings() {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return [];
     const snap = await db.collection('accommodationBookings')
       .where('customerEmail', '==', user.email.toLowerCase())
@@ -430,7 +430,7 @@ const SupabaseAPI = (() => {
 
   async function getMyTickets() {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return [];
     const snap = await db.collection('tickets')
       .where('buyerEmail', '==', user.email.toLowerCase())
@@ -447,7 +447,7 @@ const SupabaseAPI = (() => {
    */
   async function getSalesForMyEvents() {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return [];
 
     try {
@@ -523,7 +523,7 @@ const SupabaseAPI = (() => {
    *  touches Supabase. `role` here is for display only; Auth.isAdmin()/
    *  isOrganiser() read the verified custom claim, never this. */
   async function getMyFirestoreProfile() {
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return null;
     const db   = await firestoreClient();
     const snap = await db.collection('users').doc(user.id).get();
@@ -549,7 +549,7 @@ const SupabaseAPI = (() => {
   async function adminSetUserRole(userId, role) {
     const res = await fetch('/.netlify/functions/firebase-set-role', {
       method:  'POST',
-      headers: window.Auth?.headers ? window.Auth.headers() : { 'Content-Type': 'application/json' },
+      headers: Auth?.headers ? Auth.headers() : { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ userId, role }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -739,7 +739,7 @@ const SupabaseAPI = (() => {
    */
   async function createAccommodation(data) {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Please sign in to list accommodation.');
 
     const newId = makeId('ACC');
@@ -774,7 +774,7 @@ const SupabaseAPI = (() => {
   /** Accommodation listings owned by the signed-in seller. */
   async function getMyAccommodations() {
     const db   = await firestoreClient();
-    const user = window.Auth?.getUser();
+    const user = Auth?.getUser();
     if (!user) return [];
     try {
       const snap = await db.collection('accommodations')
