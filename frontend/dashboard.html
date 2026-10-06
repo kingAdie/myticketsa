@@ -331,7 +331,7 @@
         <div class="dash-empty-icon">🎟</div>
         <h3>No tickets yet</h3>
         <p>Once you book an event, your tickets will appear here.</p>
-        <a href="index.html#events" class="btn btn-primary" style="margin-top:20px">Browse Events</a>
+        <a href="browse.html" class="btn btn-primary" style="margin-top:20px">Browse Events</a>
       </div>
     </section>
 
@@ -339,10 +339,10 @@
 </div>
 
 
-<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/seller-apply.js"></script>
 <script src="js/wizard-core.js"></script>
 <script>
 /* ============================================================
@@ -511,6 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true; btn.textContent = 'Submitting…';
 
     try {
+      var svcUser = Auth.getUser() || {};
+      var svcName = document.getElementById('svcSelectedName').textContent.trim();
       await SupabaseAPI.submitServiceRequest({
         serviceId:    document.getElementById('svcId').value,
         serviceName:  document.getElementById('svcSelectedName').textContent.trim(),
@@ -522,6 +524,22 @@ document.addEventListener('DOMContentLoaded', function() {
         contactPhone: document.getElementById('svcPhone').value,
         budgetRange:  document.getElementById('svcBudget').value,
       });
+      // Tell the support inbox (and email the customer a receipt). The request is already saved.
+      SellerApply.submit('equipment_request', {
+        title:        svcName || 'Equipment request',
+        contactName:  [svcUser.firstName, svcUser.lastName].filter(Boolean).join(' ') || svcUser.email,
+        contactEmail: svcUser.email,
+        contactPhone: document.getElementById('svcPhone').value,
+        details: SellerApply.detailsFrom([
+          ['Equipment',    svcName],
+          ['Event date',   document.getElementById('svcEventDate').value],
+          ['Duration',     document.getElementById('svcDuration').value],
+          ['Location',     document.getElementById('svcLocation').value],
+          ['Quantity',     document.getElementById('svcQty').value || 1],
+          ['Budget',       document.getElementById('svcBudget').value],
+          ['Details',      document.getElementById('svcDetails').value]
+        ])
+      }).catch(function (e) { console.warn('Equipment request email not sent:', e && e.message); });
       document.getElementById('serviceForm').classList.add('hidden');
       document.getElementById('svcPickerStep').classList.add('hidden');
       document.getElementById('svcSuccess').classList.remove('hidden');

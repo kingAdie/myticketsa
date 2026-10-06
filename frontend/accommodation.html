@@ -292,7 +292,6 @@
 
 </div><!-- /pageBody -->
 
-<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
@@ -673,7 +672,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
   const price    = parseFloat(selOpt?.dataset?.price || 0);
 
   try {
-    await SupabaseAPI.submitAccommodationBooking({
+    const booking = await SupabaseAPI.submitAccommodationBooking({
       accommodationId:   document.getElementById('bkAccId').value,
       accommodationName: document.getElementById('bkAccName').value,
       spaceTypeName:     sel.value,
@@ -686,6 +685,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
       customerPhone:     phone || null,
       specialRequests:   requests || null,
     });
+    if (booking && booking.id) SupabaseAPI.notifyBooking('accommodation', booking.id);   // emails the owner, the guest and support
 
     // Show inline success state no redirect, user can share or explore further
     document.getElementById('bookingForm').style.display = 'none';

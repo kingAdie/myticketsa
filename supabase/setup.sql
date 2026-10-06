@@ -86,3 +86,44 @@ CREATE POLICY "ticket_types: admin all" ON public.ticket_types
 DROP POLICY IF EXISTS "event_tags: admin all" ON public.event_tags;
 CREATE POLICY "event_tags: admin all" ON public.event_tags
   FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- ── photo uploads: public bucket, sellers write only into their own folder ──
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('listing-images', 'listing-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "listing-images: public read" ON storage.objects;
+CREATE POLICY "listing-images: public read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'listing-images');
+
+DROP POLICY IF EXISTS "listing-images: owner upload" ON storage.objects;
+CREATE POLICY "listing-images: owner upload" ON storage.objects
+  FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'listing-images' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+DROP POLICY IF EXISTS "listing-images: admin all" ON storage.objects;
+CREATE POLICY "listing-images: admin all" ON storage.objects
+  FOR ALL TO authenticated
+  USING (bucket_id = 'listing-images' AND public.is_admin())
+  WITH CHECK (bucket_id = 'listing-images' AND public.is_admin());
+
+-- ── admin portal needs to read these across all users ───────────────────────
+DROP POLICY IF EXISTS "profiles: admin read" ON public.profiles;
+CREATE POLICY "profiles: admin read" ON public.profiles
+  FOR SELECT TO authenticated USING (public.is_admin());
+
+DROP POLICY IF EXISTS "tickets: admin all" ON public.tickets;
+CREATE POLICY "tickets: admin all" ON public.tickets
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "equipment_requests: admin all" ON public.equipment_requests;
+CREATE POLICY "equipment_requests: admin all" ON public.equipment_requests
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- ── bookings: who can read/write them ───────────────────────────────────────
+-- (Emails to owners are sent by the notify-booking Netlify Function using the
+--  service-role key, which bypasses RLS, so no extra read policy is needed there.)
+ALTER TABLE public.accommodation_bookings ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+DROP POLICY IF EXISTS "accommodation_bookings: admin all" ON public.accommodation_bookings;
+CREATE POLICY "accommodation_bookings: admin all" ON public.accommodation_bookings
+  FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());

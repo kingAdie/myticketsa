@@ -192,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // TicketsSA doesn't process payment the organiser collects it directly
       // via their own payment link / bank details, shown above and on the receipt.
       const result = await SupabaseAPI.submitTicket(payload);
+      SupabaseAPI.notifyBooking('ticket', result.id);   // emails the owner, the buyer and support
 
       Utils.setStorage('mt_booking', {
         ticketId: result.id,

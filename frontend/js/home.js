@@ -7,10 +7,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   Utils.initMobileNav();
   initSearch();
-  initNewsletter();
 
   /* ── Load events from Supabase (for dynamic grid if present) ─────── */
   await EventsData.init();
+  renderLiveEvents();
+
+  /* Published events (approved by an admin) appear ahead of the "list your own" tile. */
+  function renderLiveEvents() {
+    const grid = document.querySelector('.ev-grid');
+    if (!grid) return;
+    const cta = grid.querySelector('.ev-empty-cta');
+    EventsData.getAll().slice(0, 6).forEach(ev => grid.insertBefore(createEventCard(ev), cta));
+  }
 
   /* ── Search ────────────────────────────────────────────────────────── */
   function initSearch() {
@@ -67,6 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     clearBtn?.addEventListener('click', clearSearch);
   }
 
+  function esc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
   function createEventCard(event) {
     const card = document.createElement('article');
     card.className = 'event-card';
@@ -75,14 +85,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     card.innerHTML = `
       <div class="event-card__img-wrap">
-        <img class="event-card__img" src="${event.image || ''}" alt="${event.title}" loading="lazy"
+        <img class="event-card__img" src="${esc(event.image || '')}" alt="${esc(event.title)}" loading="lazy"
           onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80'"/>
         <div class="event-card__img-overlay"></div>
         ${event.featured ? '<span class="event-card__badge badge badge-green">Featured</span>' : ''}
       </div>
       <div class="event-card__body">
-        <div class="event-card__cat">${event.category}</div>
-        <h3 class="event-card__title">${event.title}</h3>
+        <div class="event-card__cat">${esc(event.category)}</div>
+        <h3 class="event-card__title">${esc(event.title)}</h3>
         <div class="event-card__meta">
           <div class="event-card__meta-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -95,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
-            <span>${event.location}, ${event.city}</span>
+            <span>${esc([event.location, event.city].filter(Boolean).join(', '))}</span>
           </div>
         </div>
         <div class="event-card__foot">
@@ -103,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${Utils.formatCurrency(event.price)}
             <span class="event-card__price-note">from per ticket</span>
           </div>
-          <button class="btn btn-primary btn-sm" data-event-id="${event.id}" aria-label="View ${event.title}">
+          <button class="btn btn-primary btn-sm" data-event-id="${esc(event.id)}" aria-label="View ${esc(event.title)}">
             View Event
           </button>
         </div>
@@ -111,26 +121,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     card.querySelector('.btn').addEventListener('click', e => {
       e.stopPropagation();
-      window.location.href = `event.html?id=${event.id}`;
+      window.location.href = `event.html?id=${encodeURIComponent(event.id)}`;
     });
-    card.addEventListener('click', () => window.location.href = `event.html?id=${event.id}`);
+    card.addEventListener('click', () => window.location.href = `event.html?id=${encodeURIComponent(event.id)}`);
     return card;
-  }
-
-  /* ── Newsletter ─────────────────────────────────────────────────────── */
-  function initNewsletter() {
-    const form  = document.getElementById('newsletterForm');
-    const email = document.getElementById('newsletterEmail');
-    form?.addEventListener('submit', e => {
-      e.preventDefault();
-      const v = email?.value.trim();
-      if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-        Utils.showToast('Please enter a valid email.', 'error');
-        return;
-      }
-      Utils.showToast("You're subscribed! 🎉", 'success', 4000);
-      if (email) email.value = '';
-    });
   }
 
 });

@@ -310,7 +310,7 @@ const Utils = (() => {
    * @param {number} [opts.quality=0.82]  - png quality 0–1
    * @returns {Promise<File>}
    */
-  async function compressImage(file, { maxWidth = 1920, maxHeight = 1920, quality = 0.82 } = {}) {
+  async function compressImage(file, { maxWidth = 1920, maxHeight = 1920, quality = 0.82, type = null } = {}) {
     if (!file || !file.type.startsWith('image/')) return file;
     if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
 
@@ -332,15 +332,16 @@ const Utils = (() => {
           canvas.width  = w;
           canvas.height = h;
           const ctx = canvas.getContext('2d');
+          const outType = type || (file.type === 'image/png' ? 'image/png' : 'image/jpeg');
+          if (outType === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); } // no black where PNG was transparent
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, w, h);
 
-          const outType = file.type === 'image/png' ? 'image/png' : 'image/png';
-          const outQuality = outType === 'image/png' ? quality : undefined;
+          const outQuality = outType === 'image/jpeg' ? quality : undefined;
 
           canvas.toBlob((blob) => {
-            if (!blob || blob.size >= file.size) {
+            if (!blob || (!type && blob.size >= file.size)) {
               resolve(file); // compression didn't help keep original
             } else {
               const ext  = outType === 'image/png' ? '.png' : '.jpg';
@@ -355,53 +356,25 @@ const Utils = (() => {
     });
   }
 
-  /* ---------- Upload to /api/upload → Cloudinary ---------- */
+  /* ---------- Upload to Supabase Storage ---------- */
 
   const UPLOAD_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   const UPLOAD_MAX_MB  = 5;
 
-  /**
-   * Compress then upload a File to /api/upload, returning the Cloudinary URL.
-   * @param {File}   file
-   * @param {string} [folder='uploads']
-   * @returns {Promise<string>}  Cloudinary secure URL
-   */
-  async function uploadImage(file, folder = 'uploads') {
-    if (!UPLOAD_ALLOWED.includes(file.type)) {
-      throw new Error('Only JPG, PNG, WebP images are allowed.');
-    }
+  /** Compress then upload an image File; resolves to its public URL. */
+  async function uploadImage(file) {
+    if (!UPLOAD_ALLOWED.includes(file.type)) throw new Error('Only JPG, PNG, WebP or GIF images are allowed.');
     if (file.size > UPLOAD_MAX_MB * 1024 * 1024) {
       throw new Error(`Image must be under ${UPLOAD_MAX_MB} MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
     }
-
-    // Client-side compress first
-    const compressed = await compressImage(file);
-
-    // Read as base64 data URL
-    const base64 = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Failed to read file.'));
-      reader.onload  = (e) => resolve(e.target.result);
-      reader.readAsDataURL(compressed);
+    const compressed = await compressImage(file, { type: 'image/jpeg' });
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onerror = () => reject(new Error('Failed to read file.'));
+      r.onload  = (e) => resolve(e.target.result);
+      r.readAsDataURL(compressed);
     });
-
-    // POST to backend
-    const apiBase = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
-    const headers = { 'Content-Type': 'application/json' };
-    if (typeof Auth !== 'undefined' && typeof Auth.headers === 'function') {
-      Object.assign(headers, Auth.headers());
-    }
-
-    const res = await fetch(`${apiBase}/api/upload`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ data: base64, filename: compressed.name, mimeType: compressed.type, folder }),
-    });
-
-    const json = await res.json().catch(() => ({ success: false, error: 'Server returned invalid response.' }));
-    if (!json.success) throw new Error(json.error || 'Upload failed.');
-
-    return json.url;
+    return SupabaseAPI.uploadListingImage(dataUrl);
   }
 
   /* ---------- Public API ---------- */

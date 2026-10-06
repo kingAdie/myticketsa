@@ -45,14 +45,6 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
           Requests
         </a>
-      <a href="#" class="admin-nav-item" data-section="organisers">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        Organisers
-      </a>
-      <a href="#" class="admin-nav-item" data-section="customers">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        Customers
-      </a>
       <a href="#" class="admin-nav-item" data-section="accommodations">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Accommodations
@@ -60,10 +52,6 @@
       <a href="#" class="admin-nav-item" data-section="sellerlistings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
         Equipment &amp; Merch
-      </a>
-      <a href="#" class="admin-nav-item" data-section="media">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Media
       </a>
     </nav>
 
@@ -265,27 +253,6 @@
       </div>
     </section>
 
-    <!-- ── ORGANISERS ─────────────────────────────────────────────── -->
-    <section class="admin-section hidden" id="section-organisers">
-      <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
-        <h2>Organisers</h2>
-        <input type="text" class="form-input" id="organiserSearchInput" placeholder="Search by name or email…" style="width:240px;"/>
-      </div>
-      <div class="admin-card" style="padding:0;overflow:hidden;">
-        <div id="adminOrganisersBody"><div class="org-empty"><div class="spinner"></div></div></div>
-      </div>
-    </section>
-
-    <!-- ── CUSTOMERS ──────────────────────────────────────────────── -->
-    <section class="admin-section hidden" id="section-customers">
-      <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
-        <h2>Customers</h2>
-        <input type="text" class="form-input" id="customerSearchInput" placeholder="Search by name or email…" style="width:240px;"/>
-      </div>
-      <div class="admin-card" style="padding:0;overflow:hidden;">
-        <div id="adminCustomersBody"><div class="org-empty"><div class="spinner"></div></div></div>
-      </div>
-    </section>
 
     <!-- ── ACCOMMODATIONS ──────────────────────────────────────────── -->
     <section class="admin-section hidden" id="section-accommodations">
@@ -374,15 +341,6 @@
       </div>
     </section>
 
-    <section class="admin-section hidden" id="section-media">
-      <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
-        <h2>Media Library</h2>
-        <span id="mediaCount" style="font-size:.875rem;color:var(--text-secondary);"></span>
-      </div>
-      <div id="adminMediaBody">
-        <div class="org-empty"><div class="spinner"></div></div>
-      </div>
-    </section>
 
   </div><!-- /.admin-content -->
 
@@ -774,7 +732,6 @@
     </div>
   </div>
 
-  <script src="../js/config.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/utils.js"></script>
   <script src="../js/auth.js"></script>

@@ -27,6 +27,7 @@ const KINDS = {
   experience:    { label: 'Experience listing',         prefix: 'EXP' },
   equipment:     { label: 'Equipment hire listing',     prefix: 'EQP' },
   merchandise:   { label: 'Merchandise seller',         prefix: 'MRC' },
+  equipment_request: { label: 'Equipment request',      prefix: 'REQ', next: 'the TicketsSA team has received your request and will match you with available equipment and come back to you with a quote, usually within one working day.' },
   seller_access: { label: 'Seller account request',     prefix: 'SEL' },
 };
 
@@ -160,7 +161,7 @@ function buildEmail({ meta, ref, now, contactName, contactEmail, contactPhone, t
 
         <tr><td style="padding:0 28px 26px;">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;font-size:13px;color:#166534;line-height:1.6;">
-            <strong>What happens next:</strong> the TicketsSA team has received this and will review it, usually within one working day. Once everything is confirmed the listing is published on TicketsSA, and customers will contact you directly on the details above.
+            <strong>What happens next:</strong> ${esc(meta.next || 'the TicketsSA team has received this and will review it, usually within one working day. Once everything is confirmed the listing is published on TicketsSA, and customers will contact you directly on the details above.')}
           </div>
         </td></tr>
 

@@ -9,12 +9,11 @@
    Depends on: utils.js (Utils), auth.js (Auth).
    Styles:     css/wizard.css
 
-   IMAGES: images are compressed client-side and stored
-   as base64 data URLs on the record, matching the
-   existing organiser event form. Do NOT switch these to
-   Utils.uploadImage() it POSTs to /api/upload on the
-   retired Express backend, which is not part of the
-   live Netlify deploy and will fail silently.
+   IMAGES: photos are compressed client-side (JPEG, max
+   1600px) and held as data URLs while the form is filled.
+   On submit they are uploaded to Supabase Storage (bucket
+   `listing-images`) and replaced by public links. If storage
+   is unavailable a small photo falls back to staying inline.
    ================================================ */
 
 const WizardCore = (() => {
@@ -604,7 +603,7 @@ const WizardCore = (() => {
               continue;
             }
             try {
-              const compressed = await Utils.compressImage(file, { maxWidth: 1600, maxHeight: 1600 });
+              const compressed = await Utils.compressImage(file, { maxWidth: 1600, maxHeight: 1600, type: 'image/jpeg' });
               const dataUrl    = await new Promise((res, rej) => {
                 const r = new FileReader();
                 r.onerror = () => rej(new Error('read failed'));
@@ -746,6 +745,7 @@ const WizardCore = (() => {
       errors = {};
       busy = true; render();
       try {
+        await uploadPhotos();
         const result = await cfg.onSubmit(state);
         finished = true;
         notifyTeam();
@@ -756,6 +756,31 @@ const WizardCore = (() => {
         console.error('Wizard submit failed:', e);
         render();
         Utils.showToast(e && e.message ? e.message : 'Could not submit right now. Please try again.', 'error', 6000);
+      }
+    }
+
+    /* Photos are held in the browser as data URLs while the seller fills the form.
+       Upload them to storage now so the database stores short links, not megabytes. */
+    async function uploadPhotos() {
+      const fields = [];
+      steps.forEach(st => (st.fields || []).forEach(f => { if (f.type === 'image' || f.type === 'images') fields.push(f); }));
+      for (const f of fields) {
+        const v = state[f.name];
+        const isData = x => typeof x === 'string' && x.startsWith('data:');
+        const up = async (item) => {
+          try { return await SupabaseAPI.uploadListingImage(item); }
+          catch (e) {
+            if (item.length < 600000) { console.warn('Storage upload failed, keeping photo inline:', e.message); return item; }
+            throw e;
+          }
+        };
+        if (f.type === 'images' && Array.isArray(v) && v.some(isData)) {
+          const out = [];
+          for (const item of v) out.push(isData(item) ? await up(item) : item);
+          state[f.name] = out;
+        } else if (f.type === 'image' && isData(v)) {
+          state[f.name] = await up(v);
+        }
       }
     }
 

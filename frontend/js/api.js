@@ -529,6 +529,16 @@ const SupabaseAPI = (() => {
     return { ...normaliseTicket(data), pricing: { subtotal, serviceFee, total } };
   }
 
+  /* Ask the server to email the owner, the customer and support about a booking
+     that was just saved. Fire-and-forget: the booking itself is already stored. */
+  function notifyBooking(kind, id) {
+    return fetch('/.netlify/functions/notify-booking', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ kind, id }),
+    }).catch(() => {});
+  }
+
   // ════════════════════════════════════════
   //  PROFILE
   // ════════════════════════════════════════
@@ -598,10 +608,11 @@ const SupabaseAPI = (() => {
     }));
   }
 
-  async function adminUpdateUserRole(userId, role) {
+  async function adminGetTickets() {
     const sb = await client();
-    const { error } = await sb.from('profiles').update({ role }).eq('id', userId);
+    const { data, error } = await sb.from('tickets').select('*').order('booked_at', { ascending: false });
     if (error) throw error;
+    return (data || []).map(normaliseTicket);
   }
 
   async function adminGetServiceRequests() {
@@ -789,6 +800,22 @@ const SupabaseAPI = (() => {
   }
 
   // ════════════════════════════════════════
+  //  PHOTO UPLOAD  (public bucket `listing-images`, see supabase/setup.sql)
+  // ════════════════════════════════════════
+
+  async function uploadListingImage(dataUrl) {
+    const sb   = await client();
+    const user = currentUser();
+    if (!user) throw new Error('Please sign in to upload photos.');
+    const blob = await (await fetch(dataUrl)).blob();
+    const ext  = blob.type === 'image/png' ? 'png' : 'jpg';
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await sb.storage.from('listing-images').upload(path, blob, { contentType: blob.type, upsert: false });
+    if (error) throw new Error('Could not upload your photo (' + error.message + '). Please try again.');
+    return sb.storage.from('listing-images').getPublicUrl(path).data.publicUrl;
+  }
+
+  // ════════════════════════════════════════
   //  OTHER SELLER LISTINGS (equipment, merchandise)
   //  Stored in `seller_listings` (see supabase/setup.sql).
   // ════════════════════════════════════════
@@ -940,10 +967,11 @@ const SupabaseAPI = (() => {
     getEvents, getEvent,
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
-    adminGetStats, adminGetUsers, adminUpdateUserRole,
+    adminGetStats, adminGetUsers, adminGetTickets,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,
+    uploadListingImage, notifyBooking,
     createSellerListing, getMySellerListings,
     adminGetSellerListings, adminUpdateSellerListingStatus, adminDeleteSellerListing,
     getMyAccommodationBookings,

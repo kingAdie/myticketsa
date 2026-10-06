@@ -604,16 +604,6 @@ const Auth = (() => {
       const user = formatUser(data.user);
       saveSession(data.session.access_token, user);
 
-      // Best-effort profile sync
-      const _apiBase = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
-      if (_apiBase) {
-        fetch(_apiBase + '/api/auth/setup-profile', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.session.access_token}` },
-          body:    JSON.stringify({ firstName, lastName, role: 'attendee' }),
-        }).catch(() => {});
-      }
-
       // Welcome email to the new user + heads-up to the support inbox.
       // (When email confirmation is on, auth-callback.html sends these instead.)
       fetch('/.netlify/functions/notify-signin', {

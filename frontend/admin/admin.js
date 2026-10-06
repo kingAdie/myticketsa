@@ -38,18 +38,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(`section-${name}`)?.classList.remove('hidden');
     document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
 
-    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests', organisers: 'Organisers', customers: 'Customers', accommodations: 'Accommodations', sellerlistings: 'Equipment & Merch', media: 'Media Library' };
+    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests', accommodations: 'Accommodations', sellerlistings: 'Equipment & Merch' };
     Utils.setText('#pageTitle', titles[name] || 'Admin');
 
     if (name === 'events')          loadEvents();
     if (name === 'tickets')         loadTickets();
     if (name === 'users')           loadUsers();
     if (name === 'requests')        loadServiceRequests();
-    if (name === 'organisers')      loadOrganisers();
-    if (name === 'customers')       loadCustomers();
     if (name === 'accommodations')  loadAccommodationsSection();
     if (name === 'sellerlistings')  loadSellerListings();
-    if (name === 'media')           loadMedia();
   }
 
   document.querySelectorAll('.admin-nav-item[data-section]').forEach(item => {
@@ -199,13 +196,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         ${pending.map(e => `
           <div class="admin-row admin-row-event" style="grid-template-columns:52px 1fr 100px 120px;">
-            <img class="admin-row-thumb" src="${e.image || ''}" alt=""
+            <img class="admin-row-thumb" src="${escH(e.image || '')}" alt=""
               onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=100&q=60'"/>
             <div>
-              <div class="admin-row-title">${e.title}</div>
-              <div class="admin-row-meta">${e.city} · ${Utils.formatDate(e.date)}</div>
+              <div class="admin-row-title">${escH(e.title)}</div>
+              <div class="admin-row-meta">${escH(e.city)} · ${Utils.formatDate(e.date)}</div>
             </div>
-            <div class="admin-row-meta" style="text-align:center;">${e.organiser || '—'}</div>
+            <div class="admin-row-meta" style="text-align:center;">${escH(e.organiser || '—')}</div>
             <div style="display:flex;gap:6px;justify-content:flex-end;">
               <button class="btn btn-primary btn-sm approve-btn" data-id="${e.id}">Approve</button>
               <button class="btn btn-secondary btn-sm reject-btn" data-id="${e.id}">Reject</button>
@@ -238,11 +235,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     body.innerHTML = events.map(e => `
       <div class="admin-row admin-row-event">
-        <img class="admin-row-thumb" src="${e.image || ''}" alt=""
+        <img class="admin-row-thumb" src="${escH(e.image || '')}" alt=""
           onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=100&q=60'"/>
         <div>
-          <div class="admin-row-title">${e.title}</div>
-          <div class="admin-row-meta">${e.city} · ${Utils.formatDate(e.date)} · ${e.organiser || '—'}</div>
+          <div class="admin-row-title">${escH(e.title)}</div>
+          <div class="admin-row-meta">${escH(e.city)} · ${Utils.formatDate(e.date)} · ${escH(e.organiser || '—')}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
           <span class="status-badge ${e.status}">${e.status}</span>
@@ -261,8 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               ${e.status !== 'published' ? `<button class="event-action-btn approve-ev" data-id="${e.id}">✅ Publish</button>` : `<button class="event-action-btn unpublish-ev" data-id="${e.id}">⏸ Unpublish</button>`}
               ${!e.featured ? `<button class="event-action-btn feature-ev" data-id="${e.id}">⭐ Feature</button>` : `<button class="event-action-btn unfeature-ev" data-id="${e.id}">☆ Unfeature</button>`}
               <button class="event-action-btn reject-ev" data-id="${e.id}">❌ Reject</button>
-              <button class="event-action-btn view-poster-ev" data-id="${e.id}" data-img="${e.image || ''}">🖼 View Poster</button>
-              <button class="event-action-btn enhance-ev" data-id="${e.id}">✨ Enhance Image</button>
+              <button class="event-action-btn view-poster-ev" data-id="${e.id}" data-img="${escH(e.image || '')}">🖼 View Poster</button>
               <button class="event-action-btn delete-ev" data-id="${e.id}" style="color:#EF4444;">🗑 Delete</button>
             </div>
           </div>
@@ -290,7 +286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.querySelectorAll('.unfeature-ev').forEach(b => b.addEventListener('click', () => toggleFeatured(b.dataset.id, false)));
     body.querySelectorAll('.delete-ev')   .forEach(b => b.addEventListener('click', () => deleteEvent(b.dataset.id)));
     body.querySelectorAll('.view-poster-ev').forEach(b => b.addEventListener('click', () => viewPoster(b.dataset.img)));
-    body.querySelectorAll('.enhance-ev').forEach(b => b.addEventListener('click', () => enhanceImage(b.dataset.id)));
   }
 
   /* Filter & search */
@@ -336,9 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function loadTickets() {
     document.getElementById('adminTicketsBody').innerHTML = `<div class="org-empty"><div class="spinner"></div></div>`;
     try {
-      const res  = await fetch(_API_BASE + '/api/admin/tickets', { headers: Auth.headers() });
-      const data = await res.json();
-      allTickets = data.tickets || [];
+      allTickets = await SupabaseAPI.adminGetTickets();
       renderTicketsTable(allTickets);
     } catch {
       document.getElementById('adminTicketsBody').innerHTML = `<div class="org-empty"><p>Failed to load tickets.</p></div>`;
@@ -353,14 +346,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     body.innerHTML = tickets.map(t => `
       <div class="admin-row admin-row-ticket">
-        <div class="admin-row-mono">${t.id}</div>
+        <div class="admin-row-mono">${escH(t.id)}</div>
         <div>
-          <div class="admin-row-title">${t.event?.title || '—'}</div>
-          <div class="admin-row-meta">${t.ticket?.typeName || ''} × ${t.ticket?.quantity || 1}</div>
+          <div class="admin-row-title">${escH(t.event?.title || '—')}</div>
+          <div class="admin-row-meta">${escH(t.ticket?.typeName || '')} × ${escH(t.ticket?.quantity || 1)}</div>
         </div>
         <div>
-          <div class="admin-row-title">${t.buyer?.firstName || ''} ${t.buyer?.lastName || ''}</div>
-          <div class="admin-row-meta">${t.buyer?.email || ''}</div>
+          <div class="admin-row-title">${escH((t.buyer?.firstName || '') + ' ' + (t.buyer?.lastName || ''))}</div>
+          <div class="admin-row-meta">${escH(t.buyer?.email || '')}</div>
         </div>
         <div class="admin-row-meta" style="white-space:nowrap;">
           ${new Date(t.bookedAt).toLocaleDateString('en-ZA')}
@@ -403,37 +396,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.innerHTML = users.map(u => `
       <div class="admin-row admin-row-user">
         <div>
-          <div class="admin-row-title">${u.firstName} ${u.lastName}</div>
-          <div class="admin-row-meta">${u.email}${u.organisationName ? ` · ${u.organisationName}` : ''}</div>
+          <div class="admin-row-title">${escH(u.firstName + ' ' + u.lastName)}</div>
+          <div class="admin-row-meta">${escH(u.email)}${u.organisationName ? ` · ${escH(u.organisationName)}` : ''}</div>
         </div>
         <span class="role-badge ${u.role}">${u.role}</span>
         <div class="admin-row-meta" style="white-space:nowrap;">
           ${new Date(u.createdAt).toLocaleDateString('en-ZA')}
         </div>
-        <div style="display:flex;gap:var(--sp-sm);align-items:center;">
-          <select class="form-select role-select" data-id="${u.id}" style="width:120px;padding:6px 12px;font-size:.8125rem;" ${u.id === Auth.getUser().id ? 'disabled' : ''}>
-            <option value="attendee"  ${u.role === 'attendee'  ? 'selected' : ''}>Attendee</option>
-            <option value="organiser" ${u.role === 'organiser' ? 'selected' : ''}>Organiser</option>
-            <option value="admin"     ${u.role === 'admin'     ? 'selected' : ''}>Admin</option>
-          </select>
-          <button class="btn btn-secondary btn-sm save-role-btn" data-id="${u.id}" ${u.id === Auth.getUser().id ? 'disabled' : ''}>Save</button>
-        </div>
       </div>`).join('');
-
-    body.querySelectorAll('.save-role-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const id   = btn.dataset.id;
-        const role = body.querySelector(`.role-select[data-id="${id}"]`)?.value;
-        if (!role) return;
-        try {
-          await SupabaseAPI.adminUpdateUserRole(id, role);
-          Utils.showToast('Role updated!', 'success');
-          // Refresh list so badge updates
-          allUsers = await SupabaseAPI.adminGetUsers();
-          renderUsersTable(allUsers);
-        } catch (err) { Utils.showToast('Failed: ' + err.message, 'error'); }
-      });
-    });
   }
 
   document.getElementById('userSearchInput')?.addEventListener('input', e => {
@@ -473,135 +443,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(overlay);
   }
 
-  async function enhanceImage(id) {
-    const btn = document.querySelector(`.enhance-ev[data-id="${id}"]`);
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Enhancing…'; }
-    try {
-      const res = await fetch(`${_API_BASE}/api/admin/events/${id}/enhance`, {
-        method: 'POST', headers: Auth.headers(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        Utils.showToast('Image enhanced! Refreshing event…', 'success');
-        setTimeout(() => loadEvents(), 800);
-      } else {
-        Utils.showToast(data.error || 'Enhancement failed.', 'error');
-      }
-    } catch {
-      Utils.showToast('Server error during enhancement.', 'error');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = '✨ Enhance Image'; }
-    }
-  }
-
   /* ── Bootstrap ──────────────────────────────────────────────────────── */
   await loadStats();
   await loadPendingList();
   await loadDashboardRequests();
 });
 
-/* ════════════════════════════════════════════════════
-   ORGANISERS Admin Management
-   ════════════════════════════════════════════════════ */
-
-async function loadOrganisers() {
-  const body = document.getElementById('adminOrganisersBody');
-  if (!body) return;
-  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
-  try {
-    const res = await fetch(_API_BASE + '/api/admin/organisers', { headers: Auth.headers() });
-    const data = await res.json();
-    const orgs = data.organisers || [];
-    if (!orgs.length) { body.innerHTML = '<div class="org-empty"><p>No organisers yet.</p></div>'; return; }
-    body.innerHTML = orgs.map(o => `
-      <div class="admin-row" style="grid-template-columns:1fr 180px 80px 80px;">
-        <div>
-          <div class="admin-row-title">${escH(o.name)}</div>
-          <div class="admin-row-meta">${escH(o.email)}${o.org !== '—' ? ` · ${escH(o.org)}` : ''}</div>
-        </div>
-        <div class="admin-row-meta">${new Date(o.joined).toLocaleDateString('en-ZA')}</div>
-        <div style="text-align:center;font-weight:700;color:var(--text-primary);">${o.events.total}</div>
-        <div style="text-align:center;">
-          <span class="status-badge published">${o.events.published} live</span>
-        </div>
-      </div>`).join('');
-    document.getElementById('organiserSearchInput')?.addEventListener('input', e => {
-      const q = e.target.value.toLowerCase();
-      body.querySelectorAll('.admin-row').forEach(row => {
-        row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
-      });
-    });
-  } catch (err) {
-    body.innerHTML = `<div class="org-empty"><p>Failed to load organisers.</p></div>`;
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   CUSTOMERS Admin Management
-   ════════════════════════════════════════════════════ */
-
-async function loadCustomers() {
-  const body = document.getElementById('adminCustomersBody');
-  if (!body) return;
-  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
-  try {
-    const res = await fetch(_API_BASE + '/api/admin/customers', { headers: Auth.headers() });
-    const data = await res.json();
-    const customers = data.customers || [];
-    if (!customers.length) { body.innerHTML = '<div class="org-empty"><p>No customers yet.</p></div>'; return; }
-    body.innerHTML = customers.map(c => `
-      <div class="admin-row" style="grid-template-columns:1fr 180px 80px 100px;">
-        <div>
-          <div class="admin-row-title">${escH(c.name)}</div>
-          <div class="admin-row-meta">${escH(c.email)}</div>
-        </div>
-        <div class="admin-row-meta">${new Date(c.joined).toLocaleDateString('en-ZA')}</div>
-        <div style="text-align:center;font-weight:700;">${c.bookings}</div>
-        <div style="text-align:right;font-weight:700;color:var(--green);">R ${parseFloat(c.spent).toFixed(2)}</div>
-      </div>`).join('');
-    document.getElementById('customerSearchInput')?.addEventListener('input', e => {
-      const q = e.target.value.toLowerCase();
-      body.querySelectorAll('.admin-row').forEach(row => {
-        row.style.display = !q || row.textContent.toLowerCase().includes(q) ? '' : 'none';
-      });
-    });
-  } catch (err) {
-    body.innerHTML = `<div class="org-empty"><p>Failed to load customers.</p></div>`;
-  }
-}
-
-/* ════════════════════════════════════════════════════
-   MEDIA LIBRARY Admin Management
-   ════════════════════════════════════════════════════ */
-
-async function loadMedia() {
-  const body = document.getElementById('adminMediaBody');
-  if (!body) return;
-  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
-  try {
-    const res = await fetch(_API_BASE + '/api/admin/media', { headers: Auth.headers() });
-    const data = await res.json();
-    const files = data.files || [];
-    document.getElementById('mediaCount').textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
-    if (!files.length) {
-      body.innerHTML = '<div class="org-empty"><p>No uploaded images yet. Images uploaded via event creation will appear here.</p></div>';
-      return;
-    }
-    body.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:24px;">` +
-      files.map(f => `
-        <div style="border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;background:var(--bg-elevated);">
-          <img src="${f.url}" alt="${f.filename}" loading="lazy"
-            style="width:100%;height:140px;object-fit:cover;cursor:pointer;"
-            onclick="viewPosterGlobal('${f.url}')"/>
-          <div style="padding:8px 12px;">
-            <div style="font-size:.75rem;color:var(--text-secondary);word-break:break-all;">${f.filename}</div>
-            <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px;">${(f.size/1024).toFixed(1)} KB</div>
-          </div>
-        </div>`).join('') + `</div>`;
-  } catch (err) {
-    body.innerHTML = `<div class="org-empty"><p>Failed to load media.</p></div>`;
-  }
-}
 
 // Global viewPoster helper for inline onclick in media grid
 window.viewPosterGlobal = function(imgUrl) {
@@ -1008,7 +855,7 @@ function renderAccListings(list) {
   }
   body.innerHTML = list.map(a => `
     <div class="admin-row" style="grid-template-columns:60px 1fr 130px 80px 100px;align-items:center;">
-      <img src="${a.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60'}"
+      <img src="${escH(a.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60')}"
         alt="${escH(a.name)}" class="admin-row-thumb" style="height:44px;border-radius:8px;"
         onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60'"/>
       <div>
@@ -1020,7 +867,7 @@ function renderAccListings(list) {
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="openAccModal('${escH(a.id)}')">Edit</button>
         <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);"
-          onclick="deleteAcc('${escH(a.id)}', '${escH(a.name)}')">Delete</button>
+          onclick="deleteAcc('${escH(a.id)}')">Delete</button>
       </div>
     </div>`).join('');
 }
@@ -1146,7 +993,8 @@ function showAccModalError(msg) {
   if (el) { el.textContent = msg; el.classList.remove('hidden'); }
 }
 
-async function deleteAcc(id, name) {
+async function deleteAcc(id) {
+  const name = (allAccommodations.find(a => a.id === id) || {}).name || 'this accommodation';
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
   try {
     await SupabaseAPI.adminDeleteAccommodation(id);
@@ -1191,7 +1039,7 @@ function renderAccSpots(list) {
       <div style="display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="openSpotModal('${escH(s.id)}')">Edit</button>
         <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);"
-          onclick="deleteSpot('${escH(s.id)}', '${escH(s.name)}')">Delete</button>
+          onclick="deleteSpot('${escH(s.id)}')">Delete</button>
       </div>
     </div>`).join('');
 }
@@ -1272,7 +1120,8 @@ function showSpotModalError(msg) {
   if (el) { el.textContent = msg; el.classList.remove('hidden'); }
 }
 
-async function deleteSpot(id, name) {
+async function deleteSpot(id) {
+  const name = (allSpots.find(x => x.id === id) || {}).name || 'this tourist spot';
   if (!confirm(`Delete "${name}"?`)) return;
   try {
     await SupabaseAPI.adminDeleteTouristDestination(id);
@@ -1486,7 +1335,7 @@ function _setZoneLoading(fileInputId, loading, label = 'Uploading…') {
 }
 
 function escH(str) {
-  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(str == null ? '' : str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 

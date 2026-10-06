@@ -12,6 +12,8 @@
 
 /*.html   /:splat   301!
 
+/index                    /index.html                                     200
+/admin/login              /admin/login.html                               200
 /event                    /event.html                                     200
 /events                    /browse.html                                    200
 /top32-venda               /top32-venda.html                               200
