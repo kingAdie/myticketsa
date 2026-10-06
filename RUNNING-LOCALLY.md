@@ -10,6 +10,8 @@ Supabase Dashboard -> **SQL Editor** -> New query -> paste all of `supabase/setu
 and the policies that let any signed-in user submit listings (always as `pending`) while only
 admins can see and approve everything.
 
+Then check it worked: on your Mac run `npm run check`. It tests the live Supabase project (tables, columns, photo bucket, and that visitors are blocked from private data) and tells you exactly what is missing.
+
 Make yourself admin: Authentication -> Users -> your user -> **Raw app meta data** ->
 `{"role": "admin"}`, then log out and in.
 
