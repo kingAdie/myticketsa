@@ -87,7 +87,7 @@ async function ticketMails(id, one) {
   const t = await one(`tickets?id=eq.${encodeURIComponent(id)}&select=*`);
   if (!t || Date.now() - new Date(t.booked_at).getTime() > MAX_AGE_MS) return null;
 
-  const ev    = await one(`events?id=eq.${encodeURIComponent(t.event_id)}&select=title,organiser_id,organiser_name,payment_type,payment_link,bank_name,account_holder,account_number,branch_code`);
+  const ev    = await one(`events?id=eq.${encodeURIComponent(t.event_id)}&select=*`);
   const owner = ev && ev.organiser_id ? await one(`profiles?id=eq.${encodeURIComponent(ev.organiser_id)}&select=email,first_name`) : null;
   const ownerEmail = owner && owner.email;
 
@@ -97,6 +97,7 @@ async function ticketMails(id, one) {
   const rows  = [
     ['Booking reference', t.id], ['Event', t.event_title], ['When', when], ['Where', where],
     ['Ticket', `${t.ticket_type_name} × ${t.quantity}`], ['Total', `R${Number(t.total).toFixed(2)}`],
+    ['Cancellation & refunds', (ev && ev.refund_policy) || "As agreed with the organiser. Contact them to cancel."],
   ];
   const buyerRows = [['Name', buyer], ['Email', t.buyer_email], ['Phone', t.buyer_phone || 'Not provided']];
 
@@ -140,7 +141,7 @@ async function accommodationMails(id, one) {
   const b = await one(`accommodation_bookings?id=eq.${encodeURIComponent(id)}&select=*`);
   if (!b || Date.now() - new Date(b.created_at || Date.now()).getTime() > MAX_AGE_MS) return null;
 
-  const acc = await one(`accommodations?id=eq.${encodeURIComponent(b.accommodation_id)}&select=name,contact_email,contact_phone`);
+  const acc = await one(`accommodations?id=eq.${encodeURIComponent(b.accommodation_id)}&select=*`);
   const ownerEmail = acc && acc.contact_email;
 
   const rows = [
@@ -148,6 +149,7 @@ async function accommodationMails(id, one) {
     ['Check-in', b.check_in_date], ['Check-out', b.check_out_date], ['Nights', b.nights],
     ['Guests', b.guests], ['Estimated total', `R${Number(b.total_price).toFixed(2)}`],
     ['Special requests', b.special_requests || 'None'],
+    ['Cancellation & refunds', (acc && acc.refund_policy) || 'As agreed with the owner. Contact them to cancel.'],
   ];
   const guestRows = [['Name', b.customer_name], ['Email', b.customer_email], ['Phone', b.customer_phone || 'Not provided']];
 

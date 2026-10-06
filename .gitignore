@@ -11,3 +11,4 @@ backend/database/backup-*.json
 __pycache__/
 *.pyc
 frontend/images/*.original.*
+deploy/

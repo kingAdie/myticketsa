@@ -127,3 +127,15 @@ ALTER TABLE public.accommodation_bookings ADD COLUMN IF NOT EXISTS created_at ti
 DROP POLICY IF EXISTS "accommodation_bookings: admin all" ON public.accommodation_bookings;
 CREATE POLICY "accommodation_bookings: admin all" ON public.accommodation_bookings
   FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+-- ── cancellation/refund policy chosen by the provider, and admin review notes ──
+ALTER TABLE public.events          ADD COLUMN IF NOT EXISTS refund_policy text;
+ALTER TABLE public.accommodations  ADD COLUMN IF NOT EXISTS refund_policy text;
+ALTER TABLE public.events          ADD COLUMN IF NOT EXISTS review_note   text;
+ALTER TABLE public.accommodations  ADD COLUMN IF NOT EXISTS review_note   text;
+ALTER TABLE public.seller_listings ADD COLUMN IF NOT EXISTS review_note   text;
+ALTER TABLE public.seller_listings ADD COLUMN IF NOT EXISTS images        jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.seller_listings ADD COLUMN IF NOT EXISTS refund_policy text;
+
+-- Owners may send a rejected event back for review (status -> pending), but only that.
+-- (They already have UPDATE on their own events via supabase_rls.sql.)

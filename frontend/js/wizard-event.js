@@ -116,6 +116,8 @@
         { name: '_freeNote', type: 'info', showIf: s => s.paymentType === 'free',
           html: 'Buyers will be able to claim a ticket without paying. You can still limit how many are available on the tickets step.' },
 
+        ...Utils.refundFields(),
+
         { name: 'tags', label: 'Search tags (optional)', type: 'text',
           placeholder: 'e.g. live music, outdoor, family friendly',
           help: 'Separate with commas. These help people find your event in search.' },
@@ -149,6 +151,7 @@
       price:       ticketTypes.length ? Math.min(...ticketTypes.map(t => t.price)) : 0,
       ticketTypes,
       tags: String(s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      refundPolicy:  Utils.refundPolicyText(s.refundPolicy, s.refundNote),
       paymentType:   s.paymentType || null,
       paymentLink:   s.paymentType === 'link' ? (s.paymentLink || null) : null,
       bankName:      s.paymentType === 'bank' ? (s.bankName || null) : null,
@@ -212,6 +215,7 @@
         ticketTypes: (ev.ticketTypes || []).map(t => ({
           name: t.name, price: t.price, available: t.available, description: t.description,
         })),
+        refundPolicy: ev.refundPolicy ? 'custom' : '', refundNote: ev.refundPolicy || '',
         paymentType: ev.paymentType || '', paymentLink: ev.paymentLink || '',
         bankName: ev.bankName || '', accountHolder: ev.accountHolder || '',
         accountNumber: ev.accountNumber || '', branchCode: ev.branchCode || '',

@@ -204,13 +204,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="admin-row-meta" style="text-align:center;">${escH(e.organiser || '—')}</div>
             <div style="display:flex;gap:6px;justify-content:flex-end;">
-              <button class="btn btn-primary btn-sm approve-btn" data-id="${e.id}">Approve</button>
-              <button class="btn btn-secondary btn-sm reject-btn" data-id="${e.id}">Reject</button>
+              <button class="btn btn-primary btn-sm review-btn" data-id="${escH(e.id)}">Review</button>
             </div>
           </div>`).join('')}`;
 
-      list.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', () => setEventStatus(btn.dataset.id, 'published')));
-      list.querySelectorAll('.reject-btn') .forEach(btn => btn.addEventListener('click', () => setEventStatus(btn.dataset.id, 'rejected')));
+      list.querySelectorAll('.review-btn').forEach(btn => btn.addEventListener('click', () => openReview('event', btn.dataset.id)));
     } catch { /* silently fail */ }
   }
 
@@ -254,6 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="event-action-menu hidden" data-id="${e.id}">
+              <button class="event-action-btn review-ev" data-id="${e.id}">🔍 Review</button>
               <button class="event-action-btn edit-adm-ev" data-id="${e.id}">✏️ Edit</button>
               ${e.status !== 'published' ? `<button class="event-action-btn approve-ev" data-id="${e.id}">✅ Publish</button>` : `<button class="event-action-btn unpublish-ev" data-id="${e.id}">⏸ Unpublish</button>`}
               ${!e.featured ? `<button class="event-action-btn feature-ev" data-id="${e.id}">⭐ Feature</button>` : `<button class="event-action-btn unfeature-ev" data-id="${e.id}">☆ Unfeature</button>`}
@@ -275,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     document.addEventListener('click', () => body.querySelectorAll('.event-action-menu').forEach(m => m.classList.add('hidden')));
 
+    body.querySelectorAll('.review-ev')   .forEach(b => b.addEventListener('click', () => openReview('event', b.dataset.id)));
     body.querySelectorAll('.edit-adm-ev') .forEach(b => b.addEventListener('click', () => {
       const ev = allAdminEvents.find(ev => ev.id === b.dataset.id);
       if (ev) openAdminEventModal(ev);
@@ -442,6 +442,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     overlay.addEventListener('click', () => overlay.remove());
     document.body.appendChild(overlay);
   }
+
+  window.__reloadAdmin = () => { loadStats(); loadPendingList(); loadEvents(); };
 
   /* ── Bootstrap ──────────────────────────────────────────────────────── */
   await loadStats();
@@ -854,7 +856,7 @@ function renderAccListings(list) {
     return;
   }
   body.innerHTML = list.map(a => `
-    <div class="admin-row" style="grid-template-columns:60px 1fr 130px 80px 100px;align-items:center;">
+    <div class="admin-row" style="grid-template-columns:60px 1fr 130px 80px 190px;align-items:center;">
       <img src="${escH(a.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60')}"
         alt="${escH(a.name)}" class="admin-row-thumb" style="height:44px;border-radius:8px;"
         onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60'"/>
@@ -865,6 +867,7 @@ function renderAccListings(list) {
       <div class="admin-row-meta">${a.priceFrom > 0 ? `From R ${a.priceFrom.toFixed(0)}/night` : 'Inquiry only'}</div>
       <span class="status-badge ${a.status}">${a.status}</span>
       <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="openReview('accommodation','${escH(a.id)}')">Review</button>
         <button class="btn btn-secondary btn-sm" onclick="openAccModal('${escH(a.id)}')">Edit</button>
         <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);"
           onclick="deleteAcc('${escH(a.id)}')">Delete</button>
@@ -1361,30 +1364,19 @@ function renderSellerListings() {
     return;
   }
   body.innerHTML = allSellerListings.map(l => {
-    const rows = (l.details || []).map(d => `<div style="display:flex;gap:10px;padding:3px 0;font-size:.8125rem;"><span style="color:var(--a-text-2);min-width:150px;">${escH(d.label)}</span><span>${escH(d.value)}</span></div>`).join('');
     return `
-    <div class="admin-row" style="grid-template-columns:1fr 100px auto;align-items:start;gap:16px;">
+    <div class="admin-row" style="grid-template-columns:1fr 100px auto;align-items:center;gap:16px;">
       <div>
         <div class="admin-row-title">${escH(l.title)} <span class="admin-row-meta">· ${escH(l.category)}</span></div>
-        <div class="admin-row-meta">${escH(l.contact_name || '')} · ${escH(l.contact_email || l.owner_email || '')} · ${escH(l.contact_phone || '')} · ${new Date(l.created_at).toLocaleDateString('en-ZA')}</div>
-        <details style="margin-top:8px;"><summary style="cursor:pointer;font-size:.8125rem;">View details</summary>${rows}</details>
+        <div class="admin-row-meta">${escH(l.contact_name || '')} · ${escH(l.contact_email || l.owner_email || '')} · ${escH(l.contact_phone || '')} · ${new Date(l.created_at).toLocaleDateString('en-ZA')} · ${(l.images || []).length} photo${(l.images || []).length !== 1 ? 's' : ''}</div>
       </div>
       <span class="status-badge ${escH(l.status)}">${escH(l.status)}</span>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${l.status !== 'published' ? `<button class="btn btn-primary btn-sm" onclick="setSellerListingStatus('${escH(l.id)}','published')">Approve</button>` : ''}
-        ${l.status !== 'rejected'  ? `<button class="btn btn-secondary btn-sm" onclick="setSellerListingStatus('${escH(l.id)}','rejected')">Reject</button>` : ''}
+        <button class="btn btn-primary btn-sm" onclick="openReview('listing','${escH(l.id)}')">Review</button>
         <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);" onclick="deleteSellerListing('${escH(l.id)}')">Delete</button>
       </div>
     </div>`;
   }).join('');
-}
-
-async function setSellerListingStatus(id, status) {
-  try {
-    await SupabaseAPI.adminUpdateSellerListingStatus(id, status);
-    Utils.showToast(status === 'published' ? 'Listing approved.' : 'Listing updated.', 'success');
-    await loadSellerListings();
-  } catch (err) { Utils.showToast(err.message || 'Could not update listing.', 'error'); }
 }
 
 async function deleteSellerListing(id) {
@@ -1393,4 +1385,159 @@ async function deleteSellerListing(id) {
     await SupabaseAPI.adminDeleteSellerListing(id);
     await loadSellerListings();
   } catch (err) { Utils.showToast(err.message || 'Could not delete listing.', 'error'); }
+}
+
+
+/* ════════════════════════════════════════════════════
+   LISTING REVIEW: one screen to check a submission properly
+   (photos, every detail, contact info, refund policy) and approve or decline it.
+   kind: 'event' | 'accommodation' | 'listing'
+   ════════════════════════════════════════════════════ */
+
+async function openReview(kind, id) {
+  closeReview();
+  const overlay = document.createElement('div');
+  overlay.className = 'rv-overlay';
+  overlay.id = 'rvOverlay';
+  overlay.innerHTML = `<div class="rv"><div class="rv__head"><div><div class="rv__kind">Loading…</div></div></div><div class="org-empty" style="padding:48px"><div class="spinner"></div></div></div>`;
+  overlay.addEventListener('mousedown', e => { if (e.target === overlay) closeReview(); });
+  document.body.appendChild(overlay);
+
+  let d;
+  try { d = await buildReviewData(kind, id); }
+  catch (err) {
+    overlay.querySelector('.rv').innerHTML = `<div class="org-empty" style="padding:48px"><p>Could not load this listing.</p><small>${escH(err.message)}</small></div>`;
+    return;
+  }
+  renderReview(overlay, kind, id, d);
+}
+
+function closeReview() { document.getElementById('rvOverlay')?.remove(); document.getElementById('rvLightbox')?.remove(); }
+
+const rvMoney = n => 'R' + Number(n || 0).toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const rvDate  = v => v ? new Date(v).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+
+async function buildReviewData(kind, id) {
+  if (kind === 'event') {
+    const e = await SupabaseAPI.getEvent(id);
+    if (!e) throw new Error('Event not found.');
+    const owner = await SupabaseAPI.adminGetOwnerProfile(e.organiserId).catch(() => null);
+    const ownerEmail = owner && owner.email;
+    return {
+      label: e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, status: e.status, note: e.reviewNote,
+      images: e.image ? [e.image] : [],
+      submitter: [['Submitted by', e.organiser || '—'], ['Account email', ownerEmail ? `<a href="mailto:${escH(ownerEmail)}">${escH(ownerEmail)}</a>` : '—', true], ['Submitted', rvDate(e.createdAt)]],
+      sections: [
+        ['Event', [['Category', e.category], ['Date', [e.date, e.time].filter(Boolean).join(' · ')], ['Venue', e.location], ['Address', e.address], ['City', [e.city, e.province].filter(Boolean).join(', ')]]],
+        ['Tickets', (e.ticketTypes || []).map(t => [t.name, `${rvMoney(t.price)} · ${t.available} available${t.description && t.description !== t.name ? ' · ' + t.description : ''}`])],
+        ['How buyers pay', e.paymentType === 'link' ? [['Payment link', e.paymentLink]] : e.paymentType === 'bank' ? [['Bank', e.bankName], ['Account holder', e.accountHolder], ['Account no.', e.accountNumber], ['Branch code', e.branchCode]] : [['Method', e.paymentType === 'free' ? 'Free event' : '—']]],
+      ],
+      description: e.description, refund: e.refundPolicy, tags: e.tags,
+      missing: e.image ? [] : ['No poster image'],
+    };
+  }
+  if (kind === 'accommodation') {
+    const a = (typeof allAccommodations !== 'undefined' && allAccommodations.find(x => x.id === id)) || await SupabaseAPI.getAccommodation(id);
+    if (!a) throw new Error('Accommodation not found.');
+    const missing = [];
+    if (!(a.images || []).length) missing.push('No photos');
+    if (!a.contactEmail) missing.push('No contact email, so booking enquiries cannot reach the owner');
+    return {
+      label: 'Accommodation', title: a.name, status: a.status, note: a.reviewNote, images: a.images || [],
+      submitter: [['Contact email', a.contactEmail ? `<a href="mailto:${escH(a.contactEmail)}">${escH(a.contactEmail)}</a>` : '—', true], ['Phone', a.contactPhone], ['Website', a.website], ['Submitted', rvDate(a.createdAt)]],
+      sections: [
+        ['Property', [['Location', [a.address, a.city, a.province].filter(Boolean).join(', ')], ['Star grading', a.starRating ? a.starRating + ' star' : 'Not graded'], ['From', a.priceFrom ? rvMoney(a.priceFrom) + ' per night' : '—'], ['Check-in / out', `${a.checkInTime || '—'} / ${a.checkOutTime || '—'}`]]],
+        ['Rooms & units', (a.spaceTypes || []).map(r => [r.name, `${rvMoney(r.price)} per night · sleeps ${r.capacity || '?'}${r.bedrooms != null ? ' · ' + r.bedrooms + ' bedroom(s)' : ''}`])],
+      ],
+      description: a.description, refund: a.refundPolicy, tags: a.amenities, tagLabel: 'Amenities', missing,
+    };
+  }
+  // seller_listings (equipment, merchandise)
+  const l = (typeof allSellerListings !== 'undefined' && allSellerListings.find(x => x.id === id));
+  if (!l) throw new Error('Listing not found.');
+  const imgs = Array.isArray(l.images) ? l.images : [];
+  return {
+    label: l.category === 'merchandise' ? 'Merchandise' : 'Equipment hire', title: l.title, status: l.status, note: l.review_note, images: imgs,
+    submitter: [['Name', l.contact_name], ['Email', l.contact_email ? `<a href="mailto:${escH(l.contact_email)}">${escH(l.contact_email)}</a>` : '—', true], ['Phone', l.contact_phone], ['Submitted', rvDate(l.created_at)]],
+    sections: [['Details', (l.details || []).filter(x => x.label !== 'Photos').map(x => [x.label, x.value])]],
+    missing: imgs.length ? [] : ['No photos'],
+  };
+}
+
+function renderReview(overlay, kind, id, d) {
+  const rows = (pairs) => pairs.filter(r => r[1] !== '' && r[1] != null && r[1] !== undefined)
+    .map(r => `<div class="rv__row"><span>${escH(r[0])}</span><span>${r[2] ? r[1] : escH(r[1])}</span></div>`).join('');
+  const imgs = d.images || [];
+  const gallery = imgs.length
+    ? `<img class="rv__gallery-main" id="rvMain" src="${escH(imgs[0])}" alt="Listing photo"/>
+       ${imgs.length > 1 ? `<div class="rv__thumbs">${imgs.map((u, i) => `<img src="${escH(u)}" data-i="${i}" class="${i === 0 ? 'is-active' : ''}" alt=""/>`).join('')}</div>` : ''}
+       <div class="rv__count">${imgs.length} photo${imgs.length !== 1 ? 's' : ''}. Click a photo to enlarge.</div>`
+    : `<div class="rv__noimg">⚠️ The seller did not upload any photos.</div>`;
+  const decided = d.status === 'published' || d.status === 'rejected';
+
+  overlay.innerHTML = `
+  <div class="rv" role="dialog" aria-modal="true" aria-label="Review listing">
+    <div class="rv__head">
+      <div><div class="rv__kind">${escH(d.label)} · <span class="status-badge ${escH(d.status)}">${escH(d.status)}</span></div>
+           <div class="rv__title">${escH(d.title)}</div></div>
+      <button class="rv__close" id="rvClose" aria-label="Close">×</button>
+    </div>
+    <div class="rv__body">
+      <div>${gallery}</div>
+      <div>
+        ${d.missing && d.missing.length ? `<div class="rv__warn"><strong>Check before approving:</strong> ${d.missing.map(escH).join('; ')}.</div>` : ''}
+        ${d.note && d.status === 'rejected' ? `<div class="rv__warn"><strong>Previous decline reason:</strong> ${escH(d.note)}</div>` : ''}
+        <div class="rv__sec"><h4>Seller</h4>${rows(d.submitter)}</div>
+        ${d.sections.map(([h, pairs]) => pairs.length ? `<div class="rv__sec"><h4>${escH(h)}</h4>${rows(pairs)}</div>` : '').join('')}
+        ${d.description ? `<div class="rv__sec"><h4>Description</h4><div class="rv__text">${escH(d.description)}</div></div>` : ''}
+        ${d.tags && d.tags.length ? `<div class="rv__sec"><h4>${escH(d.tagLabel || 'Tags')}</h4><div class="rv__text">${d.tags.map(escH).join(' · ')}</div></div>` : ''}
+        ${kind !== 'listing' ? `<div class="rv__sec"><h4>Cancellation &amp; refunds</h4><div class="rv__text">${d.refund ? escH(d.refund) : '<span style="color:var(--a-amber)">The seller did not set a policy.</span>'}</div></div>` : ''}
+      </div>
+    </div>
+    <div class="rv__foot">
+      <textarea class="rv__reason" id="rvReason" placeholder="Reason for declining (shown to the seller in their email and Seller Hub). Required to decline."></textarea>
+      <div class="rv__actions">
+        <button class="btn btn-primary" id="rvApprove">${d.status === 'published' ? 'Keep published' : '✅ Approve &amp; publish'}</button>
+        <button class="btn btn-secondary" id="rvReject">Decline with reason</button>
+        <span class="rv__spacer"></span>
+        <span style="font-size:.75rem;color:var(--a-text-3)">${decided ? 'Already decided. You can change it.' : 'The seller is emailed the decision.'}</span>
+      </div>
+    </div>
+  </div>`;
+
+  overlay.querySelector('#rvClose').addEventListener('click', closeReview);
+  const main = overlay.querySelector('#rvMain');
+  if (main) {
+    main.addEventListener('click', () => {
+      const lb = document.createElement('div');
+      lb.className = 'rv__lightbox'; lb.id = 'rvLightbox';
+      lb.innerHTML = `<img src="${escH(main.src)}" alt=""/>`;
+      lb.addEventListener('click', () => lb.remove());
+      document.body.appendChild(lb);
+    });
+    overlay.querySelectorAll('.rv__thumbs img').forEach(t => t.addEventListener('click', () => {
+      main.src = imgs[+t.dataset.i];
+      overlay.querySelectorAll('.rv__thumbs img').forEach(x => x.classList.toggle('is-active', x === t));
+    }));
+  }
+
+  const decide = async (status) => {
+    const note = overlay.querySelector('#rvReason').value.trim();
+    if (status === 'rejected' && note.length < 5) { Utils.showToast('Please give the seller a reason for declining.', 'error'); overlay.querySelector('#rvReason').focus(); return; }
+    const btns = overlay.querySelectorAll('.rv__actions button'); btns.forEach(b => b.disabled = true);
+    try {
+      const r = await SupabaseAPI.adminReviewListing(kind, id, status, note);
+      Utils.showToast(`${status === 'published' ? 'Approved and published' : 'Declined'}. ${r.emailed ? 'The seller was emailed.' : 'Saved, but the email could not be sent.'}`, r.emailed ? 'success' : 'info', 5000);
+      closeReview();
+      if (typeof window.__reloadAdmin === 'function') window.__reloadAdmin();
+      if (typeof loadAccListings === 'function' && document.getElementById('section-accommodations') && !document.getElementById('section-accommodations').classList.contains('hidden')) loadAccListings();
+      if (typeof loadSellerListings === 'function' && !document.getElementById('section-sellerlistings').classList.contains('hidden')) loadSellerListings();
+    } catch (err) {
+      Utils.showToast(err.message || 'Could not save the decision.', 'error');
+      btns.forEach(b => b.disabled = false);
+    }
+  };
+  overlay.querySelector('#rvApprove').addEventListener('click', () => decide('published'));
+  overlay.querySelector('#rvReject').addEventListener('click', () => decide('rejected'));
+  document.addEventListener('keydown', function esc(e) { if (e.key === 'Escape') { closeReview(); document.removeEventListener('keydown', esc); } });
 }

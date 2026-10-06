@@ -119,6 +119,7 @@
         { name: 'accountHolder', label: 'Account holder', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'Name on the account' },
         { name: 'accountNumber', label: 'Account number', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 62012345678' },
         { name: 'branchCode',    label: 'Branch code',    type: 'text', showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 250655' },
+        ...Utils.refundFields(),
       ],
     },
   ];
@@ -177,6 +178,7 @@
           available:   parseInt(s.capacity) || 1,
         }],
         tags: [s.expType, 'experience'].filter(Boolean),
+        refundPolicy:  Utils.refundPolicyText(s.refundPolicy, s.refundNote),
         paymentType:   s.paymentType || null,
         paymentLink:   s.paymentType === 'link' ? (s.paymentLink || null) : null,
         bankName:      s.paymentType === 'bank' ? (s.bankName || null) : null,

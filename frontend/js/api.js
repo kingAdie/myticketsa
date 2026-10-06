@@ -33,6 +33,21 @@ const SupabaseAPI = (() => {
     return (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
   }
 
+  /* Insert/update a row that includes columns added by supabase/setup.sql. If the
+     database has not been migrated yet, retry without those columns so the listing
+     is still saved (it just won't carry the extra field until setup.sql is run). */
+  async function withOptionalColumns(run, row, optional) {
+    let current = { ...row };
+    let r = await run(current);
+    for (let i = 0; r.error && i < optional.length; i++) {
+      const missing = optional.find(c => c in current && new RegExp(c, 'i').test(r.error.message || ''));
+      if (!missing) break;
+      delete current[missing];            // PostgREST names one missing column per error
+      r = await run(current);
+    }
+    return r;
+  }
+
   // ── ID generator ────────────────────────────────────────────────────────
   function makeId(prefix) {
     return `${prefix}-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -72,6 +87,8 @@ const SupabaseAPI = (() => {
       createdAt:      row.created_at,
       updatedAt:      row.updated_at,
       address:        row.address        || null,
+      refundPolicy:   row.refund_policy  || null,
+      reviewNote:     row.review_note    || null,
       paymentType:    row.payment_type   || null,
       paymentLink:    row.payment_link   || null,
       bankName:       row.bank_name      || null,
@@ -151,7 +168,7 @@ const SupabaseAPI = (() => {
 
     const eventId = makeId('EVT');
 
-    const { error: evtErr } = await sb.from('events').insert({
+    const evtRow = {
       id:             eventId,
       status:         'pending',
       // Organiser-supplied artwork. Events land as `pending`, so an admin still
@@ -178,7 +195,9 @@ const SupabaseAPI = (() => {
       account_holder: eventData.accountHolder  || null,
       account_number: eventData.accountNumber  || null,
       branch_code:    eventData.branchCode     || null,
-    });
+      refund_policy:  eventData.refundPolicy   || null,
+    };
+    const { error: evtErr } = await withOptionalColumns(r => sb.from('events').insert(r), evtRow, ['refund_policy']);
     if (evtErr) throw evtErr;
 
     if (Array.isArray(eventData.ticketTypes) && eventData.ticketTypes.length > 0) {
@@ -214,7 +233,7 @@ const SupabaseAPI = (() => {
     // so an admin-curated image is never wiped by an edit that left it alone.
     const imagePatch = eventData.image ? { image: eventData.image } : {};
 
-    const { error: evtErr } = await sb.from('events').update({
+    const evtPatch = {
       ...imagePatch,
       title:          eventData.title,
       category:       eventData.category,
@@ -233,9 +252,16 @@ const SupabaseAPI = (() => {
       account_holder: eventData.accountHolder  || null,
       account_number: eventData.accountNumber  || null,
       branch_code:    eventData.branchCode     || null,
+      refund_policy:  eventData.refundPolicy   || null,
       updated_at:     new Date().toISOString(),
-    }).eq('id', id);
+    };
+    const { error: evtErr } = await withOptionalColumns(r => sb.from('events').update(r).eq('id', id), evtPatch, ['refund_policy', 'updated_at']);
     if (evtErr) throw evtErr;
+
+    // An organiser who fixes a declined event is sending it back for review.
+    await withOptionalColumns(
+      r => sb.from('events').update(r).eq('id', id).eq('status', 'rejected'),
+      { status: 'pending', review_note: null }, ['review_note']);
 
     if (Array.isArray(eventData.ticketTypes)) {
       await sb.from('ticket_types').delete().eq('event_id', id);
@@ -675,6 +701,8 @@ const SupabaseAPI = (() => {
       contactPhone: row.contact_phone  || null,
       website:      row.website        || null,
       bookingUrl:   row.booking_url    || null,
+      refundPolicy: row.refund_policy  || null,
+      reviewNote:   row.review_note    || null,
       featured:     !!row.featured,
       status:       row.status,
       createdAt:    row.created_at,
@@ -770,16 +798,12 @@ const SupabaseAPI = (() => {
       contact_phone:  data.contactPhone  || null,
       website:        data.website       || null,
       star_rating:    parseInt(data.starRating) || 0,
+      refund_policy:  data.refundPolicy  || null,
       featured:       false,
       status:         'pending',
     };
 
-    let { error } = await sb.from('accommodations').insert({ ...row, owner_id: user.id });
-
-    if (error && /owner_id/i.test(error.message || '')) {
-      // Column not present on this database retry without it.
-      ({ error } = await sb.from('accommodations').insert(row));
-    }
+    const { error } = await withOptionalColumns(r => sb.from('accommodations').insert(r), { ...row, owner_id: user.id }, ['owner_id', 'refund_policy']);
     if (error) throw error;
 
     return { id: newId, ...data, status: 'pending' };
@@ -825,7 +849,7 @@ const SupabaseAPI = (() => {
     const user = currentUser();
     if (!user) throw new Error('Please sign in to submit a listing.');
     const id = makeId('LST');
-    const { error } = await sb.from('seller_listings').insert({
+    const { error } = await withOptionalColumns(r => sb.from('seller_listings').insert(r), {
       id,
       category:      d.category,
       title:         d.title,
@@ -836,7 +860,8 @@ const SupabaseAPI = (() => {
       contact_email: d.contactEmail || null,
       contact_phone: d.contactPhone || null,
       details:       Array.isArray(d.details) ? d.details : [],
-    });
+      images:        Array.isArray(d.images) ? d.images : [],
+    }, ['images']);
     if (error) throw error;
     return { id };
   }
@@ -862,6 +887,40 @@ const SupabaseAPI = (() => {
     const sb = await client();
     const { error } = await sb.from('seller_listings').update({ status }).eq('id', id);
     if (error) throw error;
+  }
+
+  /**
+   * Approve ('published') or decline ('rejected') a listing, store the reason for the seller,
+   * and email the seller the outcome. kind: 'event' | 'accommodation' | 'listing'.
+   * Resolves { emailed: boolean }; the decision itself is saved even if the email fails.
+   */
+  async function adminReviewListing(kind, id, status, note) {
+    const table = { event: 'events', accommodation: 'accommodations', listing: 'seller_listings' }[kind];
+    if (!table) throw new Error('Unknown listing type.');
+    const sb = await client();
+    const patch = { status, review_note: status === 'rejected' ? (note || null) : null };
+    const { error } = await withOptionalColumns(r => sb.from(table).update(r).eq('id', id), patch, ['review_note']);
+    if (error) throw error;
+
+    let emailed = false;
+    try {
+      const token = (typeof Auth !== 'undefined' && Auth.getToken) ? Auth.getToken() : null;
+      const res = await fetch('/.netlify/functions/notify-decision', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body:    JSON.stringify({ kind, id, status, note: note || '' }),
+      });
+      emailed = res.ok;
+    } catch { /* decision is saved; the email is a courtesy */ }
+    return { emailed };
+  }
+
+  /** Contact details for the account that owns a listing (admin only; RLS enforces that). */
+  async function adminGetOwnerProfile(userId) {
+    if (!userId) return null;
+    const sb = await client();
+    const { data } = await sb.from('profiles').select('first_name, last_name, email').eq('id', userId).maybeSingle();
+    return data || null;
   }
 
   async function adminDeleteSellerListing(id) {
@@ -974,6 +1033,7 @@ const SupabaseAPI = (() => {
     uploadListingImage, notifyBooking,
     createSellerListing, getMySellerListings,
     adminGetSellerListings, adminUpdateSellerListingStatus, adminDeleteSellerListing,
+    adminReviewListing, adminGetOwnerProfile,
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,

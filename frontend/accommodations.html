@@ -279,9 +279,10 @@ function renderAllProvinces(container) {
         <div class="acc-empty-state__icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
-        <p>No accommodations listed here yet</p>
-        <small>We're onboarding hosts across South Africa right now. Run a guesthouse, lodge or B&amp;B? List it and be one of the first live.</small>
-        <a href="sell-accommodation.html" class="btn btn-primary btn-sm">List Your Accommodation</a>
+        <p>No places to stay available yet</p>
+        <small>We're adding stays across South Africa. Check back soon, or look at events and experiences in the meantime.</small>
+        <a href="browse.html" class="btn btn-primary btn-sm">Browse events &amp; experiences</a>
+        <small style="margin-top:14px;display:block">Own a lodge, guesthouse or B&amp;B? <a href="sell.html?type=accommodation" style="color:var(--green)">List your property</a></small>
       </div>`;
     return;
   }
@@ -317,9 +318,9 @@ function renderSingleProvince(container, province) {
         <div class="acc-empty-state__icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
-        <p>No accommodations listed yet in ${escH(province)}</p>
-        <small>Be the first to list a stay in ${escH(province)} it's free to get started.</small>
-        <a href="sell-accommodation.html" class="btn btn-primary btn-sm">List Your Accommodation</a>
+        <p>No stays in ${escH(province)} yet</p>
+        <small>Try another province, or check back soon.</small>
+        <small style="margin-top:14px;display:block">Own a place in ${escH(province)}? <a href="sell.html?type=accommodation" style="color:var(--green)">List your property</a></small>
       </div>`;
   } else {
     // Group by city

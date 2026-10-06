@@ -60,6 +60,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const descEl = document.getElementById('eventDescription');
     if (descEl) descEl.textContent = event.description || '';
 
+    // Cancellation & refund policy (set by the organiser)
+    const refundEl = document.getElementById('eventRefund');
+    if (refundEl && event.refundPolicy) {
+      refundEl.textContent = event.refundPolicy;
+      document.getElementById('refundSection').style.display = '';
+    }
+
     // Tags
     const tagsEl = document.getElementById('eventTags');
     if (tagsEl) {

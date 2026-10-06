@@ -26,6 +26,7 @@ const SellerApply = (() => {
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
         details:      data.details || [],
+        images:       data.images  || [],
       });
       return true;
     } catch (e) {
@@ -56,7 +57,7 @@ const SellerApply = (() => {
       const res = await fetch(ENDPOINT, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ kind, ...data }),
+        body:    JSON.stringify({ kind, ...data, images: undefined }),   // photos live in storage, not in the email
       });
       if (res.status === 404) {
         // Running from a plain static server (local dev) rather than Netlify.

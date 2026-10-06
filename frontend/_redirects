@@ -14,6 +14,9 @@
 
 /index                    /index.html                                     200
 /admin/login              /admin/login.html                               200
+/terms                    /terms.html                                     200
+/privacy                  /privacy.html                                   200
+/refunds                  /refunds.html                                   200
 /event                    /event.html                                     200
 /events                    /browse.html                                    200
 /top32-venda               /top32-venda.html                               200

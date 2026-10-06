@@ -127,6 +127,13 @@
             <div class="acc-detail__stars" id="detailStars"></div>
             <p class="acc-detail__desc" id="detailDesc"></p>
 
+            <!-- Cancellation & refunds -->
+            <div id="refundSection" style="display:none;">
+              <div class="acc-info-heading">Cancellations &amp; refunds</div>
+              <p class="acc-detail__desc" id="detailRefund" style="margin-bottom:6px"></p>
+              <p style="font-size:.8125rem;color:var(--text-3)">Set by the owner. TicketsSA does not take payment or issue refunds. <a href="refunds.html" style="color:var(--green)">How refunds work</a></p>
+            </div>
+
             <!-- Amenities -->
             <div id="amenitiesSection" style="display:none;">
               <div class="acc-info-heading">Amenities &amp; Features</div>
@@ -377,6 +384,10 @@ function renderPage(a) {
 
   // Description
   document.getElementById('detailDesc').textContent = a.description || '';
+  if (a.refundPolicy) {
+    document.getElementById('detailRefund').textContent = a.refundPolicy;
+    document.getElementById('refundSection').style.display = '';
+  }
 
   // Amenities
   renderAmenities(a.amenities || []);

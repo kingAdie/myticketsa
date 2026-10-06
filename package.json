@@ -1,10 +1,8 @@
 {
-  "dependencies": {
-    "motion": "^12.38.0"
-  },
   "scripts": {
     "dev": "node dev-server.js",
     "dev:netlify": "npx netlify-cli@latest dev --dir frontend --functions netlify/functions --port 8888",
-    "serve": "node dev-server.js"
+    "serve": "node dev-server.js",
+    "package": "node scripts/package.js"
   }
 }

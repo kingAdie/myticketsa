@@ -172,8 +172,9 @@ document.addEventListener('DOMContentLoaded', async function () {
           '</div>' +
           '<div class="mk-empty__actions">' +
             (q ? '<button class="btn btn-secondary" id="clearSearch">Clear search</button>' : '') +
-            '<a class="btn btn-primary" href="sell.html">List yours on TicketsSA</a>' +
+            (q ? '' : '<a class="btn btn-primary" href="index.html">Back to home</a>') +
           '</div>' +
+          '<div class="mk-empty__body" style="margin-top:14px">Selling something? <a href="sell.html" style="color:var(--green)">List it on TicketsSA</a></div>' +
         '</div>';
       var cs = document.getElementById('clearSearch');
       if (cs) cs.addEventListener('click', function () { search.value = ''; paint(); });

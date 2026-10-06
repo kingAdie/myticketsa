@@ -719,6 +719,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var listingFilter = 'all';
 
+  /* Plain-language status for sellers */
+  function hubStatusLabel(raw) {
+    return { pending: 'In review', published: 'Live', rejected: 'Needs changes' }[raw] || raw || 'In review';
+  }
+
   function listingRow(o) {
     var badge = '<span class="sh-badge sh-badge--' + o.statusKey + '">' + escHtml(o.status) + '</span>';
     var thumb = o.image
@@ -731,6 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '<span class="sh-badge sh-badge--cat">' + escHtml(o.category) + '</span>' +
         '</div>' +
         '<div class="sh-listing__meta">' + escHtml(o.meta) + '</div>' +
+        (o.note ? '<div class="sh-listing__meta" style="color:#F59E0B;margin-top:4px"><strong>Reason from our team:</strong> ' + escHtml(o.note) + '</div>' : '') +
         (o.perf ? '<div class="sh-listing__perf">' + o.perf + '</div>' : '') +
         (o.actions ? '<div class="sh-listing__actions">' + o.actions + '</div>' : '') +
       '</div></div>';
@@ -759,7 +765,8 @@ document.addEventListener('DOMContentLoaded', function() {
       var stKey = e.sold_out ? 'soldout' : (e.status === 'published' ? 'published' : (e.status === 'pending' ? 'pending' : 'archived'));
       rows.push({
         kind: isExp ? 'experience' : 'event', statusKey: stKey,
-        status: e.sold_out ? 'Sold out' : (e.status || 'draft'),
+        status: e.sold_out ? 'Sold out' : hubStatusLabel(e.status),
+        note: e.status === 'rejected' ? e.reviewNote : '',
         icon: isExp ? '🌍' : '🎟️', title: e.title,
         category: isExp ? 'Experience' : 'Event', image: e.image,
         meta: [Utils.formatDate(e.date), [e.location, e.city].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
@@ -774,8 +781,8 @@ document.addEventListener('DOMContentLoaded', function() {
     HUB.accs.forEach(function (a) {
       rows.push({
         kind: 'accommodation',
-        statusKey: a.status === 'published' ? 'published' : 'pending',
-        status: a.status || 'pending', icon: '🏨', title: a.name,
+        statusKey: a.status === 'published' ? 'published' : (a.status === 'rejected' ? 'archived' : 'pending'),
+        status: hubStatusLabel(a.status), note: a.status === 'rejected' ? a.reviewNote : '', icon: '🏨', title: a.name,
         category: 'Accommodation', image: (a.images || [])[0],
         meta: [a.city, a.province].filter(Boolean).join(', ') + ' · from ' + hubMoney(a.priceFrom) + ' per night',
         perf: '',
@@ -788,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
       rows.push({
         kind: isMerch ? 'merchandise' : 'equipment',
         statusKey: l.status === 'published' ? 'published' : (l.status === 'rejected' ? 'archived' : 'pending'),
-        status: l.status === 'pending' ? 'pending review' : (l.status || 'pending'),
+        status: hubStatusLabel(l.status), note: l.status === 'rejected' ? l.review_note : '',
         icon: isMerch ? '🛍️' : '🔊', title: l.title,
         category: isMerch ? 'Merchandise' : 'Equipment hire', image: null,
         meta: 'Submitted ' + hubSince(l.created_at), perf: '', actions: ''

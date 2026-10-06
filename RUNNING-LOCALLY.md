@@ -44,25 +44,35 @@ Needs Node 18+ (`brew install node`). `.env` values for local testing:
 ## 3. Test checklist
 
 1. **Sign up** with a new email -> confirmation email arrives -> confirm -> log in at localhost.
-2. **List an event, a lodge, equipment** (homepage buttons, or Seller Hub -> Create Listing).
-   Each should: show "submitted for review", email support@ticketssa.co.za, email you a receipt,
-   and appear in **Admin** (Events / Accommodations / Equipment & Merch) as `pending`.
-3. **Approve** it in Admin; it then appears on the public pages.
+2. **List an event, a lodge, equipment** (homepage buttons, or Seller Hub -> Create Listing). Upload photos
+   and pick a cancellation/refund policy. Each should: show "submitted for review", email
+   support@ticketssa.co.za, email you a receipt, and appear in **Admin** as `pending`.
+3. In Admin click **Review**: you see the photos, contact details, every detail and the refund policy.
+   **Approve** (seller is emailed, listing goes public) or **Decline with reason** (seller is emailed
+   and sees the reason in their Seller Hub).
 4. **Book it** from a second account: ticket checkout, or "enquire" on a stay. The owner, the
    customer and support each get an email.
 5. **Request equipment**: Services -> Get a Quote -> submit. Support and the customer get an email.
 
-## 4. Deploy to Netlify
+## 4. Deploy to Netlify (and keep the credits down)
 
-Netlify -> Site configuration -> Environment variables: `RESEND_API_KEY`,
-`SEND_EMAIL_HOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (and optionally `SUPPORT_EMAIL`,
-`ADMIN_EXTRA_EMAILS`).
+Netlify's credit plans (see [how credits work](https://docs.netlify.com/manage/accounts-and-billing/billing/billing-for-credit-based-plans/how-credits-work/)):
+each **production deploy costs a flat 15 credits** (file count and size do not change that), bandwidth is
+10 credits per GB, and previews/rollbacks/failed deploys are free. So the savings come from deploying less often and sending visitors fewer bytes.
+What this project already does:
+- Photos are compressed (4.4 MB down to 0.6 MB) and cached for a year.
+- CSS/JS/HTML use `no-cache`, so browsers re-check with a tiny "unchanged" reply instead of re-downloading everything.
+- `npm run package` builds a clean `deploy/` folder (about 2 MB, 80 files) with only what the site needs.
 
-Emails are sent by Netlify Functions in `netlify/functions/`. Deploy from the **project root**
-(the folder containing `netlify.toml`), not just `frontend/`, or the functions are skipped and no
-emails send. After deploying, check Netlify -> Functions lists all four: `notify-booking`,
+**To deploy:** test locally first, then run `npm run package` and drag the **`deploy/`** folder onto Netlify.
+Do all your testing locally so you only spend 15 credits when you are happy.
+
+Set these under Netlify -> Site configuration -> Environment variables: `RESEND_API_KEY`,
+`SEND_EMAIL_HOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` (and optionally `SUPPORT_EMAIL`, `ADMIN_EXTRA_EMAILS`).
+After deploying, Netlify -> Functions should list all five: `notify-booking`, `notify-decision`,
 `notify-signin`, `send-auth-email`, `submit-seller-application`.
 
-## Still needed before a public launch
-Terms of Service, Privacy Policy and Refund Policy pages. The old footer links pointed nowhere, so
-they were removed; checkout still asks buyers to agree to them.
+## Legal pages
+`terms.html`, `privacy.html` and `refunds.html` are written for South African law (CPA, ECTA, POPIA) but
+are a draft: **have an attorney review them**, then fill in the company details and Information Officer
+(see the TODO comments at the top of `terms.html` and `privacy.html`).
