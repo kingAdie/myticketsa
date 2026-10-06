@@ -133,12 +133,14 @@ document.addEventListener('DOMContentLoaded', function () {
   var panel = document.getElementById('accessPanel');
   var user  = Auth.isLoggedIn() ? Auth.getUser() : null;
   var role  = user && user.role;
-  var wantsStay = new URLSearchParams(location.search).get('type') === 'accommodation';
+  var wantsType = new URLSearchParams(location.search).get('type');
+  var wantsStay = wantsType === 'accommodation';
+  var wantsEquip = wantsType === 'equipment';
 
   /* ── Already a seller ── */
   if (role === 'organiser' || role === 'admin') {
     cta.innerHTML =
-      '<a class="btn btn-primary btn-lg" href="' + (wantsStay ? 'sell-accommodation.html' : 'create-listing.html') + '">' + (wantsStay ? '+ List your lodge' : '+ Create a listing') + '</a>' +
+      '<a class="btn btn-primary btn-lg" href="' + (wantsStay ? 'sell-accommodation.html' : wantsEquip ? 'sell-equipment.html' : 'create-listing.html') + '">' + (wantsStay ? '+ List your lodge' : wantsEquip ? '+ List your equipment' : '+ Create a listing') + '</a>' +
       '<a class="btn btn-secondary btn-lg" href="dashboard.html">Go to Seller Hub</a>';
     panel.innerHTML =
       '<div class="mk-panel__title">You are all set</div>' +
@@ -182,6 +184,13 @@ document.addEventListener('DOMContentLoaded', function () {
       if (sel) sel.value = 'Accommodation';
       var about = document.getElementById('sellerAbout');
       if (about) about.placeholder = 'e.g. We run a 10-room lodge near Hazyview. Name, town and star grading help us approve faster.';
+    }
+
+    if (wantsEquip) {
+      var sel2 = document.getElementById('sellerWhat');
+      if (sel2) sel2.value = 'Equipment';
+      var about2 = document.getElementById('sellerAbout');
+      if (about2) about2.placeholder = 'e.g. We hire out sound systems, tents and generators around Mbombela.';
     }
 
     var submitting = false;
