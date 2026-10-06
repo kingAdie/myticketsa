@@ -133,11 +133,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var panel = document.getElementById('accessPanel');
   var user  = Auth.isLoggedIn() ? Auth.getUser() : null;
   var role  = user && user.role;
+  var wantsStay = new URLSearchParams(location.search).get('type') === 'accommodation';
 
   /* ── Already a seller ── */
   if (role === 'organiser' || role === 'admin') {
     cta.innerHTML =
-      '<a class="btn btn-primary btn-lg" href="create-listing.html">+ Create a listing</a>' +
+      '<a class="btn btn-primary btn-lg" href="' + (wantsStay ? 'sell-accommodation.html' : 'create-listing.html') + '">' + (wantsStay ? '+ List your lodge' : '+ Create a listing') + '</a>' +
       '<a class="btn btn-secondary btn-lg" href="dashboard.html">Go to Seller Hub</a>';
     panel.innerHTML =
       '<div class="mk-panel__title">You are all set</div>' +
@@ -175,6 +176,13 @@ document.addEventListener('DOMContentLoaded', function () {
         '</div>' +
         '<button class="btn btn-primary" id="requestBtn2" style="margin-top:16px">Send request</button>' +
       '</div>';
+
+    if (wantsStay) {
+      var sel = document.getElementById('sellerWhat');
+      if (sel) sel.value = 'Accommodation';
+      var about = document.getElementById('sellerAbout');
+      if (about) about.placeholder = 'e.g. We run a 10-room lodge near Hazyview. Name, town and star grading help us approve faster.';
+    }
 
     var submitting = false;
     function sendRequest() {

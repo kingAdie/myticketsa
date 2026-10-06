@@ -204,16 +204,6 @@
   status = 200
 
 [[redirects]]
-  from = "/empire-travel"
-  to   = "/empire-travel.html"
-  status = 200
-
-[[redirects]]
-  from = "/mbombela-hospitality"
-  to   = "/mbombela-hospitality.html"
-  status = 200
-
-[[redirects]]
   from = "/services"
   to   = "/services/index.html"
   status = 200
