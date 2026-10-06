@@ -29,6 +29,7 @@ const Auth = (() => {
 
   let _rcWidgetLogin  = null;
   let _rcWidgetSignup = null;
+  let _rcWidgetForgot = null;
 
   function _initRecaptcha() {
     if (!RC_ENABLED) return;
@@ -45,6 +46,11 @@ const Auth = (() => {
     const signupDiv = document.getElementById('rcSignup');
     if (loginDiv && _rcWidgetLogin === null) {
       try { _rcWidgetLogin  = window.turnstile.render('#rcLogin',  { sitekey: TURNSTILE_SITE_KEY, theme: 'dark' }); }
+      catch (_) {}
+    }
+    const forgotDiv = document.getElementById('rcForgot');
+    if (forgotDiv && _rcWidgetForgot === null && document.getElementById('forgotForm') && !document.getElementById('forgotForm').classList.contains('hidden')) {
+      try { _rcWidgetForgot = window.turnstile.render('#rcForgot', { sitekey: TURNSTILE_SITE_KEY, theme: 'dark' }); }
       catch (_) {}
     }
     if (signupDiv && _rcWidgetSignup === null) {
@@ -330,6 +336,9 @@ const Auth = (() => {
             <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="20" height="20" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
             <span>Check your inbox a reset link has been sent.</span>
           </div>
+          <div class="auth-recaptcha-wrap${RC_ENABLED ? '' : ' hidden'}" id="rcForgotWrap">
+            <div id="rcForgot"></div>
+          </div>
           <button type="button" class="btn btn-primary btn-full" id="forgotSubmitBtn">Send Reset Link</button>
         </div>
 
@@ -441,6 +450,7 @@ const Auth = (() => {
     const tabsEl = document.querySelector('.auth-tabs');
     if (tabsEl) tabsEl.style.display = tab === 'forgot' ? 'none' : '';
     clearError();
+    if (tab === 'forgot') _renderRecaptchaWidgets();   // the reset form needs its own security check
   }
 
   function openModal(tab = 'login', contextMessage = null) {
@@ -637,13 +647,39 @@ const Auth = (() => {
       showError('Please enter a valid email address.'); return;
     }
 
+    let captchaToken = null;
+    if (RC_ENABLED) {
+      captchaToken = _getRcToken(_rcWidgetForgot);
+      if (!captchaToken) { showError('Please complete the security check first.'); return; }
+    }
+
     const btn = document.getElementById('forgotSubmitBtn');
     btn.disabled = true; btn.textContent = 'Sending…';
 
     try {
       const sb = await getSupabase();
-      await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://ticketssa.co.za/auth-callback' });
-    } catch (_) {}
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://ticketssa.co.za/auth-callback',
+        ...(captchaToken ? { captchaToken } : {}),
+      });
+      // Only problems that say nothing about whether the email exists are shown.
+      if (error && /captcha/i.test(error.message || '')) {
+        _resetRc(_rcWidgetForgot);
+        showError('The security check failed. Please try again.');
+        btn.disabled = false; btn.textContent = 'Send Reset Link';
+        return;
+      }
+      if (error && /rate|too many|seconds/i.test(error.message || '')) {
+        _resetRc(_rcWidgetForgot);
+        showError('Please wait a minute before asking for another reset link.');
+        btn.disabled = false; btn.textContent = 'Send Reset Link';
+        return;
+      }
+    } catch (_) {
+      showError('Could not reach the server. Check your connection and try again.');
+      btn.disabled = false; btn.textContent = 'Send Reset Link';
+      return;
+    }
 
     // Always show success never reveal whether email exists
     btn.style.display = 'none';
