@@ -14,9 +14,7 @@
 (function () {
 
   /* ── Guard: sellers only ─────────────────────── */
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=event&signup=1'); return; }
 
   const CATEGORIES = ['Music', 'Sport', 'Food & Drink', 'Comedy', 'Arts & Culture', 'Business', 'Technology', 'Fashion', 'Other'];
   const PROVINCES  = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
@@ -166,6 +164,7 @@
     title:       editId ? 'Edit event' : 'List an event',
     steps,
     draftTitleField: 'title',
+    notifyKind:  editId ? null : 'event',
     submitLabel: editId ? 'Save changes' : 'Submit for review',
     exitHref:    'dashboard.html?tab=listings',
 

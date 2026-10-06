@@ -27,6 +27,12 @@ const SupabaseAPI = (() => {
     return _client;
   }
 
+  /* `Auth` is a top-level `const` in auth.js, so it is NOT a property of
+     `window`; reading window.Auth made every write think nobody was signed in. */
+  function currentUser() {
+    return (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
+  }
+
   // ── ID generator ────────────────────────────────────────────────────────
   function makeId(prefix) {
     return `${prefix}-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
@@ -140,7 +146,7 @@ const SupabaseAPI = (() => {
 
   async function createEvent(eventData) {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
@@ -269,7 +275,7 @@ const SupabaseAPI = (() => {
 
   async function adminCreateEvent(eventData, options = {}) {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
@@ -395,7 +401,7 @@ const SupabaseAPI = (() => {
 
   async function submitServiceRequest(data) {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) throw new Error('Not authenticated');
 
     const { data: result, error } = await sb.from('equipment_requests').insert({
@@ -417,7 +423,7 @@ const SupabaseAPI = (() => {
 
   async function getMyServiceRequests() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return [];
     const { data, error } = await sb
       .from('equipment_requests')
@@ -434,7 +440,7 @@ const SupabaseAPI = (() => {
 
   async function getMyAccommodationBookings() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return [];
     const { data, error } = await sb
       .from('accommodation_bookings')
@@ -447,7 +453,7 @@ const SupabaseAPI = (() => {
 
   async function getMyTickets() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return [];
     const { data, error } = await sb
       .from('tickets')
@@ -466,7 +472,7 @@ const SupabaseAPI = (() => {
    */
   async function getSalesForMyEvents() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return [];
 
     const { data: myEvents, error: evErr } = await sb
@@ -529,7 +535,7 @@ const SupabaseAPI = (() => {
 
   async function getMyProfile() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return null;
     const { data, error } = await sb
       .from('profiles')
@@ -732,7 +738,7 @@ const SupabaseAPI = (() => {
    */
   async function createAccommodation(data) {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) throw new Error('Please sign in to list accommodation.');
 
     const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
@@ -771,7 +777,7 @@ const SupabaseAPI = (() => {
   /** Accommodation listings owned by the signed-in seller (empty if no owner_id column). */
   async function getMyAccommodations() {
     const sb   = await client();
-    const user = window.Auth?.getUser();
+    const user = currentUser();
     if (!user) return [];
     const { data, error } = await sb
       .from('accommodations')
@@ -780,6 +786,61 @@ const SupabaseAPI = (() => {
       .order('created_at', { ascending: false });
     if (error) return [];            // column missing → caller shows the explanatory note
     return (data || []).map(normaliseAccommodation);
+  }
+
+  // ════════════════════════════════════════
+  //  OTHER SELLER LISTINGS (equipment, merchandise)
+  //  Stored in `seller_listings` (see supabase/setup.sql).
+  // ════════════════════════════════════════
+
+  async function createSellerListing(d) {
+    const sb   = await client();
+    const user = currentUser();
+    if (!user) throw new Error('Please sign in to submit a listing.');
+    const id = makeId('LST');
+    const { error } = await sb.from('seller_listings').insert({
+      id,
+      category:      d.category,
+      title:         d.title,
+      status:        'pending',
+      owner_id:      user.id,
+      owner_email:   user.email || null,
+      contact_name:  d.contactName  || null,
+      contact_email: d.contactEmail || null,
+      contact_phone: d.contactPhone || null,
+      details:       Array.isArray(d.details) ? d.details : [],
+    });
+    if (error) throw error;
+    return { id };
+  }
+
+  async function getMySellerListings() {
+    const sb   = await client();
+    const user = currentUser();
+    if (!user) return [];
+    const { data, error } = await sb.from('seller_listings').select('*')
+      .eq('owner_id', user.id).order('created_at', { ascending: false });
+    if (error) return [];
+    return data || [];
+  }
+
+  async function adminGetSellerListings() {
+    const sb = await client();
+    const { data, error } = await sb.from('seller_listings').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function adminUpdateSellerListingStatus(id, status) {
+    const sb = await client();
+    const { error } = await sb.from('seller_listings').update({ status }).eq('id', id);
+    if (error) throw error;
+  }
+
+  async function adminDeleteSellerListing(id) {
+    const sb = await client();
+    const { error } = await sb.from('seller_listings').delete().eq('id', id);
+    if (error) throw error;
   }
 
   // ════════════════════════════════════════
@@ -883,6 +944,8 @@ const SupabaseAPI = (() => {
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,
+    createSellerListing, getMySellerListings,
+    adminGetSellerListings, adminUpdateSellerListingStatus, adminDeleteSellerListing,
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,

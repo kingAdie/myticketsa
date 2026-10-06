@@ -14,9 +14,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=accommodation&signup=1'); return; }
 
   const PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
 
@@ -160,6 +158,7 @@
     title:       'List accommodation',
     steps,
     draftTitleField: 'name',
+    notifyKind:  'accommodation',
     submitLabel: 'Submit for review',
     exitHref:    'dashboard.html?tab=listings',
 

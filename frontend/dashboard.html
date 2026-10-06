@@ -356,11 +356,6 @@
     window.location.replace('index.html');
     return;
   }
-  var role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') {
-    // Regular customers go to their tickets page, not here
-    window.location.replace('my-tickets.html');
-  }
 })();
 
 /* ============================================================
@@ -616,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
      Reads through existing SupabaseAPI calls only.
      ========================================================== */
 
-  var HUB = { loaded: {}, events: [], accs: [], reqs: [], sales: [], drafts: [] };
+  var HUB = { loaded: {}, events: [], accs: [], others: [], reqs: [], sales: [], drafts: [] };
 
   var CAT_META = {
     event:         { name: 'Event',         icon: '🎟️', href: 'sell-event.html' },
@@ -649,18 +644,20 @@ document.addEventListener('DOMContentLoaded', function() {
       SupabaseAPI.getEvents({ organiserId: user.id }),
       SupabaseAPI.getMyAccommodations ? SupabaseAPI.getMyAccommodations() : Promise.resolve([]),
       SupabaseAPI.getMyServiceRequests(),
-      SupabaseAPI.getSalesForMyEvents ? SupabaseAPI.getSalesForMyEvents() : Promise.resolve([])
+      SupabaseAPI.getSalesForMyEvents ? SupabaseAPI.getSalesForMyEvents() : Promise.resolve([]),
+      SupabaseAPI.getMySellerListings ? SupabaseAPI.getMySellerListings() : Promise.resolve([])
     ]);
     HUB.events = r[0].status === 'fulfilled' ? (r[0].value || []) : [];
     HUB.accs   = r[1].status === 'fulfilled' ? (r[1].value || []) : [];
     HUB.reqs   = r[2].status === 'fulfilled' ? (r[2].value || []) : [];
     HUB.sales  = r[3].status === 'fulfilled' ? (r[3].value || []) : [];
+    HUB.others = r[4].status === 'fulfilled' ? (r[4].value || []) : [];
     HUB.drafts = (typeof WizardCore !== 'undefined') ? WizardCore.listDrafts() : [];
   }
 
   function renderOverview() {
     var user      = Auth.getUser() || {};
-    var listings  = HUB.events.length + HUB.accs.length;
+    var listings  = HUB.events.length + HUB.accs.length + (HUB.others || []).length;
     var published = HUB.events.filter(function (e) { return e.status === 'published'; }).length;
     var isNew     = listings === 0 && HUB.drafts.length === 0;
 
@@ -768,6 +765,18 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
 
+    (HUB.others || []).forEach(function (l) {
+      var isMerch = l.category === 'merchandise';
+      rows.push({
+        kind: isMerch ? 'merchandise' : 'equipment',
+        statusKey: l.status === 'published' ? 'published' : (l.status === 'rejected' ? 'archived' : 'pending'),
+        status: l.status === 'pending' ? 'pending review' : (l.status || 'pending'),
+        icon: isMerch ? '🛍️' : '🔊', title: l.title,
+        category: isMerch ? 'Merchandise' : 'Equipment hire', image: null,
+        meta: 'Submitted ' + hubSince(l.created_at), perf: '', actions: ''
+      });
+    });
+
     HUB.reqs.forEach(function (r) {
       rows.push({
         kind: 'equipment',
@@ -785,7 +794,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var counts = { all: rows.length };
     rows.forEach(function (r) { counts[r.kind] = (counts[r.kind] || 0) + 1; });
     var chips = [['all', 'All']].concat(
-      [['draft', 'Drafts'], ['event', 'Events'], ['accommodation', 'Stays'], ['experience', 'Experiences'], ['equipment', 'Equipment']]
+      [['draft', 'Drafts'], ['event', 'Events'], ['accommodation', 'Stays'], ['experience', 'Experiences'], ['equipment', 'Equipment'], ['merchandise', 'Merch']]
         .filter(function (c) { return counts[c[0]]; }));
     document.getElementById('listingFilters').innerHTML = chips.map(function (c) {
       return '<button class="mk-filter' + (listingFilter === c[0] ? ' is-active' : '') + '" data-lf="' + c[0] + '">' +

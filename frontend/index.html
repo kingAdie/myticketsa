@@ -1179,7 +1179,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     function handleListEvent(e) {
       e.preventDefault();
-      Auth.requireAuth(() => window.location.href = 'organiser.html', 'Sign in to list your event');
+      Auth.requireAuth(() => window.location.href = 'sell-event.html', 'Log in or create a free account to list your event', 'signup');
     }
     document.getElementById('heroListEventBtn')?.addEventListener('click', handleListEvent);
     document.getElementById('footerListEvent')?.addEventListener('click', handleListEvent);

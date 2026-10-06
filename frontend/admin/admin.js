@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById(`section-${name}`)?.classList.remove('hidden');
     document.querySelector(`[data-section="${name}"]`)?.classList.add('active');
 
-    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests', organisers: 'Organisers', customers: 'Customers', accommodations: 'Accommodations', media: 'Media Library' };
+    const titles = { dashboard: 'Dashboard', events: 'Events', tickets: 'Tickets Sold', users: 'Users', requests: 'Service Requests', organisers: 'Organisers', customers: 'Customers', accommodations: 'Accommodations', sellerlistings: 'Equipment & Merch', media: 'Media Library' };
     Utils.setText('#pageTitle', titles[name] || 'Admin');
 
     if (name === 'events')          loadEvents();
@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (name === 'organisers')      loadOrganisers();
     if (name === 'customers')       loadCustomers();
     if (name === 'accommodations')  loadAccommodationsSection();
+    if (name === 'sellerlistings')  loadSellerListings();
     if (name === 'media')           loadMedia();
   }
 
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     item.addEventListener('click', e => { e.preventDefault(); showSection(item.dataset.section); });
   });
 
+  document.getElementById('refreshSellerListingsBtn')?.addEventListener('click', () => loadSellerListings());
   document.getElementById('adminLogoutBtn').addEventListener('click', () => Auth.logout());
   document.getElementById('refreshRequestsBtn')?.addEventListener('click', () => loadServiceRequests());
   document.getElementById('dashRefreshReq')?.addEventListener('click', () => loadDashboardRequests());
@@ -1485,4 +1487,61 @@ function _setZoneLoading(fileInputId, loading, label = 'Uploading…') {
 
 function escH(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+/* ── Equipment & merchandise listings (seller_listings) ─────────────────── */
+let allSellerListings = [];
+
+async function loadSellerListings() {
+  const body = document.getElementById('sellerListingsBody');
+  if (!body) return;
+  body.innerHTML = '<div class="org-empty"><div class="spinner"></div></div>';
+  try {
+    allSellerListings = await SupabaseAPI.adminGetSellerListings();
+    renderSellerListings();
+  } catch (err) {
+    body.innerHTML = `<div class="org-empty"><p>Could not load listings.</p><small>${escH(err.message)}. If the table is missing, run supabase/setup.sql in the Supabase SQL editor.</small></div>`;
+  }
+}
+
+function renderSellerListings() {
+  const body = document.getElementById('sellerListingsBody');
+  if (!allSellerListings.length) {
+    body.innerHTML = '<div class="org-empty"><p>No equipment or merchandise submissions yet.</p></div>';
+    return;
+  }
+  body.innerHTML = allSellerListings.map(l => {
+    const rows = (l.details || []).map(d => `<div style="display:flex;gap:10px;padding:3px 0;font-size:.8125rem;"><span style="color:var(--a-text-2);min-width:150px;">${escH(d.label)}</span><span>${escH(d.value)}</span></div>`).join('');
+    return `
+    <div class="admin-row" style="grid-template-columns:1fr 100px auto;align-items:start;gap:16px;">
+      <div>
+        <div class="admin-row-title">${escH(l.title)} <span class="admin-row-meta">· ${escH(l.category)}</span></div>
+        <div class="admin-row-meta">${escH(l.contact_name || '')} · ${escH(l.contact_email || l.owner_email || '')} · ${escH(l.contact_phone || '')} · ${new Date(l.created_at).toLocaleDateString('en-ZA')}</div>
+        <details style="margin-top:8px;"><summary style="cursor:pointer;font-size:.8125rem;">View details</summary>${rows}</details>
+      </div>
+      <span class="status-badge ${escH(l.status)}">${escH(l.status)}</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${l.status !== 'published' ? `<button class="btn btn-primary btn-sm" onclick="setSellerListingStatus('${escH(l.id)}','published')">Approve</button>` : ''}
+        ${l.status !== 'rejected'  ? `<button class="btn btn-secondary btn-sm" onclick="setSellerListingStatus('${escH(l.id)}','rejected')">Reject</button>` : ''}
+        <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);" onclick="deleteSellerListing('${escH(l.id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function setSellerListingStatus(id, status) {
+  try {
+    await SupabaseAPI.adminUpdateSellerListingStatus(id, status);
+    Utils.showToast(status === 'published' ? 'Listing approved.' : 'Listing updated.', 'success');
+    await loadSellerListings();
+  } catch (err) { Utils.showToast(err.message || 'Could not update listing.', 'error'); }
+}
+
+async function deleteSellerListing(id) {
+  if (!confirm('Delete this listing permanently?')) return;
+  try {
+    await SupabaseAPI.adminDeleteSellerListing(id);
+    await loadSellerListings();
+  } catch (err) { Utils.showToast(err.message || 'Could not delete listing.', 'error'); }
 }

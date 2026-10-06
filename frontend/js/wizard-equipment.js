@@ -18,9 +18,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=equipment&signup=1'); return; }
 
   const user = Auth.getUser() || {};
 

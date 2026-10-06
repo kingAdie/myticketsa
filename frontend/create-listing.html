@@ -101,11 +101,9 @@
 <script src="js/auth.js"></script>
 <script src="js/wizard-core.js"></script>
 <script>
-/* Sellers only. Everyone else gets the explainer, not a locked door. */
+/* Any signed-in account can list. Signed-out visitors are sent to sign up first. */
 (function () {
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  var role = Auth.getUser() && Auth.getUser().role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?signup=1'); }
 })();
 
 document.addEventListener('DOMContentLoaded', function () {

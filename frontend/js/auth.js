@@ -98,7 +98,10 @@ const Auth = (() => {
     } catch { return false; }
   }
   function isAdmin()     { return getUser()?.role === 'admin'; }
-  function isOrganiser() { const r = getUser()?.role; return r === 'organiser' || r === 'admin'; }
+  /* Every signed-in account can list things on the platform; listings are
+     held as `pending` until an admin approves them. Kept under the old name
+     because several pages call it. */
+  function isOrganiser() { return isLoggedIn(); }
 
   function saveSession(token, user) {
     localStorage.setItem(TOKEN_KEY, token);
@@ -138,12 +141,12 @@ const Auth = (() => {
   /* ── requireAuth ──────────────────────────────────────────────────────── */
   let _pendingCallback = null;
 
-  function requireAuth(callback, message) {
+  function requireAuth(callback, message, tab) {
     if (isLoggedIn()) {
       callback();
     } else {
       _pendingCallback = callback;
-      openModal('login', message);
+      openModal(tab || 'login', message);
     }
   }
 
@@ -172,8 +175,8 @@ const Auth = (() => {
     if (user) {
       const adm = isAdmin();
       const org = isOrganiser();
-      const accountHref  = up + ((adm || org) ? 'dashboard.html' : 'my-tickets.html');
-      const accountLabel = (adm || org) ? 'Seller Hub' : 'My TicketsSA';
+      const accountHref  = up + 'dashboard.html';
+      const accountLabel = 'Seller Hub';
       actions.innerHTML = `
         <a href="${accountHref}" class="btn btn-ghost btn-sm">${accountLabel}</a>
         <div class="nav-user" id="navUserMenu">
@@ -199,10 +202,11 @@ const Auth = (() => {
             ${org ? `<a href="${up}create-listing.html" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Create Listing
-            </a>` : `<a href="${up}sell.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-              Sell on TicketsSA
-            </a>`}
+            </a>` : ''}
+            <a href="${up}my-tickets.html" class="nav-user__link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6M2 15a3 3 0 000 6h20a3 3 0 000-6"/></svg>
+              My Tickets
+            </a>
             ${adm ? `<a href="${up}admin/" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               Admin Portal
@@ -592,7 +596,7 @@ const Auth = (() => {
       if (!data.session) {
         closeModal();
         if (typeof Utils !== 'undefined')
-          Utils.showToast('Account created! Check your email to confirm before logging in.', 'success', 6000);
+          Utils.showToast('Account created! We have emailed you a confirmation link. Click it, then log in to start listing.', 'success', 8000);
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }
@@ -609,6 +613,14 @@ const Auth = (() => {
           body:    JSON.stringify({ firstName, lastName, role: 'attendee' }),
         }).catch(() => {});
       }
+
+      // Welcome email to the new user + heads-up to the support inbox.
+      // (When email confirmation is on, auth-callback.html sends these instead.)
+      fetch('/.netlify/functions/notify-signin', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: user.email, firstName: user.firstName, provider: 'email', isNew: true }),
+      }).catch(() => {});
 
       closeModal();
       updateNavbar();

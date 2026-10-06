@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "motion": "^12.38.0"
+  },
+  "scripts": {
+    "dev": "npx netlify-cli@latest dev --dir frontend --functions netlify/functions --port 8888",
+    "serve": "python3 -m http.server 8888 --directory frontend"
   }
 }
