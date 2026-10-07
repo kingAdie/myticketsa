@@ -169,7 +169,7 @@ const SupabaseAPI = (() => {
     const eventId = makeId('EVT');
     const now = new Date().toISOString();
 
-    await db.collection('events').doc(eventId).create({
+    await db.collection('events').doc(eventId).set({
       status:         'pending',
       // Organiser-supplied artwork. Events land as `pending`, so an admin still
       // reviews (and can replace) the image before anything is published.
@@ -260,7 +260,7 @@ const SupabaseAPI = (() => {
     const eventId = makeId('EVT');
     const now = new Date().toISOString();
 
-    await db.collection('events').doc(eventId).create({
+    await db.collection('events').doc(eventId).set({
       status:        options.status   ?? 'published',
       featured:      options.featured ?? false,
       soldOut:       false,
@@ -377,7 +377,7 @@ const SupabaseAPI = (() => {
       status:       'pending',
       createdAt:    new Date().toISOString(),
     };
-    await db.collection('equipmentRequests').doc(id).create(row);
+    await db.collection('equipmentRequests').doc(id).set(row);
     return toRawServiceRequest(id, row);
   }
 
@@ -516,7 +516,7 @@ const SupabaseAPI = (() => {
       bookedAt:          now,
     };
 
-    await db.collection('tickets').doc(ticketId).create(row);
+    await db.collection('tickets').doc(ticketId).set(row);
     return { ...normaliseTicket(ticketId, row), pricing: { subtotal, serviceFee, total } };
   }
 
@@ -739,7 +739,7 @@ const SupabaseAPI = (() => {
       status:            'pending',
       createdAt:         new Date().toISOString(),
     };
-    await db.collection('accommodationBookings').doc(id).create(row);
+    await db.collection('accommodationBookings').doc(id).set(row);
     return toRawBooking(id, row);
   }
 
@@ -781,7 +781,7 @@ const SupabaseAPI = (() => {
       updatedAt:     now,
     };
 
-    await db.collection('accommodations').doc(newId).create(row);
+    await db.collection('accommodations').doc(newId).set(row);
     return { id: newId, ...data, status: 'pending' };
   }
 
@@ -829,7 +829,7 @@ const SupabaseAPI = (() => {
     const user = Auth?.getUser();
     if (!user) throw new Error('Please sign in to submit a listing.');
     const id = makeId('LST');
-    await db.collection('sellerListings').doc(id).create({
+    await db.collection('sellerListings').doc(id).set({
       category:     d.category,
       title:        d.title,
       status:       'pending',
@@ -949,7 +949,7 @@ const SupabaseAPI = (() => {
       await db.collection('accommodations').doc(id).update(row);
     } else {
       const newId = makeId('ACC');
-      await db.collection('accommodations').doc(newId).create({ ...row, ownerId: null, createdAt: row.updatedAt });
+      await db.collection('accommodations').doc(newId).set({ ...row, ownerId: null, createdAt: row.updatedAt });
     }
   }
 
@@ -994,7 +994,7 @@ const SupabaseAPI = (() => {
       await db.collection('touristDestinations').doc(id).update(row);
     } else {
       const newId = makeId('TD');
-      await db.collection('touristDestinations').doc(newId).create({ ...row, createdAt: new Date().toISOString() });
+      await db.collection('touristDestinations').doc(newId).set({ ...row, createdAt: new Date().toISOString() });
     }
   }
 
