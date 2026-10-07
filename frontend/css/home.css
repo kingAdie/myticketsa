@@ -1564,3 +1564,26 @@
 /* Hero card badges never squash each other on narrower tablets */
 .featured-event-card__top{flex-wrap:wrap;gap:8px}
 .featured-event-badge--price{white-space:nowrap}
+
+/* ── Hero carousel: slides swap on their own ─────────────── */
+.featured-event-card.is-carousel{display:block}
+.hero-slides{display:grid;position:relative;min-height:inherit;width:100%}
+.hero-slide{
+  grid-area:1/1;position:relative;display:flex;flex-direction:column;min-height:400px;
+  opacity:0;visibility:hidden;transform:translateX(28px) scale(.985);
+  transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1),visibility 0s linear .7s;
+}
+.hero-slide.is-active{opacity:1;visibility:visible;transform:none;transition-delay:0s;z-index:2}
+.hero-slide.is-leaving{opacity:0;visibility:visible;transform:translateX(-28px) scale(.985);z-index:1}
+.hero-slide .featured-event-card__bg-img{animation:heroKen 6s ease-out both}
+@keyframes heroKen{from{transform:scale(1.08)}to{transform:scale(1)}}
+.hero-ctrl{position:absolute;top:16px;right:18px;z-index:5}
+.hero-dots{display:flex;gap:7px}
+.hero-dots button{width:8px;height:8px;border-radius:999px;border:0;padding:0;cursor:pointer;background:rgba(255,255,255,.35);transition:width .3s,background .3s}
+.hero-dots button.on{width:22px;background:#22C55E}
+.hero-dots button:hover{background:rgba(255,255,255,.7)}
+.hero-dots button.on:hover{background:#22C55E}
+.hero-progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08);z-index:5}
+.hero-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#16A34A,#22C55E)}
+@keyframes heroBar{from{width:0}to{width:100%}}
+@media (prefers-reduced-motion:reduce){.hero-slide{transition:none}.hero-slide .featured-event-card__bg-img{animation:none}}
