@@ -1,0 +1,179 @@
+/* ================================================
+   TicketsSA: Sell page (sell.css)
+   Hero with two clear paths, trust circles,
+   "what do you want to list" chooser, animated
+   step flow. Tokens come from styles.css.
+   ================================================ */
+
+.sl-wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.sl-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.6875rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--green-hi);
+}
+.sl-eyebrow::before{content:"";width:18px;height:2px;background:var(--green);border-radius:2px}
+.sl-title{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  font-size:clamp(1.6rem,4.2vw,2.4rem);margin:10px 0 0;color:var(--text);
+}
+.sl-title .accent{color:var(--green-hi)}
+.sl-sub{margin:12px 0 0;color:var(--text-2);line-height:1.7;font-size:1rem;max-width:560px}
+.sl-section{padding:64px 0 0}
+.sl-center{text-align:center}
+.sl-center .sl-sub{margin-left:auto;margin-right:auto}
+
+/* ── Hero ───────────────────────────────────────── */
+.sl-hero{position:relative;overflow:hidden;padding:72px 0 56px;text-align:center}
+.sl-hero::before{
+  content:"";position:absolute;left:50%;top:-120px;width:820px;height:460px;transform:translateX(-50%);
+  background:radial-gradient(ellipse,rgba(22,163,74,.16),transparent 65%);pointer-events:none;
+}
+.sl-hero > .sl-wrap{position:relative}
+.sl-hero h1{
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:1.05;
+  font-size:clamp(2.1rem,6.4vw,3.75rem);margin:14px 0 0;color:var(--text);
+}
+.sl-hero h1 .accent{color:var(--green-hi)}
+.sl-hero p{margin:18px auto 0;max-width:560px;color:var(--text-2);font-size:1.0625rem;line-height:1.7}
+.sl-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
+.sl-cta .btn{min-height:50px;padding:0 28px;font-size:1rem}
+.sl-cta-note{margin-top:14px;font-size:.875rem;color:var(--text-3)}
+.sl-cta-note button{background:none;border:0;padding:0;color:var(--green-hi);font:inherit;font-weight:700;cursor:pointer}
+.sl-cta-note button:hover{text-decoration:underline}
+
+/* ── Trust circles (why list with us) ───────────── */
+.sl-circles{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:34px;
+}
+.sl-circle{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.sl-circle__ring{
+  width:96px;height:96px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--green-border);background:var(--green-tint);color:var(--green-hi);
+  box-shadow:0 0 0 0 rgba(22,163,74,.25);
+  transition:transform .3s,box-shadow .3s,background .3s;
+}
+.sl-circle:hover .sl-circle__ring{transform:translateY(-4px);background:rgba(22,163,74,.16);box-shadow:0 10px 30px rgba(22,163,74,.2)}
+.sl-circle__ring svg{width:34px;height:34px}
+.sl-circle__label{font-size:.8125rem;font-weight:600;color:var(--text);line-height:1.35;max-width:120px}
+.sl-circle__label small{display:block;margin-top:3px;font-weight:400;color:var(--text-3);font-size:.75rem}
+
+/* ── What would you like to list ────────────────── */
+.sl-types{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:34px}
+.sl-types > .sl-type{flex:1 1 100%}
+@media (min-width:640px){.sl-types > .sl-type{flex:0 0 calc((100% - 16px)/2)}}
+@media (min-width:980px){.sl-types > .sl-type{flex:0 0 calc((100% - 32px)/3)}}
+.sl-type{
+  position:relative;display:flex;flex-direction:column;gap:10px;
+  padding:24px 22px 20px;text-align:left;cursor:pointer;
+  background:var(--bg-2);border:1px solid var(--b1);border-radius:var(--r4);
+  color:inherit;font-family:inherit;text-decoration:none;
+  transition:transform .25s,border-color .25s,box-shadow .25s,background .25s;
+}
+.sl-type:hover,.sl-type:focus-visible{
+  outline:none;transform:translateY(-4px);border-color:var(--green-border);
+  background:var(--bg-3);box-shadow:0 14px 36px rgba(0,0,0,.45),0 0 0 1px rgba(22,163,74,.12);
+}
+.sl-type--pick{border-color:var(--green);box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+.sl-type__icon{
+  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:1.55rem;background:var(--bg-4);
+}
+.sl-type:hover .sl-type__icon{background:rgba(22,163,74,.15)}
+.sl-type__name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.0625rem;font-weight:700;color:var(--text)}
+.sl-type__desc{font-size:.875rem;line-height:1.55;color:var(--text-2);flex:1}
+.sl-type__go{font-size:.875rem;font-weight:700;color:var(--green-hi);display:inline-flex;gap:6px;align-items:center}
+.sl-type__go span{transition:transform .2s}
+.sl-type:hover .sl-type__go span{transform:translateX(4px)}
+
+/* ── Animated step flow ─────────────────────────── */
+.sl-flow{position:relative;margin-top:44px;padding:8px 0 0}
+.sl-flow__steps{
+  list-style:none;margin:0;padding:0;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;position:relative;
+}
+/* the track runs through the centres of the four circles */
+.sl-flow__track{
+  position:absolute;left:12.5%;right:12.5%;top:27px;height:3px;border-radius:3px;
+  background:var(--b2);overflow:hidden;
+}
+.sl-flow__track::before{ /* constant flowing light */
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,var(--green-hi) 45%,transparent 90%);
+  background-size:30% 100%;background-repeat:no-repeat;
+  animation:slFlow 3.2s linear infinite;
+}
+@keyframes slFlow{from{background-position:-40% 0}to{background-position:140% 0}}
+.sl-step{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:0 6px}
+.sl-step__num{
+  position:relative;z-index:1;width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;
+  background:var(--bg-2);color:var(--text-2);border:2px solid var(--b2);
+  animation:slStepOn 9.6s ease-in-out infinite;
+}
+.sl-step:nth-child(1) .sl-step__num{animation-delay:0s}
+.sl-step:nth-child(2) .sl-step__num{animation-delay:2.4s}
+.sl-step:nth-child(3) .sl-step__num{animation-delay:4.8s}
+.sl-step:nth-child(4) .sl-step__num{animation-delay:7.2s}
+@keyframes slStepOn{
+  0%{background:var(--bg-2);color:var(--text-2);border-color:var(--b2);box-shadow:0 0 0 0 rgba(34,197,94,0);transform:scale(1)}
+  6%,22%{background:var(--green);color:#fff;border-color:var(--green-hi);box-shadow:0 0 0 8px rgba(34,197,94,.16);transform:scale(1.08)}
+  30%,100%{background:var(--bg-2);color:var(--text-2);border-color:var(--b2);box-shadow:0 0 0 0 rgba(34,197,94,0);transform:scale(1)}
+}
+.sl-step__icon{font-size:1.4rem;margin-top:14px}
+.sl-step__title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--text);margin-top:2px}
+.sl-step__body{font-size:.875rem;line-height:1.6;color:var(--text-2);max-width:230px}
+
+/* reveal on scroll */
+.sl-rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.sl-rv.in{opacity:1;transform:none}
+
+/* ── Closing band ───────────────────────────────── */
+.sl-band{
+  margin-top:72px;padding:46px 24px;border-radius:var(--r5);text-align:center;
+  background:linear-gradient(135deg,#15803D,#16A34A 55%,#22C55E);color:#fff;
+  box-shadow:0 20px 60px rgba(22,163,74,.25);
+}
+.sl-band h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(1.4rem,3.6vw,2rem);letter-spacing:-.02em;margin:0}
+.sl-band p{margin:10px auto 0;max-width:520px;color:#fff;line-height:1.65}
+.sl-band .btn{margin-top:22px;background:#fff;color:#14532D;border:0;min-height:50px;padding:0 30px;font-weight:800}
+.sl-band .btn:hover{background:#F0FDF4}
+
+.sl-buy{
+  margin:28px 0 72px;padding:22px 24px;border:1px solid var(--b1);border-radius:var(--r4);background:var(--bg-2);
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.sl-buy strong{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.0625rem;color:var(--text)}
+.sl-buy span{font-size:.9rem;color:var(--text-2)}
+.sl-buy__links{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width:900px){
+  .sl-circles{grid-template-columns:repeat(3,1fr);gap:26px 12px}
+}
+@media (max-width:760px){
+  .sl-hero{padding:48px 0 40px}
+  .sl-section{padding-top:52px}
+  .sl-cta .btn{width:100%}
+  .sl-circles{grid-template-columns:repeat(2,1fr)}
+  .sl-circle__ring{width:84px;height:84px}
+  /* steps stack vertically, the track runs down the left */
+  .sl-flow__steps{grid-template-columns:1fr;gap:26px}
+  .sl-flow__track{left:27px;right:auto;top:28px;bottom:28px;width:3px;height:auto}
+  .sl-flow__track::before{
+    background:linear-gradient(180deg,transparent,var(--green-hi) 45%,transparent 90%);
+    background-size:100% 30%;animation-name:slFlowV;
+  }
+  @keyframes slFlowV{from{background-position:0 -40%}to{background-position:0 140%}}
+  .sl-step{flex-direction:row;flex-wrap:wrap;align-items:flex-start;text-align:left;column-gap:16px;padding:0}
+  .sl-step__num{flex-shrink:0}
+  .sl-step__icon{display:none}
+  .sl-step__text{flex:1;min-width:0}
+  .sl-step__title{margin-top:4px}
+  .sl-step__body{max-width:none}
+  .sl-buy{flex-direction:column;align-items:flex-start}
+}
+@media (prefers-reduced-motion:reduce){
+  .sl-flow__track::before,.sl-step__num{animation:none}
+  .sl-rv{opacity:1;transform:none;transition:none}
+}
