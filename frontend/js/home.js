@@ -28,48 +28,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!card || typeof SupabaseAPI === 'undefined' || !SupabaseAPI.getHeroSpots) return;
     let spots = [];
     try { spots = await SupabaseAPI.getHeroSpots(); } catch { return; }
-    if (!spots.length) return;
+    if (!spots.length) return;                       // nothing chosen: keep the default card
 
-    const fallback = card.innerHTML;
-    card.innerHTML = `
-      <div class="featured-event-card__bg" id="heroSpotBg"></div>
+    /* Slides: every item the admin picked, then the default "List your lodge" card.
+       They swap on their own, so even a single pick keeps the hero moving. */
+    const defaultSlide = card.innerHTML;
+    const slideFor = s => `
+      <div class="featured-event-card__bg">${s.image ? `<img class="featured-event-card__bg-img" src="${esc(s.image)}" alt="" onerror="this.remove()"/>` : ''}</div>
       <div class="featured-event-card__overlay"></div>
       <div class="featured-event-card__inner">
         <div class="featured-event-card__top">
-          <span class="featured-event-badge--price" id="heroSpotLabel"></span>
-          <span class="featured-event-region" id="heroSpotWhere"></span>
+          <span class="featured-event-badge--price">${esc(s.label)}</span>
+          ${s.where ? `<span class="featured-event-region">${esc(s.where)}</span>` : ''}
         </div>
-        <h2 class="featured-event-title" id="heroSpotTitle" style="font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.1;"></h2>
+        <h2 class="featured-event-title" style="font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.1;">${esc(s.title)}</h2>
         <div class="featured-event-details">
-          <div class="featured-event-row"><span class="featured-event-label">Price</span><span class="featured-event-value" id="heroSpotPrice"></span></div>
+          <div class="featured-event-row"><span class="featured-event-label">Price</span><span class="featured-event-value">${esc(s.price)}</span></div>
         </div>
-        <div class="featured-event-actions" style="align-items:center;">
-          <a href="#" class="btn btn-primary btn-lg" id="heroSpotLink">View →</a>
-          <span id="heroSpotDots" style="display:flex;gap:6px;margin-left:auto;"></span>
+        <div class="featured-event-actions">
+          <a href="${esc(s.href)}" class="btn btn-primary btn-lg">${s.kind === 'accommodation' ? 'View stay' : 'View event'} →</a>
         </div>
       </div>`;
-    const $ = id => document.getElementById(id);
-    const dots = $('heroSpotDots');
-    dots.innerHTML = spots.map((_, i) => `<button type="button" aria-label="Show item ${i + 1}" data-i="${i}" style="width:9px;height:9px;border-radius:50%;border:0;padding:0;cursor:pointer;background:rgba(255,255,255,.35)"></button>`).join('');
-    let cur = 0, timer = null;
+    const slides = spots.map(slideFor).concat([defaultSlide]);
+
+    card.classList.add('is-carousel');
+    card.innerHTML = `
+      <div class="hero-slides">${slides.map((h, i) => `<div class="hero-slide${i === 0 ? ' is-active' : ''}" aria-hidden="${i === 0 ? 'false' : 'true'}">${h}</div>`).join('')}</div>
+      <div class="hero-ctrl">
+        <div class="hero-dots">${slides.map((_, i) => `<button type="button" aria-label="Show slide ${i + 1}" data-i="${i}"></button>`).join('')}</div>
+      </div>
+      <div class="hero-progress"><i></i></div>`;
+
+    const els  = [...card.querySelectorAll('.hero-slide')];
+    const dots = [...card.querySelectorAll('.hero-dots button')];
+    const bar  = card.querySelector('.hero-progress i');
+    const INTERVAL = 5000;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cur = 0, timer = null, paused = false;
+
     function show(i) {
-      cur = i;
-      const s = spots[i];
-      $('heroSpotBg').innerHTML = s.image ? `<img class="featured-event-card__bg-img" src="${esc(s.image)}" alt="" onerror="this.remove()"/>` : '';
-      $('heroSpotLabel').textContent = s.label;
-      $('heroSpotWhere').textContent = s.where;
-      $('heroSpotTitle').textContent = s.title;
-      $('heroSpotPrice').textContent = s.price;
-      $('heroSpotLink').href = s.href;
-      $('heroSpotLink').textContent = s.kind === 'accommodation' ? 'View stay →' : 'View event →';
-      dots.querySelectorAll('button').forEach((b, k) => { b.style.background = k === i ? '#22C55E' : 'rgba(255,255,255,.35)'; });
+      els[cur].classList.remove('is-active'); els[cur].classList.add('is-leaving'); els[cur].setAttribute('aria-hidden', 'true');
+      const old = els[cur]; setTimeout(() => old.classList.remove('is-leaving'), 700);
+      cur = (i + els.length) % els.length;
+      els[cur].classList.add('is-active'); els[cur].setAttribute('aria-hidden', 'false');
+      dots.forEach((d, k) => d.classList.toggle('on', k === cur));
+      restartBar();
     }
-    function restart() {
+    function restartBar() {
+      if (!bar) return;
+      bar.style.animation = 'none'; void bar.offsetWidth;
+      if (!reduce && !paused) bar.style.animation = `heroBar ${INTERVAL}ms linear forwards`;
+    }
+    function schedule() {
       clearInterval(timer);
-      if (spots.length > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) timer = setInterval(() => show((cur + 1) % spots.length), 6000);
+      if (reduce || els.length < 2) return;
+      timer = setInterval(() => { if (!paused && !document.hidden) show(cur + 1); }, INTERVAL);
     }
-    dots.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { show(+b.dataset.i); restart(); } });
-    show(0); restart();
+    dots.forEach(d => d.addEventListener('click', () => { show(+d.dataset.i); schedule(); }));
+    card.addEventListener('mouseenter', () => { paused = true; bar.style.animationPlayState = 'paused'; });
+    card.addEventListener('mouseleave', () => { paused = false; restartBar(); schedule(); });
+    card.addEventListener('focusin',  () => { paused = true; });
+    card.addEventListener('focusout', () => { paused = false; });
+    // touch: swipe left/right
+    let x0 = null;
+    card.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+    card.addEventListener('touchend', e => {
+      if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) { show(cur + (dx < 0 ? 1 : -1)); schedule(); }
+    }, { passive: true });
+
+    dots[0].classList.add('on'); restartBar(); schedule();
   }
 
   /* ── Search ────────────────────────────────────────────────────────── */
