@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ── Load events from Supabase (for dynamic grid if present) ─────── */
   await EventsData.init();
   renderLiveEvents();
+  renderHeroSpots();
 
   /* Published events (approved by an admin) appear ahead of the "list your own" tile. */
   function renderLiveEvents() {
@@ -18,6 +19,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!grid) return;
     const cta = grid.querySelector('.ev-empty-cta');
     EventsData.getAll().slice(0, 6).forEach(ev => grid.insertBefore(createEventCard(ev), cta));
+  }
+
+  /* The events and stays an admin has switched on for the hero replace the
+     default "list your lodge" card. With none chosen, the default card stays. */
+  async function renderHeroSpots() {
+    const card = document.getElementById('heroSpot');
+    if (!card || typeof SupabaseAPI === 'undefined' || !SupabaseAPI.getHeroSpots) return;
+    let spots = [];
+    try { spots = await SupabaseAPI.getHeroSpots(); } catch { return; }
+    if (!spots.length) return;
+
+    const fallback = card.innerHTML;
+    card.innerHTML = `
+      <div class="featured-event-card__bg" id="heroSpotBg"></div>
+      <div class="featured-event-card__overlay"></div>
+      <div class="featured-event-card__inner">
+        <div class="featured-event-card__top">
+          <span class="featured-event-badge--price" id="heroSpotLabel"></span>
+          <span class="featured-event-region" id="heroSpotWhere"></span>
+        </div>
+        <h2 class="featured-event-title" id="heroSpotTitle" style="font-size:clamp(1.6rem,3vw,2.4rem);line-height:1.1;"></h2>
+        <div class="featured-event-details">
+          <div class="featured-event-row"><span class="featured-event-label">Price</span><span class="featured-event-value" id="heroSpotPrice"></span></div>
+        </div>
+        <div class="featured-event-actions" style="align-items:center;">
+          <a href="#" class="btn btn-primary btn-lg" id="heroSpotLink">View →</a>
+          <span id="heroSpotDots" style="display:flex;gap:6px;margin-left:auto;"></span>
+        </div>
+      </div>`;
+    const $ = id => document.getElementById(id);
+    const dots = $('heroSpotDots');
+    dots.innerHTML = spots.map((_, i) => `<button type="button" aria-label="Show item ${i + 1}" data-i="${i}" style="width:9px;height:9px;border-radius:50%;border:0;padding:0;cursor:pointer;background:rgba(255,255,255,.35)"></button>`).join('');
+    let cur = 0, timer = null;
+    function show(i) {
+      cur = i;
+      const s = spots[i];
+      $('heroSpotBg').innerHTML = s.image ? `<img class="featured-event-card__bg-img" src="${esc(s.image)}" alt="" onerror="this.remove()"/>` : '';
+      $('heroSpotLabel').textContent = s.label;
+      $('heroSpotWhere').textContent = s.where;
+      $('heroSpotTitle').textContent = s.title;
+      $('heroSpotPrice').textContent = s.price;
+      $('heroSpotLink').href = s.href;
+      $('heroSpotLink').textContent = s.kind === 'accommodation' ? 'View stay →' : 'View event →';
+      dots.querySelectorAll('button').forEach((b, k) => { b.style.background = k === i ? '#22C55E' : 'rgba(255,255,255,.35)'; });
+    }
+    function restart() {
+      clearInterval(timer);
+      if (spots.length > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) timer = setInterval(() => show((cur + 1) % spots.length), 6000);
+    }
+    dots.addEventListener('click', e => { const b = e.target.closest('button'); if (b) { show(+b.dataset.i); restart(); } });
+    show(0); restart();
   }
 
   /* ── Search ────────────────────────────────────────────────────────── */

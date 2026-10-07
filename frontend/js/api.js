@@ -72,6 +72,7 @@ const SupabaseAPI = (() => {
       image:          doc.image      || null,
       price:          parseFloat(doc.price) || 0,
       featured:       !!doc.featured,
+      hero:           !!doc.hero,
       sold_out:       !!doc.soldOut,
       organiser:      doc.organiserName,
       organiserId:    doc.organiserId,
@@ -655,6 +656,7 @@ const SupabaseAPI = (() => {
       reviewNote:   doc.reviewNote    || null,
       ownerId:      doc.ownerId       || null,
       featured:     !!doc.featured,
+      hero:         !!doc.hero,
       status:       doc.status,
       createdAt:    doc.createdAt,
     };
@@ -953,6 +955,39 @@ const SupabaseAPI = (() => {
     }
   }
 
+
+  // ════════════════════════════════════════
+  //  HERO SPOTLIGHT (admin picks what shows in the homepage hero)
+  // ════════════════════════════════════════
+
+  /** Published events and stays an admin has switched on for the hero. */
+  async function getHeroSpots() {
+    const db = await firestoreClient();
+    const pick = c => db.collection(c).where('hero', '==', true).where('status', '==', 'published').limit(6).get();
+    const [ev, ac] = await Promise.all([pick('events'), pick('accommodations')]);
+    const spots = [];
+    ev.docs.forEach(d => {
+      const e = normaliseEvent(d.id, d.data());
+      spots.push({ kind: 'event', id: e.id, title: e.title, image: e.image,
+        label: e.category || 'Event', where: [e.location, e.city].filter(Boolean).join(', '),
+        price: e.price > 0 ? 'From R ' + Math.round(e.price) : 'Free entry', href: 'event.html?id=' + encodeURIComponent(e.id) });
+    });
+    ac.docs.forEach(d => {
+      const a = normaliseAccommodation(d.id, d.data());
+      spots.push({ kind: 'accommodation', id: a.id, title: a.name, image: (a.images || [])[0] || null,
+        label: 'Stay', where: [a.city, a.province].filter(Boolean).join(', '),
+        price: a.priceFrom > 0 ? 'From R ' + Math.round(a.priceFrom) + ' / night' : 'Enquire for price', href: 'accommodation.html?id=' + encodeURIComponent(a.id) });
+    });
+    return spots;
+  }
+
+  /** Admin only (enforced by Firestore rules): show or hide a listing in the hero. */
+  async function adminSetHero(kind, id, value) {
+    const db = await firestoreClient();
+    const coll = kind === 'accommodation' ? 'accommodations' : 'events';
+    await db.collection(coll).doc(id).update({ hero: !!value, updatedAt: new Date().toISOString() });
+  }
+
   async function adminDeleteAccommodation(id) {
     const db = await firestoreClient();
     await db.collection('accommodations').doc(id).delete();
@@ -1015,6 +1050,7 @@ const SupabaseAPI = (() => {
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
+    getHeroSpots, adminSetHero,
     adminGetAccommodationBookings, adminUpdateBookingStatus,
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,

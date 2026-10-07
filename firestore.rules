@@ -74,7 +74,8 @@ service cloud.firestore {
       allow create: if (isSignedIn()
                         && request.resource.data.organiserId == request.auth.uid
                         && request.resource.data.status == 'pending'
-                        && request.resource.data.featured == false)
+                        && request.resource.data.featured == false
+                        && request.resource.data.get('hero', false) == false)
                     || isAdmin();
 
       // An owner can edit their own event, but can't self-publish or
@@ -87,7 +88,8 @@ service cloud.firestore {
       allow update: if (isOwner(resource.data.organiserId)
                         && (request.resource.data.status == resource.data.status
                             || (resource.data.status == 'rejected' && request.resource.data.status == 'pending'))
-                        && request.resource.data.featured == resource.data.featured)
+                        && request.resource.data.featured == resource.data.featured
+                        && request.resource.data.get('hero', false) == resource.data.get('hero', false))
                     || isAdmin();
 
       allow delete: if isOwner(resource.data.organiserId) || isAdmin();
@@ -143,13 +145,15 @@ service cloud.firestore {
       allow create: if (isSignedIn()
                         && request.resource.data.ownerId == request.auth.uid
                         && request.resource.data.status == 'pending'
-                        && request.resource.data.featured == false)
+                        && request.resource.data.featured == false
+                        && request.resource.data.get('hero', false) == false)
                     || isAdmin();
 
       // Same self-publish/self-feature protection as events.
       allow update: if (isOwner(resource.data.ownerId)
                         && request.resource.data.status   == resource.data.status
-                        && request.resource.data.featured == resource.data.featured)
+                        && request.resource.data.featured == resource.data.featured
+                        && request.resource.data.get('hero', false) == resource.data.get('hero', false))
                     || isAdmin();
 
       allow delete: if isOwner(resource.data.ownerId) || isAdmin();

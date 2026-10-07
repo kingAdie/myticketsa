@@ -242,6 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
           <span class="status-badge ${e.status}">${e.status}</span>
           ${e.featured ? '<span class="badge badge-blue" style="font-size:.6rem;">★ Featured</span>' : ''}
+          ${e.hero ? '<span class="badge badge-green" style="font-size:.6rem;">🎯 In hero</span>' : ''}
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <span style="font-weight:700;color:var(--green);font-size:.875rem;min-width:56px;text-align:right;">
@@ -256,6 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <button class="event-action-btn edit-adm-ev" data-id="${e.id}">✏️ Edit</button>
               ${e.status !== 'published' ? `<button class="event-action-btn approve-ev" data-id="${e.id}">✅ Publish</button>` : `<button class="event-action-btn unpublish-ev" data-id="${e.id}">⏸ Unpublish</button>`}
               ${!e.featured ? `<button class="event-action-btn feature-ev" data-id="${e.id}">⭐ Feature</button>` : `<button class="event-action-btn unfeature-ev" data-id="${e.id}">☆ Unfeature</button>`}
+              ${e.status === 'published' ? (!e.hero ? `<button class="event-action-btn hero-ev" data-id="${e.id}">🎯 Show in hero</button>` : `<button class="event-action-btn unhero-ev" data-id="${e.id}">🎯 Remove from hero</button>`) : ''}
               <button class="event-action-btn reject-ev" data-id="${e.id}">❌ Reject</button>
               <button class="event-action-btn view-poster-ev" data-id="${e.id}" data-img="${escH(e.image || '')}">🖼 View Poster</button>
               <button class="event-action-btn delete-ev" data-id="${e.id}" style="color:#EF4444;">🗑 Delete</button>
@@ -282,6 +284,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.querySelectorAll('.approve-ev')  .forEach(b => b.addEventListener('click', () => approveEvent(b.dataset.id)));
     body.querySelectorAll('.unpublish-ev').forEach(b => b.addEventListener('click', () => setEventStatus(b.dataset.id, 'pending')));
     body.querySelectorAll('.reject-ev')   .forEach(b => b.addEventListener('click', () => openReview('event', b.dataset.id)));   // declining needs a reason for the seller
+    body.querySelectorAll('.hero-ev')     .forEach(b => b.addEventListener('click', () => toggleHero('event', b.dataset.id, true)));
+    body.querySelectorAll('.unhero-ev')   .forEach(b => b.addEventListener('click', () => toggleHero('event', b.dataset.id, false)));
     body.querySelectorAll('.feature-ev')  .forEach(b => b.addEventListener('click', () => toggleFeatured(b.dataset.id, true)));
     body.querySelectorAll('.unfeature-ev').forEach(b => b.addEventListener('click', () => toggleFeatured(b.dataset.id, false)));
     body.querySelectorAll('.delete-ev')   .forEach(b => b.addEventListener('click', () => deleteEvent(b.dataset.id)));
@@ -315,6 +319,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadStats(); loadPendingList(); loadEvents();
     } catch (err) { Utils.showToast(err.message || 'Server error.', 'error'); }
   }
+
+  async function toggleHero(kind, id, value) {
+    try {
+      await SupabaseAPI.adminSetHero(kind, id, value);
+      Utils.showToast(value ? 'Now showing in the homepage hero.' : 'Removed from the homepage hero.', 'success');
+      if (kind === 'accommodation') loadAccListings(); else loadEvents();
+    } catch (err) { Utils.showToast(err.message || 'Server error.', 'error'); }
+  }
+  window.toggleHero = toggleHero;
 
   async function toggleFeatured(id, featured) {
     try {
@@ -888,7 +901,7 @@ function renderAccListings(list) {
     return;
   }
   body.innerHTML = list.map(a => `
-    <div class="admin-row" style="grid-template-columns:60px 1fr 130px 80px 190px;align-items:center;">
+    <div class="admin-row" style="grid-template-columns:60px 1fr 130px 80px 330px;align-items:center;">
       <img src="${escH(a.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60')}"
         alt="${escH(a.name)}" class="admin-row-thumb" style="height:44px;border-radius:8px;"
         onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=100&q=60'"/>
@@ -898,8 +911,9 @@ function renderAccListings(list) {
       </div>
       <div class="admin-row-meta">${a.priceFrom > 0 ? `From R ${a.priceFrom.toFixed(0)}/night` : 'Inquiry only'}</div>
       <span class="status-badge ${a.status}">${a.status}</span>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" onclick="openReview('accommodation','${escH(a.id)}')">Review</button>
+        ${a.status === 'published' ? `<button class="btn btn-secondary btn-sm" onclick="toggleHero('accommodation','${escH(a.id)}',${!a.hero})">${a.hero ? '🎯 In hero · remove' : '🎯 Show in hero'}</button>` : ''}
         <button class="btn btn-secondary btn-sm" onclick="openAccModal('${escH(a.id)}')">Edit</button>
         <button class="btn btn-sm" style="background:var(--a-red-bg);color:var(--a-red);border:1px solid rgba(239,68,68,.3);"
           onclick="deleteAcc('${escH(a.id)}')">Delete</button>
