@@ -6,17 +6,17 @@
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "no-cache"
 
 [[headers]]
   for = "/*"
@@ -72,6 +72,31 @@
   force  = true
 
 # ── Clean URL rewrites serve the right .html file ───────
+[[redirects]]
+  from = "/index"
+  to   = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/login"
+  to   = "/admin/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms"
+  to   = "/terms.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy"
+  to   = "/privacy.html"
+  status = 200
+
+[[redirects]]
+  from = "/refunds"
+  to   = "/refunds.html"
+  status = 200
+
 [[redirects]]
   from = "/event"
   to   = "/event.html"
@@ -189,11 +214,6 @@
   status = 200
 
 [[redirects]]
-  from = "/auth-callback"
-  to   = "/auth-callback.html"
-  status = 200
-
-[[redirects]]
   from = "/accommodations"
   to   = "/accommodations.html"
   status = 200
@@ -201,16 +221,6 @@
 [[redirects]]
   from = "/accommodation"
   to   = "/accommodation.html"
-  status = 200
-
-[[redirects]]
-  from = "/empire-travel"
-  to   = "/empire-travel.html"
-  status = 200
-
-[[redirects]]
-  from = "/mbombela-hospitality"
-  to   = "/mbombela-hospitality.html"
   status = 200
 
 [[redirects]]

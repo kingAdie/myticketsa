@@ -1,10 +1,15 @@
 
 /* ================================================
-   TicketsSA Auth Module v7
-   - Login / Signup / Forgot Password via Supabase
+   TicketsSA Auth Module v8
+   - Login / Signup / Forgot Password via Firebase Auth
    - Google OAuth (+ extensible to other providers)
-   - Cloudflare Turnstile CAPTCHA
+   - Cloudflare Turnstile CAPTCHA (verified server-side —
+     Firebase Auth has no built-in captchaToken passthrough)
    - Password show/hide toggle
+
+   Migrated from Supabase Auth. The public API this module
+   returns is unchanged on purpose, so every other page/script
+   that calls Auth.* keeps working without modification.
    ================================================ */
 
 const Auth = (() => {
@@ -12,9 +17,19 @@ const Auth = (() => {
   const TOKEN_KEY = 'mt_token';
   const USER_KEY  = 'mt_user';
 
-  // ── Supabase ──────────────────────────────────────────────────────────────
-  const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+  // ── Firebase ──────────────────────────────────────────────────────────────
+  // Firebase Console → Project settings → General → Your apps → Web app.
+  // These values are public/safe to embed client-side (same trust model as
+  // the old Supabase anon key) — fill them in from your `tickets-sa` project.
+  const firebaseConfig = {
+    apiKey:            'AIzaSyBG0O0MIOGa_8X1H-xUS1mz9r41TateJBE',
+    authDomain:        'tickets-sa.firebaseapp.com',
+    projectId:         'tickets-sa',
+    storageBucket:     'tickets-sa.firebasestorage.app',
+    messagingSenderId: '1033978636742',
+    appId:             '1:1033978636742:web:ea98ebe89d6daf3ce32ac7',
+  };
+  const FIREBASE_SDK_VERSION = '10.13.2';
 
   // ── Cloudflare Turnstile CAPTCHA ─────────────────────────────────────────
   // TO ENABLE:
@@ -22,8 +37,11 @@ const Auth = (() => {
   //  2. Add your domains (ticketssa.co.za, your-site.netlify.app, localhost)
   //  3. Paste your SITE KEY below:
   const TURNSTILE_SITE_KEY = '0x4AAAAAADrXDvUXgmgxhbAx';
-  //  4. In Supabase Dashboard → Authentication → Bot and Abuse Protection
-  //     select "Turnstile by Cloudflare" and paste your SECRET KEY there.
+  //  4. Set the matching SECRET KEY as TURNSTILE_SECRET_KEY in Netlify env
+  //     vars — netlify/functions/verify-turnstile.js checks tokens against it
+  //     server-side (Firebase Auth, unlike Supabase, has no built-in captcha
+  //     passthrough, so this project verifies the token itself before ever
+  //     calling Firebase).
   //  Leave as 'YOUR_TURNSTILE_SITE_KEY' to skip CAPTCHA (forms still work).
   const RC_ENABLED = TURNSTILE_SITE_KEY && !TURNSTILE_SITE_KEY.startsWith('YOUR_');
 
@@ -64,21 +82,138 @@ const Auth = (() => {
     }
   }
 
-  // ── Supabase lazy-loader ──────────────────────────────────────────────────
-  let _sb = null;
-  async function getSupabase() {
-    if (_sb) return _sb;
-    if (!window.supabase) {
-      await new Promise((resolve, reject) => {
-        const s   = document.createElement('script');
-        s.src     = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-        s.onload  = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
+  /* Why the last captcha check failed: 'invalid' (the token was rejected) or
+     'unavailable' (the verify-turnstile function is missing/misconfigured/offline).
+     Lets the login form tell people the truth instead of "try again" forever. */
+  let _captchaFailure = 'invalid';
+  const CAPTCHA_UNAVAILABLE_MSG = 'Login is temporarily unavailable: the security check service could not be reached. Please try again in a few minutes, or email support@ticketssa.co.za.';
+
+  async function _verifyTurnstile(token) {
+    _captchaFailure = 'invalid';
+    try {
+      const res = await fetch('/.netlify/functions/verify-turnstile', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ token }),
+      });
+      if (!res.ok) {
+        // 400 = bad request/token; anything else (404 not deployed, 500 secret missing, 502) = service problem
+        if (res.status !== 400) _captchaFailure = 'unavailable';
+        return false;
+      }
+      const data = await res.json();
+      return !!data.success;
+    } catch (_) { _captchaFailure = 'unavailable'; return false; }
+  }
+
+  function _captchaFailureMessage() {
+    return _captchaFailure === 'unavailable' ? CAPTCHA_UNAVAILABLE_MSG : 'CAPTCHA check failed. Please try again.';
+  }
+
+  // ── Firebase lazy-loader ──────────────────────────────────────────────────
+  function _loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s   = document.createElement('script');
+      s.src     = src;
+      s.onload  = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  let _fbReady = null;
+  let _listenerAttached = false;
+
+  async function getFirebase() {
+    if (_fbReady) return _fbReady;
+    _fbReady = (async () => {
+      if (!window.firebase) {
+        await _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app-compat.js`);
+        await Promise.all([
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-auth-compat.js`),
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore-compat.js`),
+          _loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-storage-compat.js`),
+        ]);
+      }
+      if (!window.firebase.apps.length) window.firebase.initializeApp(firebaseConfig);
+
+      // Keep mt_token/mt_user fresh silently in the background (Firebase ID
+      // tokens expire hourly, same as Supabase's did, but here we refresh
+      // instead of forcing re-login). Only touches storage if a session this
+      // module recognises is already active — never during the deliberate
+      // sign-out-after-signup window, and never on a page nobody logged into.
+      if (!_listenerAttached) {
+        _listenerAttached = true;
+        window.firebase.auth().onIdTokenChanged(async (firebaseUser) => {
+          if (!firebaseUser) return;
+          try {
+            const idTokenResult = await firebaseUser.getIdTokenResult();
+            const existing = getUser();
+            if (existing && existing.id === firebaseUser.uid) {
+              saveSession(idTokenResult.token, { ...existing, role: idTokenResult.claims.role || 'attendee' });
+            }
+          } catch (_) {}
+        });
+      }
+
+      return window.firebase;
+    })();
+    return _fbReady;
+  }
+
+  /** Ensures a users/{uid} Firestore doc exists, always self-assigning
+   *  role:'attendee' — Security Rules only allow a user to create their own
+   *  doc with that exact role, so this can never be used to self-promote. */
+  async function _ensureUserDoc(firebaseUser, extra = {}) {
+    const fb  = await getFirebase();
+    const ref = fb.firestore().collection('users').doc(firebaseUser.uid);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      const fullName = firebaseUser.displayName || '';
+      await ref.set({
+        email:            firebaseUser.email || '',
+        firstName:        extra.firstName || fullName.split(' ')[0] || '',
+        lastName:         extra.lastName  || fullName.split(' ').slice(1).join(' ') || '',
+        organisationName: null,
+        role:             'attendee',
+        createdAt:        fb.firestore.FieldValue.serverTimestamp(),
       });
     }
-    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return _sb;
+  }
+
+  async function _buildUserRecord(firebaseUser, idTokenResult) {
+    let profile = {};
+    try {
+      const fb   = await getFirebase();
+      const snap = await fb.firestore().collection('users').doc(firebaseUser.uid).get();
+      if (snap.exists) profile = snap.data() || {};
+    } catch (_) { /* best-effort; fall back to Auth-provided name below */ }
+
+    const fullName = firebaseUser.displayName || '';
+    return {
+      id:               firebaseUser.uid,
+      email:            firebaseUser.email,
+      role:             idTokenResult.claims.role || 'attendee',
+      firstName:        profile.firstName || fullName.split(' ')[0] || '',
+      lastName:         profile.lastName  || fullName.split(' ').slice(1).join(' ') || '',
+      organisationName: profile.organisationName || null,
+      createdAt:        firebaseUser.metadata?.creationTime || null,
+    };
+  }
+
+  function _friendlyAuthError(err) {
+    const map = {
+      'auth/invalid-credential':     'Incorrect email or password.',
+      'auth/user-not-found':         'Incorrect email or password.',
+      'auth/wrong-password':         'Incorrect email or password.',
+      'auth/email-already-in-use':   'An account with this email already exists.',
+      'auth/weak-password':          'Password must be at least 6 characters.',
+      'auth/invalid-email':          'Please enter a valid email address.',
+      'auth/popup-closed-by-user':   'Sign-in was cancelled.',
+      'auth/too-many-requests':      'Too many attempts. Please wait a moment and try again.',
+      'auth/network-request-failed': 'Unable to reach authentication service. Please try again.',
+    };
+    return (err && map[err.code]) || (err && err.message) || 'Something went wrong. Please try again.';
   }
 
   // ── Session helpers ───────────────────────────────────────────────────────
@@ -105,22 +240,8 @@ const Auth = (() => {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
   }
 
-  function formatUser(authUser) {
-    const meta = authUser.user_metadata || {};
-    const fullName = meta.full_name || meta.name || '';
-    return {
-      id:               authUser.id,
-      email:            authUser.email,
-      role:             authUser.app_metadata?.role || meta.role || 'attendee',
-      firstName:        meta.firstName || fullName.split(' ')[0] || '',
-      lastName:         meta.lastName  || fullName.split(' ').slice(1).join(' ') || '',
-      organisationName: meta.organisationName || null,
-      createdAt:        authUser.created_at,
-    };
-  }
-
   function logout() {
-    getSupabase().then(sb => sb.auth.signOut()).catch(() => {});
+    getFirebase().then(fb => fb.auth().signOut()).catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     // Signing out from services/ or admin/ used to land on a 404.
@@ -138,12 +259,12 @@ const Auth = (() => {
   /* ── requireAuth ──────────────────────────────────────────────────────── */
   let _pendingCallback = null;
 
-  function requireAuth(callback, message) {
+  function requireAuth(callback, message, tab) {
     if (isLoggedIn()) {
       callback();
     } else {
       _pendingCallback = callback;
-      openModal('login', message);
+      openModal(tab || 'login', message);
     }
   }
 
@@ -152,6 +273,31 @@ const Auth = (() => {
       const cb = _pendingCallback;
       _pendingCallback = null;
       cb();
+    }
+  }
+
+  /** Shared by login/signup/Google sign-in: builds+saves the session, then
+   *  either resumes whatever action triggered the auth modal, or redirects
+   *  by role. */
+  async function _completeSignIn(firebaseUser, opts = {}) {
+    const idTokenResult = await firebaseUser.getIdTokenResult();
+    const user = await _buildUserRecord(firebaseUser, idTokenResult);
+    saveSession(idTokenResult.token, user);
+    closeModal();
+    updateNavbar();
+    if (typeof Utils !== 'undefined') {
+      Utils.showToast(opts.welcomeMsg || `Welcome back, ${user.firstName || user.email.split('@')[0]}!`, 'success');
+    }
+
+    if (_pendingCallback) {
+      _runPending();
+    } else {
+      const d  = window.location.pathname.replace(/^\/|\/$/g, '').split('/').length - 1;
+      const up = d > 0 ? '../'.repeat(d) : '';
+      const dest = user.role === 'admin'     ? up + 'admin/index.html'
+                 : user.role === 'organiser' ? up + 'dashboard.html'
+                 :                             up + 'index.html';
+      setTimeout(() => window.location.href = dest, 800);
     }
   }
 
@@ -172,37 +318,37 @@ const Auth = (() => {
     if (user) {
       const adm = isAdmin();
       const org = isOrganiser();
-      const accountHref  = up + ((adm || org) ? 'dashboard.html' : 'my-tickets.html');
-      const accountLabel = (adm || org) ? 'Seller Hub' : 'My TicketsSA';
       actions.innerHTML = `
-        <a href="${accountHref}" class="btn btn-ghost btn-sm">${accountLabel}</a>
         <div class="nav-user" id="navUserMenu">
           <button class="btn btn-primary btn-sm nav-user__btn" id="navUserBtn">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            ${escHtml(user.firstName || user.email.split('@')[0])}
+            My TicketsSA
           </button>
           <div class="nav-user__dropdown" id="navUserDropdown">
             <div class="nav-user__name">${escHtml(user.firstName)} ${escHtml(user.lastName)}</div>
             <div class="nav-user__email">${escHtml(user.email)}</div>
             <div class="nav-user__divider"></div>
-            <a href="${up}dashboard.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-              Seller Hub
+            <div class="nav-user__choice-label">I want to&hellip;</div>
+            <a href="${up}my-tickets.html" class="nav-user__link nav-user__link--choice nav-user__link--buy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
+              <span><strong>Buy</strong><br>My Tickets &amp; Bookings</span>
+            </a>
+            <a href="${up}dashboard.html" class="nav-user__link nav-user__link--choice nav-user__link--sell">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span><strong>Sell</strong><br>Seller Hub</span>
+            </a>
+            <div class="nav-user__divider"></div>
+            <a href="${up}create-listing.html" class="nav-user__link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Create Listing
             </a>
             ${org ? `<a href="${up}organiser.html" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="15" r="3"/></svg>
               My Events
             </a>` : ''}
-            ${org ? `<a href="${up}create-listing.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Create Listing
-            </a>` : `<a href="${up}sell.html" class="nav-user__link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-              Sell on TicketsSA
-            </a>`}
             ${adm ? `<a href="${up}admin/" class="nav-user__link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               Admin Portal
@@ -473,19 +619,18 @@ const Auth = (() => {
   /* ── Google / OAuth sign-in ───────────────────────────────────────────── */
   async function handleOAuthSignIn(provider) {
     clearError();
-    const btn = document.getElementById(provider === 'google' ? 'googleLoginBtn' : null)
-             || document.getElementById('googleSignupBtn');
-
     try {
-      const sb = await getSupabase();
-      const CALLBACK = 'https://ticketssa.co.za/auth-callback';
-      const { error } = await sb.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: CALLBACK },
+      const fb = await getFirebase();
+      if (provider !== 'google') throw new Error('Unsupported provider');
+      const googleProvider = new fb.auth.GoogleAuthProvider();
+      const cred = await fb.auth().signInWithPopup(googleProvider);
+      await _ensureUserDoc(cred.user);
+      await _completeSignIn(cred.user, {
+        welcomeMsg: `Welcome, ${(cred.user.displayName || cred.user.email || '').split(' ')[0]}!`,
       });
-      if (error) showError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-in failed. Please try again.`);
-    } catch (_) {
-      showError('Unable to connect. Please try again.');
+    } catch (err) {
+      if (err && err.code === 'auth/popup-closed-by-user') return;
+      showError(`${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-in failed. Please try again.`);
     }
   }
 
@@ -509,38 +654,20 @@ const Auth = (() => {
     btn.disabled = true; btn.textContent = 'Logging in…';
 
     try {
-      const sb = await getSupabase();
-      const { data, error } = await sb.auth.signInWithPassword({
-        email,
-        password: pass,
-        ...(captchaToken ? { options: { captchaToken } } : {}),
-      });
-
-      if (error || !data.session) {
+      if (RC_ENABLED && !(await _verifyTurnstile(captchaToken))) {
         _resetRc(_rcWidgetLogin);
-        showError(error?.message === 'Invalid login credentials'
-          ? 'Incorrect email or password.'
-          : (error?.message || 'Login failed. Please try again.'));
+        showError(_captchaFailureMessage());
         btn.disabled = false; btn.textContent = 'Log In';
         return;
       }
 
-      const user = formatUser(data.user);
-      saveSession(data.session.access_token, user);
-      closeModal();
-      updateNavbar();
-      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome back, ${user.firstName || user.email.split('@')[0]}!`, 'success');
+      const fb   = await getFirebase();
+      const cred = await fb.auth().signInWithEmailAndPassword(email, pass);
+      await _completeSignIn(cred.user);
 
-      if (_pendingCallback) {
-        _runPending();
-      } else {
-        const dest = (user.role === 'organiser' || user.role === 'admin') ? 'dashboard.html' : 'index.html';
-        setTimeout(() => window.location.href = dest, 800);
-      }
-
-    } catch (_) {
+    } catch (err) {
       _resetRc(_rcWidgetLogin);
-      showError('Unable to reach authentication service. Please try again.');
+      showError(_friendlyAuthError(err));
       btn.disabled = false; btn.textContent = 'Log In';
     }
   }
@@ -570,59 +697,37 @@ const Auth = (() => {
     btn.disabled = true; btn.textContent = 'Creating account…';
 
     try {
-      const sb = await getSupabase();
-      const { data, error } = await sb.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { firstName, lastName, role: 'attendee' },
-          ...(captchaToken ? { captchaToken } : {}),
-        },
-      });
-
-      if (error) {
+      if (RC_ENABLED && !(await _verifyTurnstile(captchaToken))) {
         _resetRc(_rcWidgetSignup);
-        showError(error.message.includes('already registered')
-          ? 'An account with this email already exists.'
-          : (error.message || 'Registration failed. Please try again.'));
+        showError(_captchaFailureMessage());
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }
 
-      if (!data.session) {
-        closeModal();
-        if (typeof Utils !== 'undefined')
-          Utils.showToast('Account created! Check your email to confirm before logging in.', 'success', 6000);
-        btn.disabled = false; btn.textContent = 'Create Account';
-        return;
-      }
+      const fb   = await getFirebase();
+      const cred = await fb.auth().createUserWithEmailAndPassword(email, password);
+      await _ensureUserDoc(cred.user, { firstName, lastName });
+      try { await cred.user.updateProfile({ displayName: `${firstName} ${lastName}`.trim() }); } catch (_) {}
 
-      const user = formatUser(data.user);
-      saveSession(data.session.access_token, user);
+      // Fire the verification email (via Resend) best-effort, then sign back
+      // out immediately: no usable session until the link is confirmed, same
+      // as the previous Supabase behaviour.
+      fetch('/.netlify/functions/firebase-send-auth-email', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ type: 'signup', email }),
+      }).catch(() => {});
 
-      // Best-effort profile sync
-      const _apiBase = (typeof _API_BASE !== 'undefined') ? _API_BASE : '';
-      if (_apiBase) {
-        fetch(_apiBase + '/api/auth/setup-profile', {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.session.access_token}` },
-          body:    JSON.stringify({ firstName, lastName, role: 'attendee' }),
-        }).catch(() => {});
-      }
+      await fb.auth().signOut();
 
       closeModal();
-      updateNavbar();
-      if (typeof Utils !== 'undefined') Utils.showToast(`Welcome, ${user.firstName}!`, 'success', 3500);
+      if (typeof Utils !== 'undefined')
+        Utils.showToast('Account created! Check your email to confirm, then log in.', 'success', 6000);
+      btn.disabled = false; btn.textContent = 'Create Account';
 
-      if (_pendingCallback) {
-        _runPending();
-      } else {
-        setTimeout(() => window.location.href = 'index.html', 800);
-      }
-
-    } catch (_) {
+    } catch (err) {
       _resetRc(_rcWidgetSignup);
-      showError('Registration failed. Please try again.');
+      showError(_friendlyAuthError(err));
       btn.disabled = false; btn.textContent = 'Create Account';
     }
   }
@@ -639,8 +744,11 @@ const Auth = (() => {
     btn.disabled = true; btn.textContent = 'Sending…';
 
     try {
-      const sb = await getSupabase();
-      await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://ticketssa.co.za/auth-callback' });
+      await fetch('/.netlify/functions/firebase-send-auth-email', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ type: 'recovery', email }),
+      });
     } catch (_) {}
 
     // Always show success never reveal whether email exists
@@ -652,14 +760,21 @@ const Auth = (() => {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // Start loading reCAPTCHA immediately so it's ready when the modal first opens
+  // Start loading Turnstile + Firebase immediately so both are ready when
+  // the modal first opens (and so the background token-refresh listener
+  // attaches on every page, not just ones that open the modal).
   _initRecaptcha();
+  getFirebase().catch(() => {});
 
   return {
     getToken, getUser, isLoggedIn, isAdmin, isOrganiser,
-    saveSession, logout, headers, formatUser,
+    saveSession, logout, headers,
     openModal, closeModal, updateNavbar,
     requireAuth,
+    // Lets other modules (api.js's Firestore client, utils.js's Storage
+    // upload) reuse this same initialized Firebase app instead of each
+    // bootstrapping their own copy of the config + SDK loader.
+    getFirebaseApp: getFirebase,
   };
 
 })();

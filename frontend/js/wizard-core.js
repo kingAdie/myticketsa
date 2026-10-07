@@ -9,12 +9,15 @@
    Depends on: utils.js (Utils), auth.js (Auth).
    Styles:     css/wizard.css
 
-   IMAGES: images are compressed client-side and stored
-   as base64 data URLs on the record, matching the
-   existing organiser event form. Do NOT switch these to
-   Utils.uploadImage() it POSTs to /api/upload on the
-   retired Express backend, which is not part of the
-   live Netlify deploy and will fail silently.
+   IMAGES: uploaded via Utils.uploadImage() (Firebase
+   Storage, see Firebase migration Phase 4) — state[name]
+   holds the resulting download URL, not raw image data.
+   Previously these were compressed client-side and stored
+   as base64 data URLs directly on the record, since
+   Utils.uploadImage() POSTed to a since-retired backend
+   endpoint that wasn't part of the live deploy. That's
+   fixed now, so this wizard uses the same real upload path
+   admin.js's photo widgets already called.
    ================================================ */
 
 const WizardCore = (() => {
@@ -604,24 +607,18 @@ const WizardCore = (() => {
               continue;
             }
             try {
-              const compressed = await Utils.compressImage(file, { maxWidth: 1600, maxHeight: 1600 });
-              const dataUrl    = await new Promise((res, rej) => {
-                const r = new FileReader();
-                r.onerror = () => rej(new Error('read failed'));
-                r.onload  = (e) => res(e.target.result);
-                r.readAsDataURL(compressed);
-              });
+              const url = await Utils.uploadImage(file, cfg.category);
               if (multi) {
                 const arr = Array.isArray(state[name]) ? state[name].slice() : [];
                 if (arr.length >= max) { Utils.showToast(`You can add up to ${max} photos.`, 'info'); break; }
-                arr.push(dataUrl);
+                arr.push(url);
                 state[name] = arr;
               } else {
-                state[name] = dataUrl;
+                state[name] = url;
               }
               delete errors[name];
             } catch (e) {
-              Utils.showToast('That image could not be processed. Try another file.', 'error');
+              Utils.showToast(e?.message || 'That image could not be uploaded. Try another file.', 'error');
             }
           }
           saveDraft(true);
@@ -748,6 +745,7 @@ const WizardCore = (() => {
       try {
         const result = await cfg.onSubmit(state);
         finished = true;
+        notifyTeam();
         clearDraft(cfg.category);
         showDone(result);
       } catch (e) {
@@ -755,6 +753,46 @@ const WizardCore = (() => {
         console.error('Wizard submit failed:', e);
         render();
         Utils.showToast(e && e.message ? e.message : 'Could not submit right now. Please try again.', 'error', 6000);
+      }
+    }
+
+    /* Tell the TicketsSA support inbox (and email the seller a receipt) about a
+       listing that was just saved. Fire-and-forget: the listing is already safely
+       in the database, so a mail problem must never turn into a failed submission. */
+    function notifyTeam() {
+      if (!cfg.notifyKind || typeof SellerApply === 'undefined') return;
+      try {
+        const user  = (typeof Auth !== 'undefined' && Auth.getUser()) || {};
+        const rows  = [];
+        steps.filter(st => !st.review).forEach(st => (st.fields || []).forEach(f => {
+          if (['info', 'image', 'images'].includes(f.type)) return;
+          const v = state[f.name];
+          if (v === undefined || v === null || v === '') return;
+          let text;
+          if (f.type === 'repeater' && Array.isArray(v)) {
+            text = v.map(row => (f.fields || [])
+              .filter(sf => row[sf.name] !== '' && row[sf.name] != null)
+              .map(sf => `${sf.label}: ${row[sf.name]}`).join(', ')).filter(Boolean).join('  |  ');
+          } else if (Array.isArray(v)) {
+            text = v.join(', ');
+          } else {
+            text = String(v);
+          }
+          if (text) rows.push({ label: f.label || f.name, value: text });
+        }));
+        const photos = (state.images || []).length + (state.image ? 1 : 0);
+        if (photos) rows.push({ label: 'Photos', value: `${photos} uploaded` });
+
+        const title = String(state[cfg.draftTitleField || 'title'] || '').trim() || 'Untitled listing';
+        SellerApply.submit(cfg.notifyKind, {
+          title,
+          contactName:  state.contactName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'TicketsSA seller',
+          contactEmail: state.contactEmail || user.email || '',
+          contactPhone: state.contactPhone || state.phone || '',
+          details:      rows,
+        }).catch(e => console.warn('Listing notification not sent:', e && e.message));
+      } catch (e) {
+        console.warn('Listing notification not sent:', e && e.message);
       }
     }
 

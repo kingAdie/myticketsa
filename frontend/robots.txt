@@ -6,7 +6,6 @@ Disallow: /dashboard.html
 Disallow: /success.html
 Disallow: /checkout.html
 Disallow: /admin/
-Disallow: /auth-callback.html
 
 # Allow all major crawlers access to CSS/JS for rendering
 Allow: /css/

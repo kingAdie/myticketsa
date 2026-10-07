@@ -60,6 +60,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const descEl = document.getElementById('eventDescription');
     if (descEl) descEl.textContent = event.description || '';
 
+    // Cancellation & refund policy (set by the organiser)
+    const refundEl = document.getElementById('eventRefund');
+    if (refundEl && event.refundPolicy) {
+      refundEl.textContent = event.refundPolicy;
+      document.getElementById('refundSection').style.display = '';
+    }
+
     // Tags
     const tagsEl = document.getElementById('eventTags');
     if (tagsEl) {
@@ -85,6 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function escText(v) {
+    return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   /* ── Ticket type rows ────────────────────────────────────────────── */
   function renderTicketTypes(ticketTypes) {
     const container = document.getElementById('ticketTypes');
@@ -100,8 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       row.innerHTML = `
         <div class="ticket-type__info">
-          <h4>${tt.name}</h4>
-          <p>${tt.description || ''}</p>
+          <h4>${escText(tt.name)}</h4>
+          <p>${escText(tt.description || '')}</p>
           ${tt.available <= 20
             ? `<p class="scarce" style="color:var(--green);font-size:.8125rem;font-weight:600;">Only ${tt.available} left!</p>`
             : ''}
@@ -203,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="container" style="text-align:center;padding:80px 0;">
         <div style="font-size:3rem;margin-bottom:1rem;">😕</div>
         <h2 style="margin-bottom:1rem;">Oops!</h2>
-        <p style="margin-bottom:2rem;">${message}</p>
+        <p style="margin-bottom:2rem;">${escText(message)}</p>
         <a href="index.html" class="btn btn-primary">Back to Events</a>
       </div>`;
   }

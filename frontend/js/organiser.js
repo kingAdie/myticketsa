@@ -9,8 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'index.html';
     return;
   }
-  // Enforce organiser/admin role from stored session
-  if (!Auth.isOrganiser()) { window.location.href = 'index.html'; return; }
 
   const user = Auth.getUser();
   Utils.setText('#orgWelcome', `Welcome, ${user.firstName}`);

@@ -1,30 +1,42 @@
 ﻿/* ================================================
-   TicketsSA Supabase Data Layer (api.js)
-   All data operations go directly to Supabase.
-   No backend server needed for reads or organiser writes.
-   Backend is only called for: checkout, admin operations.
+   TicketsSA Data Layer (api.js)
+   All data operations go directly to Firestore no backend server
+   needed for reads or organiser writes. Migrated off Supabase in
+   three phases (auth, events/tickets, then everything else — see
+   project memory for the full history); no Supabase dependency
+   remains in this file.
    ================================================ */
 
 const SupabaseAPI = (() => {
 
-  const SUPABASE_URL      = 'https://xaooupqqtbqwjddsqnwi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhhb291cHFxdGJxd2pkZHNxbndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzY1MDUsImV4cCI6MjA5NTgxMjUwNX0.ahG6OtWIfLnjqV0DLI_hRD0bh-IcbV14ok7SxIKH-qE';
+  // Firebase config + SDK loading lives in one place now: frontend/js/auth.js
+  // (loaded on every page this file is), reused here instead of duplicating
+  // it (see Firebase migration Phase 4). auth.js is always present alongside
+  // this file — confirmed across every consuming page.
+  let _firestore = null;
+  async function firestoreClient() {
+    if (_firestore) return _firestore;
+    const fb = await Auth.getFirebaseApp();
+    _firestore = fb.firestore();
+    // Supabase/JSON.stringify silently dropped `undefined` fields (relied on
+    // by admin.js's partial-update quick actions, e.g. adminUpdateEvent(id,
+    // {}, {status})) — Firestore throws on them by default. This restores
+    // the old silent-drop behaviour globally instead of auditing every call
+    // site individually.
+    _firestore.settings({ ignoreUndefinedProperties: true });
+    return _firestore;
+  }
 
-  let _client = null;
-
-  async function client() {
-    if (_client) return _client;
-    if (!window.supabase) {
-      await new Promise((resolve, reject) => {
-        const s   = document.createElement('script');
-        s.src     = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-        s.onload  = resolve;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return _client;
+  function normaliseFirestoreUser(id, data) {
+    return {
+      id,
+      firstName:        data.firstName || '',
+      lastName:         data.lastName  || '',
+      email:            data.email     || '',
+      role:             data.role      || 'attendee',
+      organisationName: data.organisationName || null,
+      createdAt:        data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || null),
+    };
   }
 
   // ── ID generator ────────────────────────────────────────────────────────
@@ -41,38 +53,41 @@ const SupabaseAPI = (() => {
     return hhmm === '00:00' ? null : hhmm;
   }
 
-  function normaliseEvent(row) {
+  function normaliseEvent(id, doc) {
     return {
-      id:             row.id,
-      status:         row.status,
-      title:          row.title,
-      category:       row.category,
-      date:           row.event_date,
-      // events.event_time is NOT NULL, so listings with no published start time
-      // are stored as 00:00. Map that back to null here rather than showing a
-      // midnight start the organiser never advertised the UI renders "TBC".
-      time:           normaliseTime(row.event_time),
-      endTime:        normaliseTime(row.end_time),
-      location:       row.location,
-      city:           row.city,
-      province:       row.province   || null,
-      description:    row.description,
-      image:          row.image      || null,
-      price:          parseFloat(row.price) || 0,
-      featured:       !!row.featured,
-      sold_out:       !!row.sold_out,
-      organiser:      row.organiser_name,
-      organiserId:    row.organiser_id,
-      createdAt:      row.created_at,
-      updatedAt:      row.updated_at,
-      address:        row.address        || null,
-      paymentType:    row.payment_type   || null,
-      paymentLink:    row.payment_link   || null,
-      bankName:       row.bank_name      || null,
-      accountHolder:  row.account_holder || null,
-      accountNumber:  row.account_number || null,
-      branchCode:     row.branch_code    || null,
-      ticketTypes: (row.ticket_types || []).map(tt => ({
+      id,
+      status:         doc.status,
+      title:          doc.title,
+      category:       doc.category,
+      date:           doc.eventDate,
+      // Stored as null directly for Firestore-native events. Migrated rows may
+      // still carry Postgres's old "00:00 means no time published" sentinel
+      // (that column was NOT NULL) — normaliseTime bridges both.
+      time:           normaliseTime(doc.eventTime),
+      endTime:        normaliseTime(doc.endTime),
+      location:       doc.location,
+      city:           doc.city,
+      province:       doc.province   || null,
+      description:    doc.description,
+      image:          doc.image      || null,
+      price:          parseFloat(doc.price) || 0,
+      featured:       !!doc.featured,
+      hero:           !!doc.hero,
+      sold_out:       !!doc.soldOut,
+      organiser:      doc.organiserName,
+      organiserId:    doc.organiserId,
+      createdAt:      doc.createdAt,
+      updatedAt:      doc.updatedAt || null,
+      address:        doc.address        || null,
+      refundPolicy:   doc.refundPolicy   || null,
+      reviewNote:     doc.reviewNote     || null,
+      paymentType:    doc.paymentType    || null,
+      paymentLink:    doc.paymentLink    || null,
+      bankName:       doc.bankName       || null,
+      accountHolder:  doc.accountHolder  || null,
+      accountNumber:  doc.accountNumber  || null,
+      branchCode:     doc.branchCode     || null,
+      ticketTypes: (doc.ticketTypes || []).map(tt => ({
         id:          tt.id,
         name:        tt.name,
         description: tt.description,
@@ -80,312 +95,239 @@ const SupabaseAPI = (() => {
         available:   tt.available,
         sold:        tt.sold || 0,
       })),
-      tags: (row.event_tags || []).map(t => t.tag),
+      tags: doc.tags || [],
     };
   }
 
-  function normaliseTicket(row) {
+  function normaliseTicket(id, doc) {
     return {
-      id:      row.id,
-      status:  row.status,
-      buyer:   { firstName: row.buyer_first_name, lastName: row.buyer_last_name, email: row.buyer_email, phone: row.buyer_phone },
-      event:   { id: row.event_id, title: row.event_title, date: row.event_date, time: row.event_time, location: row.event_location, city: row.event_city, image: row.event_image },
-      ticket:  { typeId: row.ticket_type_id, typeName: row.ticket_type_name, price: parseFloat(row.ticket_price), quantity: row.quantity },
-      pricing: { subtotal: parseFloat(row.subtotal), serviceFee: parseFloat(row.service_fee), total: parseFloat(row.total) },
-      payment: { reference: row.payment_reference, method: row.payment_method, paidAt: row.paid_at },
-      qrCodeUrl: row.qr_code_url,
-      bookedAt:  row.booked_at,
+      id,
+      status:  doc.status,
+      buyer:   { firstName: doc.buyerFirstName, lastName: doc.buyerLastName, email: doc.buyerEmail, phone: doc.buyerPhone },
+      event:   { id: doc.eventId, title: doc.eventTitle, date: doc.eventDate, time: doc.eventTime, location: doc.eventLocation, city: doc.eventCity, image: doc.eventImage },
+      ticket:  { typeId: doc.ticketTypeId, typeName: doc.ticketTypeName, price: parseFloat(doc.ticketPrice), quantity: doc.quantity },
+      pricing: { subtotal: parseFloat(doc.subtotal), serviceFee: parseFloat(doc.serviceFee), total: parseFloat(doc.total) },
+      payment: { reference: doc.paymentReference, method: doc.paymentMethod, paidAt: doc.paidAt },
+      qrCodeUrl: doc.qrCodeUrl || null,
+      bookedAt:  doc.bookedAt,
     };
   }
 
   // ════════════════════════════════════════
-  //  EVENTS
+  //  EVENTS (Firestore — see Firebase migration Phase 2)
   // ════════════════════════════════════════
 
   async function getEvents(filters = {}) {
-    const sb = await client();
-    let q = sb.from('events').select('*, ticket_types(*), event_tags(*)');
+    const db = await firestoreClient();
+    let q = db.collection('events');
 
     if (filters.organiserId) {
       // Organiser sees all their own events (any status)
-      q = q.eq('organiser_id', filters.organiserId);
-      if (filters.status) q = q.eq('status', filters.status);
+      q = q.where('organiserId', '==', filters.organiserId);
+      if (filters.status) q = q.where('status', '==', filters.status);
     } else if (filters.adminAll) {
       // Admin sees all events regardless of status
-      if (filters.status) q = q.eq('status', filters.status);
-      if (filters.category) q = q.eq('category', filters.category);
+      if (filters.status) q = q.where('status', '==', filters.status);
+      if (filters.category) q = q.where('category', '==', filters.category);
     } else {
       // Public sees only published events
-      q = q.eq('status', 'published');
-      if (filters.category) q = q.eq('category', filters.category);
-      if (filters.featured)  q = q.eq('featured', true);
+      q = q.where('status', '==', 'published');
+      if (filters.category) q = q.where('category', '==', filters.category);
+      if (filters.featured)  q = q.where('featured', '==', true);
     }
 
-    q = q.order('featured', { ascending: false }).order('event_date', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data || []).map(normaliseEvent);
+    q = q.orderBy('featured', 'desc').orderBy('eventDate', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => normaliseEvent(d.id, d.data()));
   }
 
   async function getEvent(id) {
-    const sb = await client();
-    const { data, error } = await sb
-      .from('events')
-      .select('*, ticket_types(*), event_tags(*)')
-      .eq('id', id)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? normaliseEvent(data) : null;
+    const db  = await firestoreClient();
+    const doc = await db.collection('events').doc(id).get();
+    return doc.exists ? normaliseEvent(doc.id, doc.data()) : null;
+  }
+
+  function buildTicketTypes(ticketTypes, eventId, { resetSold } = {}) {
+    return (Array.isArray(ticketTypes) ? ticketTypes : []).map((tt, i) => ({
+      id:          tt.id || `TT-${eventId}-${i + 1}`,
+      name:        tt.name,
+      description: tt.description || tt.name,
+      price:       parseFloat(tt.price) || 0,
+      available:   parseInt(tt.available) || 100,
+      sold:        resetSold ? 0 : (tt.sold || 0),
+    }));
+  }
+
+  function buildTags(tags) {
+    return (Array.isArray(tags) ? tags : []).filter(t => t?.trim()).map(t => t.trim());
   }
 
   async function createEvent(eventData) {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
+    const now = new Date().toISOString();
 
-    const { error: evtErr } = await sb.from('events').insert({
-      id:             eventId,
+    await db.collection('events').doc(eventId).set({
       status:         'pending',
       // Organiser-supplied artwork. Events land as `pending`, so an admin still
       // reviews (and can replace) the image before anything is published.
       image:          eventData.image || null,
       title:          eventData.title,
       category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
+      eventDate:      eventData.date,
+      eventTime:      eventData.time     || null,
+      endTime:        eventData.endTime || eventData.time || null,
       location:       eventData.location,
       city:           eventData.city,
       province:       eventData.province  || null,
       description:    eventData.description,
       price:          parseFloat(eventData.price) || 0,
       featured:       false,
-      sold_out:       false,
-      organiser_name: user.organisationName || `${user.firstName} ${user.lastName}`,
-      organiser_id:   user.id,
+      soldOut:        false,
+      organiserName:  user.organisationName || `${user.firstName} ${user.lastName}`,
+      organiserId:    user.id,
       address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
+      paymentType:    eventData.paymentType    || null,
+      paymentLink:    eventData.paymentLink    || null,
+      bankName:       eventData.bankName       || null,
+      accountHolder:  eventData.accountHolder  || null,
+      accountNumber:  eventData.accountNumber  || null,
+      branchCode:     eventData.branchCode     || null,
+      refundPolicy:   eventData.refundPolicy   || null,
+      ticketTypes:    buildTicketTypes(eventData.ticketTypes, eventId, { resetSold: true }),
+      tags:           buildTags(eventData.tags),
+      createdAt:      now,
+      updatedAt:      now,
     });
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes) && eventData.ticketTypes.length > 0) {
-      const { error: ttErr } = await sb.from('ticket_types').insert(
-        eventData.ticketTypes.map((tt, i) => ({
-          id:          tt.id || `TT-${eventId}-${i + 1}`,
-          event_id:    eventId,
-          name:        tt.name,
-          description: tt.description || tt.name,
-          price:       parseFloat(tt.price) || 0,
-          available:   parseInt(tt.available) || 100,
-          sort_order:  i + 1,
-        }))
-      );
-      if (ttErr) throw ttErr;
-    }
-
-    if (Array.isArray(eventData.tags) && eventData.tags.length > 0) {
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: eventId, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
 
     return { id: eventId, status: 'pending', ...eventData };
   }
 
   async function updateEvent(id, eventData) {
-    const sb = await client();
+    const db = await firestoreClient();
 
     // Only overwrite the image when the organiser actually supplied a new one,
     // so an admin-curated image is never wiped by an edit that left it alone.
     const imagePatch = eventData.image ? { image: eventData.image } : {};
 
-    const { error: evtErr } = await sb.from('events').update({
+    const fields = {
       ...imagePatch,
       title:          eventData.title,
       category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
+      eventDate:      eventData.date,
+      eventTime:      eventData.time     || null,
+      endTime:        eventData.endTime || eventData.time || null,
       location:       eventData.location,
       city:           eventData.city,
       province:       eventData.province  || null,
       description:    eventData.description,
       price:          parseFloat(eventData.price) || 0,
       address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
-      updated_at:     new Date().toISOString(),
-    }).eq('id', id);
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes)) {
-      await sb.from('ticket_types').delete().eq('event_id', id);
-      if (eventData.ticketTypes.length > 0) {
-        const { error: ttErr } = await sb.from('ticket_types').insert(
-          eventData.ticketTypes.map((tt, i) => ({
-            id:          tt.id || `TT-${id}-${i + 1}`,
-            event_id:    id,
-            name:        tt.name,
-            description: tt.description || tt.name,
-            price:       parseFloat(tt.price) || 0,
-            available:   parseInt(tt.available) || 100,
-            sort_order:  i + 1,
-          }))
-        );
-        if (ttErr) throw ttErr;
-      }
+      paymentType:    eventData.paymentType    || null,
+      paymentLink:    eventData.paymentLink    || null,
+      bankName:       eventData.bankName       || null,
+      accountHolder:  eventData.accountHolder  || null,
+      accountNumber:  eventData.accountNumber  || null,
+      branchCode:     eventData.branchCode     || null,
+      refundPolicy:   eventData.refundPolicy   || null,
+      updatedAt:      new Date().toISOString(),
+    };
+    // An organiser who fixes a declined event is sending it back for review.
+    const current = await db.collection('events').doc(id).get();
+    if (current.exists && current.data().status === 'rejected') {
+      fields.status = 'pending';
+      fields.reviewNote = null;
     }
+    if (Array.isArray(eventData.ticketTypes)) fields.ticketTypes = buildTicketTypes(eventData.ticketTypes, id);
+    if (Array.isArray(eventData.tags))        fields.tags        = buildTags(eventData.tags);
 
-    if (Array.isArray(eventData.tags)) {
-      await sb.from('event_tags').delete().eq('event_id', id);
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: id, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
-
+    await db.collection('events').doc(id).update(fields);
     return eventData;
   }
 
   async function deleteEvent(id) {
-    const sb = await client();
-    const { error } = await sb.from('events').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('events').doc(id).delete();
   }
 
   async function adminCreateEvent(eventData, options = {}) {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
     const eventId = makeId('EVT');
+    const now = new Date().toISOString();
 
-    const { error: evtErr } = await sb.from('events').insert({
-      id:             eventId,
-      status:         options.status   ?? 'published',
-      featured:       options.featured ?? false,
-      sold_out:       false,
-      title:          eventData.title,
-      category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
-      location:       eventData.location,
-      city:           eventData.city,
-      province:       eventData.province  || null,
-      description:    eventData.description,
-      image:          eventData.image     || null,
-      price:          parseFloat(eventData.price) || 0,
-      organiser_name: options.organiserName || user.organisationName || `${user.firstName} ${user.lastName}`,
-      organiser_id:   user.id,
-      address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
+    await db.collection('events').doc(eventId).set({
+      status:        options.status   ?? 'published',
+      featured:      options.featured ?? false,
+      soldOut:       false,
+      title:         eventData.title,
+      category:      eventData.category,
+      eventDate:     eventData.date,
+      eventTime:     eventData.time     || null,
+      endTime:       eventData.endTime || eventData.time || null,
+      location:      eventData.location,
+      city:          eventData.city,
+      province:      eventData.province  || null,
+      description:   eventData.description,
+      image:         eventData.image     || null,
+      price:         parseFloat(eventData.price) || 0,
+      organiserName: options.organiserName || user.organisationName || `${user.firstName} ${user.lastName}`,
+      organiserId:   user.id,
+      address:       eventData.address        || null,
+      paymentType:   eventData.paymentType    || null,
+      paymentLink:   eventData.paymentLink    || null,
+      bankName:      eventData.bankName       || null,
+      accountHolder: eventData.accountHolder  || null,
+      accountNumber: eventData.accountNumber  || null,
+      branchCode:    eventData.branchCode     || null,
+      ticketTypes:   buildTicketTypes(eventData.ticketTypes, eventId, { resetSold: true }),
+      tags:          buildTags(eventData.tags),
+      createdAt:     now,
+      updatedAt:     now,
     });
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes) && eventData.ticketTypes.length > 0) {
-      const { error: ttErr } = await sb.from('ticket_types').insert(
-        eventData.ticketTypes.map((tt, i) => ({
-          id:          tt.id || `TT-${eventId}-${i + 1}`,
-          event_id:    eventId,
-          name:        tt.name,
-          description: tt.description || tt.name,
-          price:       parseFloat(tt.price) || 0,
-          available:   parseInt(tt.available) || 100,
-          sort_order:  i + 1,
-        }))
-      );
-      if (ttErr) throw ttErr;
-    }
-
-    if (Array.isArray(eventData.tags) && eventData.tags.length > 0) {
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: eventId, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
 
     return { id: eventId, ...eventData };
   }
 
   async function adminUpdateEvent(id, eventData, options = {}) {
-    const sb = await client();
+    const db = await firestoreClient();
 
     const fields = {
-      title:          eventData.title,
-      category:       eventData.category,
-      event_date:     eventData.date,
-      event_time:     eventData.time,
-      end_time:       eventData.endTime || eventData.time,
-      location:       eventData.location,
-      city:           eventData.city,
-      province:       eventData.province  || null,
-      description:    eventData.description,
-      price:          parseFloat(eventData.price) || 0,
-      address:        eventData.address        || null,
-      payment_type:   eventData.paymentType    || null,
-      payment_link:   eventData.paymentLink    || null,
-      bank_name:      eventData.bankName       || null,
-      account_holder: eventData.accountHolder  || null,
-      account_number: eventData.accountNumber  || null,
-      branch_code:    eventData.branchCode     || null,
-      updated_at:     new Date().toISOString(),
+      title:         eventData.title,
+      category:      eventData.category,
+      eventDate:     eventData.date,
+      eventTime:     eventData.time     || null,
+      endTime:       eventData.endTime || eventData.time || null,
+      location:      eventData.location,
+      city:          eventData.city,
+      province:      eventData.province  || null,
+      description:   eventData.description,
+      price:         parseFloat(eventData.price) || 0,
+      address:       eventData.address        || null,
+      paymentType:   eventData.paymentType    || null,
+      paymentLink:   eventData.paymentLink    || null,
+      bankName:      eventData.bankName       || null,
+      accountHolder: eventData.accountHolder  || null,
+      accountNumber: eventData.accountNumber  || null,
+      branchCode:    eventData.branchCode     || null,
+      updatedAt:     new Date().toISOString(),
     };
-    if (eventData.image)          fields.image          = eventData.image;
-    if (options.organiserName)    fields.organiser_name = options.organiserName;
-    if (options.status !== undefined) fields.status     = options.status;
-    if (options.featured !== undefined) fields.featured = options.featured;
+    if (eventData.image)                fields.image         = eventData.image;
+    if (options.organiserName)          fields.organiserName = options.organiserName;
+    if (options.status !== undefined)   fields.status        = options.status;
+    if (options.featured !== undefined) fields.featured      = options.featured;
+    if (Array.isArray(eventData.ticketTypes)) fields.ticketTypes = buildTicketTypes(eventData.ticketTypes, id);
+    if (Array.isArray(eventData.tags))        fields.tags        = buildTags(eventData.tags);
 
-    const { error: evtErr } = await sb.from('events').update(fields).eq('id', id);
-    if (evtErr) throw evtErr;
-
-    if (Array.isArray(eventData.ticketTypes)) {
-      await sb.from('ticket_types').delete().eq('event_id', id);
-      if (eventData.ticketTypes.length > 0) {
-        const { error: ttErr } = await sb.from('ticket_types').insert(
-          eventData.ticketTypes.map((tt, i) => ({
-            id:          tt.id || `TT-${id}-${i + 1}`,
-            event_id:    id,
-            name:        tt.name,
-            description: tt.description || tt.name,
-            price:       parseFloat(tt.price) || 0,
-            available:   parseInt(tt.available) || 100,
-            sort_order:  i + 1,
-          }))
-        );
-        if (ttErr) throw ttErr;
-      }
-    }
-
-    if (Array.isArray(eventData.tags)) {
-      await sb.from('event_tags').delete().eq('event_id', id);
-      const tagRows = eventData.tags.filter(t => t?.trim()).map(t => ({ event_id: id, tag: t.trim() }));
-      if (tagRows.length) {
-        const { error: tagErr } = await sb.from('event_tags').insert(tagRows);
-        if (tagErr) throw tagErr;
-      }
-    }
-
+    // Firestore silently drops `undefined` values here (ignoreUndefinedProperties,
+    // set in firestoreClient()) — this is what lets admin.js's quick actions keep
+    // calling this with an empty eventData ({}) to patch only status/featured.
+    await db.collection('events').doc(id).update(fields);
     return eventData;
   }
 
@@ -393,393 +335,636 @@ const SupabaseAPI = (() => {
   //  SERVICE REQUESTS
   // ════════════════════════════════════════
 
+  // Equipment requests have no normalise*() mapper in the Supabase version
+  // either — consumers (dashboard.html, my-tickets.html, admin.js) read raw
+  // snake_case fields directly. Keeping that exact shape here is what lets
+  // those files stay unchanged; storage internally is still camelCase for
+  // consistency with every other Firestore collection.
+  function toRawServiceRequest(id, doc) {
+    return {
+      id,
+      user_id:       doc.userId,
+      service_id:    doc.serviceId,
+      service_name:  doc.serviceName,
+      event_date:    doc.eventDate,
+      duration:      doc.duration      || null,
+      location:      doc.location,
+      quantity:      doc.quantity,
+      details:       doc.details        || null,
+      contact_phone: doc.contactPhone,
+      budget_range:  doc.budgetRange    || null,
+      status:        doc.status,
+      created_at:    doc.createdAt,
+    };
+  }
+
   async function submitServiceRequest(data) {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data: result, error } = await sb.from('equipment_requests').insert({
-      user_id:       user.id,
-      service_id:    data.serviceId,
-      service_name:  data.serviceName,
-      event_date:    data.eventDate,
-      duration:      data.duration      || null,
-      location:      data.location,
-      quantity:      parseInt(data.quantity) || 1,
-      details:       data.details        || null,
-      contact_phone: data.contactPhone,
-      budget_range:  data.budgetRange    || null,
-      status:        'pending',
-    }).select().single();
-    if (error) throw error;
-    return result;
+    const id  = makeId('REQ');
+    const row = {
+      userId:       user.id,
+      serviceId:    data.serviceId,
+      serviceName:  data.serviceName,
+      eventDate:    data.eventDate,
+      duration:     data.duration      || null,
+      location:     data.location,
+      quantity:     parseInt(data.quantity) || 1,
+      details:      data.details        || null,
+      contactPhone: data.contactPhone,
+      budgetRange:  data.budgetRange    || null,
+      status:       'pending',
+      createdAt:    new Date().toISOString(),
+    };
+    await db.collection('equipmentRequests').doc(id).set(row);
+    return toRawServiceRequest(id, row);
   }
 
   async function getMyServiceRequests() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('equipment_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const snap = await db.collection('equipmentRequests')
+      .where('userId', '==', user.id)
+      .orderBy('createdAt', 'desc')
+      .get();
+    return snap.docs.map(d => toRawServiceRequest(d.id, d.data()));
   }
 
   // ════════════════════════════════════════
   //  TICKETS
   // ════════════════════════════════════════
 
+  // accommodation_bookings also has no normalise*() mapper in the Supabase
+  // version — my-tickets.html and admin.js both read raw snake_case fields.
+  function toRawBooking(id, doc) {
+    return {
+      id,
+      accommodation_id:   doc.accommodationId,
+      accommodation_name: doc.accommodationName,
+      space_type_name:    doc.spaceTypeName,
+      price_per_night:    doc.pricePerNight,
+      check_in_date:      doc.checkInDate,
+      check_out_date:     doc.checkOutDate,
+      nights:             doc.nights,
+      guests:             doc.guests,
+      total_price:        doc.totalPrice,
+      customer_name:      doc.customerName,
+      customer_email:     doc.customerEmail,
+      customer_phone:     doc.customerPhone || null,
+      special_requests:   doc.specialRequests || null,
+      status:             doc.status,
+      created_at:         doc.createdAt,
+    };
+  }
+
   async function getMyAccommodationBookings() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('accommodation_bookings')
-      .select('*')
-      .eq('customer_email', user.email.toLowerCase())
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const snap = await db.collection('accommodationBookings')
+      .where('customerEmail', '==', user.email.toLowerCase())
+      .orderBy('createdAt', 'desc')
+      .get();
+    return snap.docs.map(d => toRawBooking(d.id, d.data()));
+  }
+
+  /** Single ticket by id, for success.html when it lands here with no local
+   *  booking state (e.g. opened on another device). */
+  async function getTicket(id) {
+    const db  = await firestoreClient();
+    const doc = await db.collection('tickets').doc(id).get();
+    return doc.exists ? normaliseTicket(doc.id, doc.data()) : null;
   }
 
   async function getMyTickets() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('tickets')
-      .select('*')
-      .eq('buyer_email', user.email.toLowerCase())
-      .order('booked_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(normaliseTicket);
+    const snap = await db.collection('tickets')
+      .where('buyerEmail', '==', user.email.toLowerCase())
+      .orderBy('bookedAt', 'desc')
+      .get();
+    return snap.docs.map(d => normaliseTicket(d.id, d.data()));
   }
 
   /**
    * Tickets people have booked on the signed-in seller's own events.
    * Two hops: fetch my event ids, then the tickets against them. Returns []
-   * rather than throwing if row-level security blocks the read, so the Seller
+   * rather than throwing if a Security Rule blocks the read, so the Seller
    * Hub can show an explanatory empty state instead of an error.
    */
   async function getSalesForMyEvents() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) return [];
 
-    const { data: myEvents, error: evErr } = await sb
-      .from('events').select('id, title').eq('organiser_id', user.id);
-    if (evErr || !myEvents?.length) return [];
+    try {
+      const eventsSnap = await db.collection('events').where('organiserId', '==', user.id).get();
+      if (eventsSnap.empty) return [];
+      const ids = eventsSnap.docs.map(d => d.id);
 
-    const ids = myEvents.map(e => e.id);
-    const { data, error } = await sb
-      .from('tickets').select('*')
-      .in('event_id', ids)
-      .order('booked_at', { ascending: false });
-    if (error) return [];
-    return (data || []).map(normaliseTicket);
+      // Firestore's client-SDK 'in' operator caps at 30 values per query.
+      const chunks = [];
+      for (let i = 0; i < ids.length; i += 30) chunks.push(ids.slice(i, i + 30));
+
+      const results = await Promise.all(chunks.map(chunk =>
+        db.collection('tickets').where('eventId', 'in', chunk).orderBy('bookedAt', 'desc').get()
+      ));
+      const docs = results.flatMap(snap => snap.docs);
+      docs.sort((a, b) => (b.data().bookedAt || '').localeCompare(a.data().bookedAt || ''));
+      return docs.map(d => normaliseTicket(d.id, d.data()));
+    } catch (_) {
+      return [];
+    }
   }
 
   async function submitTicket(payload) {
-    const sb = await client();
+    const db = await firestoreClient();
 
-    const ticketId  = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const subtotal  = payload.ticketPrice * payload.quantity;
-    const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
-    const total      = Math.round((subtotal + serviceFee) * 100) / 100;
-    const now        = new Date().toISOString();
+    const ticketId   = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const subtotal   = payload.ticketPrice * payload.quantity;
+    const serviceFee = 0;   // TicketsSA takes no payment and adds no fee
+    const total       = subtotal;
+    const now         = new Date().toISOString();
 
-    const { data, error } = await sb.from('tickets').insert({
-      id:                 ticketId,
-      status:             'confirmed',
-      buyer_first_name:   payload.firstName,
-      buyer_last_name:    payload.lastName,
-      buyer_email:        payload.email.toLowerCase(),
-      buyer_phone:        payload.phone        || null,
-      event_id:           payload.eventId,
-      event_title:        payload.eventTitle,
-      event_date:         payload.eventDate,
-      event_time:         payload.eventTime    || null,
-      event_location:     payload.eventLocation,
-      event_city:         payload.eventCity,
-      event_image:        payload.eventImage   || null,
-      ticket_type_id:     payload.ticketTypeId,
-      ticket_type_name:   payload.ticketTypeName,
-      ticket_price:       payload.ticketPrice,
-      quantity:           payload.quantity,
+    const row = {
+      status:            'confirmed',
+      buyerFirstName:    payload.firstName,
+      buyerLastName:     payload.lastName,
+      buyerEmail:        payload.email.toLowerCase(),
+      buyerPhone:        payload.phone        || null,
+      eventId:           payload.eventId,
+      eventTitle:        payload.eventTitle,
+      eventDate:         payload.eventDate,
+      eventTime:         payload.eventTime    || null,
+      eventLocation:     payload.eventLocation,
+      eventCity:         payload.eventCity,
+      eventImage:        payload.eventImage   || null,
+      ticketTypeId:      payload.ticketTypeId,
+      ticketTypeName:    payload.ticketTypeName,
+      ticketPrice:       payload.ticketPrice,
+      quantity:          payload.quantity,
       subtotal,
-      service_fee:        serviceFee,
+      serviceFee,
       total,
-      payment_method:     'pending',
-      payment_reference:  null,
-      paid_at:            null,
-      qr_code_url:        null,
-      booked_at:          now,
-    }).select().single();
+      paymentMethod:     'pending',
+      paymentReference:  null,
+      paidAt:            null,
+      qrCodeUrl:         null,
+      bookedAt:          now,
+    };
 
-    if (error) throw error;
-    return { ...normaliseTicket(data), pricing: { subtotal, serviceFee, total } };
+    await db.collection('tickets').doc(ticketId).set(row);
+    return { ...normaliseTicket(ticketId, row), pricing: { subtotal, serviceFee, total } };
   }
 
   // ════════════════════════════════════════
   //  PROFILE
   // ════════════════════════════════════════
 
-  async function getMyProfile() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+  // ════════════════════════════════════════
+  //  USERS (Firestore — see Firebase Auth migration)
+  // ════════════════════════════════════════
+
+  /** Current user's Firestore profile doc — the source of truth for display
+   *  data (firstName/lastName/organisationName) now that signup no longer
+   *  touches Supabase. `role` here is for display only; Auth.isAdmin()/
+   *  isOrganiser() read the verified custom claim, never this. */
+  async function getMyFirestoreProfile() {
+    const user = Auth?.getUser();
     if (!user) return null;
-    const { data, error } = await sb
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (error || !data) return user;
-    return {
-      id:               data.id,
-      email:            data.email,
-      firstName:        data.first_name,
-      lastName:         data.last_name,
-      role:             data.role,
-      organisationName: data.organisation_name,
-      createdAt:        data.created_at,
-    };
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').doc(user.id).get();
+    if (!snap.exists) return user;
+    return normaliseFirestoreUser(user.id, snap.data());
+  }
+
+  /** All Firestore-backed users, for the admin Users tab. */
+  async function adminGetFirestoreUsers() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => normaliseFirestoreUser(d.id, d.data()));
+  }
+
+  /**
+   * The real fix for role promotion: calls firebase-set-role.js, which
+   * verifies (server-side, via the caller's Firebase ID token) that the
+   * requester is actually an admin, then sets the target user's custom
+   * claim — the thing Auth.isAdmin()/isOrganiser() actually read. Replaces
+   * the old adminUpdateUserRole, which only ever wrote a Supabase display
+   * field and never changed what the promoted user could do.
+   */
+  async function adminSetUserRole(userId, role) {
+    const res = await fetch('/.netlify/functions/firebase-set-role', {
+      method:  'POST',
+      headers: Auth?.headers ? Auth.headers() : { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ userId, role }),
+    });
+    if (!res.ok) throw new Error(await res.text());
   }
 
   // ════════════════════════════════════════
-  //  ADMIN Supabase-direct (no Railway)
+  //  ADMIN
   // ════════════════════════════════════════
+
+  /**
+   * Fully Firestore as of the Firebase migration's Phase 3 — no Supabase
+   * dependency left in this function at all. profiles/equipment_requests
+   * counts moved off Supabase since profiles stopped getting new rows the
+   * moment Phase 1 shipped (signups no longer touch Supabase Auth).
+   */
+  /** Counts a query. The browser SDK build used here may not have count()
+   *  aggregation, so fall back to reading the documents and counting them. */
+  async function countOf(q) {
+    try {
+      if (typeof q.count === 'function') return (await q.count().get()).data().count;
+    } catch (_) { /* fall through to a plain read */ }
+    return (await q.get()).size;
+  }
 
   async function adminGetStats() {
-    const sb = await client();
-    const [evRes, profRes, tickRes, reqRes] = await Promise.all([
-      sb.from('events').select('id, status'),
-      sb.from('profiles').select('id, role'),
-      sb.from('tickets').select('id', { count: 'exact', head: true }),
-      sb.from('equipment_requests').select('id, status'),
-    ]);
-    const events   = evRes.data   || [];
-    const profiles = profRes.data || [];
-    const requests = reqRes.data  || [];
-    return {
-      totalEvents:     events.length,
-      publishedEvents: events.filter(e => e.status === 'published').length,
-      pendingEvents:   events.filter(e => e.status === 'pending').length,
-      ticketsSold:     tickRes.count || 0,
-      totalUsers:      profiles.length,
-      organisers:      profiles.filter(p => p.role === 'organiser').length,
-      pendingRequests: requests.filter(r => r.status === 'pending').length,
+    const db = await firestoreClient();
+    const C  = n => db.collection(n);
+
+    // allSettled: one collection failing must not blank every number on the dashboard.
+    const jobs = {
+      totalEvents:         countOf(C('events')),
+      publishedEvents:     countOf(C('events').where('status', '==', 'published')),
+      pendingEvents:       countOf(C('events').where('status', '==', 'pending')),
+      ticketsSold:         countOf(C('tickets')),
+      totalUsers:          countOf(C('users')),
+      organisers:          countOf(C('users').where('role', '==', 'organiser')),
+      pendingRequests:     countOf(C('equipmentRequests').where('status', '==', 'pending')),
+      totalAccommodations: countOf(C('accommodations')),
+      pendingAccommodations: countOf(C('accommodations').where('status', '==', 'pending')),
+      pendingListings:     countOf(C('sellerListings').where('status', '==', 'pending')),
+      pendingBookings:     countOf(C('accommodationBookings').where('status', '==', 'pending')),
     };
+    const keys = Object.keys(jobs);
+    const res  = await Promise.allSettled(keys.map(k => jobs[k]));
+    const out  = {};
+    res.forEach((r, i) => {
+      if (r.status === 'fulfilled') out[keys[i]] = r.value;
+      else { out[keys[i]] = null; console.warn('[Stats]', keys[i], r.reason && r.reason.message); }
+    });
+    return out;
   }
 
-  async function adminGetUsers() {
-    const sb = await client();
-    const { data, error } = await sb
-      .from('profiles')
-      .select('id, first_name, last_name, email, role, organisation_name, created_at')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map(p => ({
-      id:               p.id,
-      firstName:        p.first_name  || '',
-      lastName:         p.last_name   || '',
-      email:            p.email       || '',
-      role:             p.role        || 'attendee',
-      organisationName: p.organisation_name || null,
-      createdAt:        p.created_at,
-    }));
+  /** Everything waiting for an admin decision, newest first (dashboard inbox). */
+  async function adminGetPendingSubmissions() {
+    const db = await firestoreClient();
+    const pend = async (coll, norm) => {
+      const snap = await db.collection(coll).where('status', '==', 'pending').get();
+      return snap.docs.map(d => norm(d.id, d.data()));
+    };
+    const [ev, ac, li] = await Promise.all([
+      pend('events', normaliseEvent).catch(() => []),
+      pend('accommodations', normaliseAccommodation).catch(() => []),
+      pend('sellerListings', normaliseSellerListing).catch(() => []),
+    ]);
+    const rows = [
+      ...ev.map(e => ({ kind: 'event', id: e.id, label: e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, by: e.organiser || '', image: e.image, at: e.createdAt })),
+      ...ac.map(a => ({ kind: 'accommodation', id: a.id, label: 'Stay', title: a.name, by: a.contactEmail || '', image: (a.images || [])[0], at: a.createdAt })),
+      ...li.map(l => ({ kind: 'listing', id: l.id, label: l.category === 'merchandise' ? 'Merchandise' : 'Equipment', title: l.title, by: l.contactEmail || l.contactName || '', image: (Array.isArray(l.images) ? l.images : [])[0], at: l.createdAt })),
+    ];
+    rows.sort((x, y) => String(y.at || '').localeCompare(String(x.at || '')));
+    return rows;
   }
 
-  async function adminUpdateUserRole(userId, role) {
-    const sb = await client();
-    const { error } = await sb.from('profiles').update({ role }).eq('id', userId);
-    if (error) throw error;
-  }
 
+  /** Joined against Firestore's `users` collection, not Supabase `profiles`
+   *  it stopped getting new rows the moment signup stopped touching Supabase
+   *  Auth at all (see Firebase Auth migration). */
   async function adminGetServiceRequests() {
-    const sb = await client();
-    const { data: requests, error } = await sb
-      .from('equipment_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    if (!requests?.length) return [];
+    const db   = await firestoreClient();
+    const snap = await db.collection('equipmentRequests').orderBy('createdAt', 'desc').get();
+    if (snap.empty) return [];
 
-    // Join user profiles
-    const userIds = [...new Set(requests.map(r => r.user_id).filter(Boolean))];
-    let profileMap = {};
-    if (userIds.length) {
-      const { data: profiles } = await sb
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .in('id', userIds);
-      (profiles || []).forEach(p => { profileMap[p.id] = p; });
-    }
+    const requests = snap.docs.map(d => toRawServiceRequest(d.id, d.data()));
+    const userIds  = [...new Set(requests.map(r => r.user_id).filter(Boolean))];
+    const entries  = await Promise.all(userIds.map(async uid => {
+      const doc = await db.collection('users').doc(uid).get();
+      return [uid, doc.exists ? doc.data() : null];
+    }));
+    const profileMap = Object.fromEntries(entries.filter(([, v]) => v));
 
     return requests.map(r => ({
       ...r,
-      first_name: profileMap[r.user_id]?.first_name || '',
-      last_name:  profileMap[r.user_id]?.last_name  || '',
-      email:      profileMap[r.user_id]?.email       || '',
+      first_name: profileMap[r.user_id]?.firstName || '',
+      last_name:  profileMap[r.user_id]?.lastName  || '',
+      email:      profileMap[r.user_id]?.email      || '',
     }));
   }
 
   async function adminUpdateServiceRequestStatus(id, status) {
-    const sb = await client();
-    const { error } = await sb
-      .from('equipment_requests')
-      .update({ status })
-      .eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('equipmentRequests').doc(id).update({ status });
   }
 
   // ════════════════════════════════════════
   //  ACCOMMODATIONS (public)
   // ════════════════════════════════════════
 
-  function normaliseAccommodation(row) {
+  function normaliseAccommodation(id, doc) {
     return {
-      id:           row.id,
-      name:         row.name,
-      description:  row.description   || '',
-      province:     row.province,
-      city:         row.city,
-      address:      row.address        || null,
-      checkInTime:  row.check_in_time  || '14:00',
-      checkOutTime: row.check_out_time || '10:00',
-      priceFrom:    parseFloat(row.price_from) || 0,
-      starRating:   row.star_rating    || 0,
-      amenities:    row.amenities      || [],
-      spaceTypes:   row.space_types    || [],
-      images:       row.images         || [],
-      contactEmail: row.contact_email  || null,
-      contactPhone: row.contact_phone  || null,
-      website:      row.website        || null,
-      bookingUrl:   row.booking_url    || null,
-      featured:     !!row.featured,
-      status:       row.status,
-      createdAt:    row.created_at,
+      id,
+      name:         doc.name,
+      description:  doc.description   || '',
+      province:     doc.province,
+      city:         doc.city,
+      address:      doc.address        || null,
+      checkInTime:  doc.checkInTime  || '14:00',
+      checkOutTime: doc.checkOutTime || '10:00',
+      priceFrom:    parseFloat(doc.priceFrom) || 0,
+      starRating:   doc.starRating    || 0,
+      amenities:    doc.amenities      || [],
+      spaceTypes:   doc.spaceTypes    || [],
+      images:       doc.images         || [],
+      contactEmail: doc.contactEmail  || null,
+      contactPhone: doc.contactPhone  || null,
+      website:      doc.website        || null,
+      bookingUrl:   doc.bookingUrl    || null,
+      refundPolicy: doc.refundPolicy  || null,
+      reviewNote:   doc.reviewNote    || null,
+      paymentType:  doc.paymentType   || null,
+      paymentLink:  doc.paymentLink   || null,
+      bankName:     doc.bankName      || null,
+      accountHolder: doc.accountHolder || null,
+      accountNumber: doc.accountNumber || null,
+      branchCode:   doc.branchCode    || null,
+      ownerId:      doc.ownerId       || null,
+      featured:     !!doc.featured,
+      hero:         !!doc.hero,
+      status:       doc.status,
+      createdAt:    doc.createdAt,
     };
   }
 
+  // tourist_destinations has no normalise*() mapper in the Supabase version
+  // either — accommodations.html and admin.js both read raw fields (e.g.
+  // `entry_fee`, not `entryFee`) directly.
+  function toRawDestination(id, doc) {
+    return {
+      id,
+      name:        doc.name,
+      description: doc.description || null,
+      province:    doc.province,
+      city:        doc.city    || null,
+      image:       doc.image   || null,
+      category:    doc.category || 'Nature',
+      entry_fee:   doc.entryFee || 0,
+      website:     doc.website  || null,
+      featured:    !!doc.featured,
+      status:      doc.status,
+      created_at:  doc.createdAt,
+    };
+  }
+
+  /** Space types are stored as {name, price, capacity} only — the wizard used
+   *  to also write placeType/bedrooms/beds/bathrooms, but nothing anywhere
+   *  ever reads those back, so they're dropped here rather than carried
+   *  forward as dead data with no schema to catch the drift. */
+  function buildSpaceTypes(spaceTypes) {
+    return (Array.isArray(spaceTypes) ? spaceTypes : []).map(st => ({
+      name:     st.name,
+      price:    parseFloat(st.price) || 0,
+      capacity: st.capacity != null ? parseInt(st.capacity) : null,
+    }));
+  }
+
   async function getAccommodations(filters = {}) {
-    const sb = await client();
-    let q = sb.from('accommodations').select('*');
-    if (filters.province) q = q.eq('province', filters.province);
-    if (filters.adminAll) { /* no status filter */ }
-    else q = q.eq('status', 'published');
-    q = q.order('featured', { ascending: false }).order('name', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data || []).map(normaliseAccommodation);
+    const db = await firestoreClient();
+    let q = db.collection('accommodations');
+    if (filters.province) q = q.where('province', '==', filters.province);
+    if (!filters.adminAll) q = q.where('status', '==', 'published');
+    q = q.orderBy('featured', 'desc').orderBy('name', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => normaliseAccommodation(d.id, d.data()));
   }
 
   async function getAccommodation(id) {
-    const sb = await client();
-    const { data, error } = await sb.from('accommodations').select('*').eq('id', id).maybeSingle();
-    if (error) throw error;
-    return data ? normaliseAccommodation(data) : null;
+    const db  = await firestoreClient();
+    const doc = await db.collection('accommodations').doc(id).get();
+    return doc.exists ? normaliseAccommodation(doc.id, doc.data()) : null;
   }
 
   async function getTouristDestinations(filters = {}) {
-    const sb = await client();
-    let q = sb.from('tourist_destinations').select('*');
-    if (filters.province) q = q.eq('province', filters.province);
-    if (filters.adminAll) { /* no status filter */ }
-    else q = q.eq('status', 'published');
-    q = q.order('featured', { ascending: false }).order('name', { ascending: true });
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
+    const db = await firestoreClient();
+    let q = db.collection('touristDestinations');
+    if (filters.province) q = q.where('province', '==', filters.province);
+    if (!filters.adminAll) q = q.where('status', '==', 'published');
+    q = q.orderBy('featured', 'desc').orderBy('name', 'asc');
+    const snap = await q.get();
+    return snap.docs.map(d => toRawDestination(d.id, d.data()));
   }
 
   async function submitAccommodationBooking(b) {
-    const sb = await client();
+    const db     = await firestoreClient();
     const nights = Math.max(1, Math.round((new Date(b.checkOutDate) - new Date(b.checkInDate)) / 86400000));
-    const id     = `BK-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-    const { data, error } = await sb.from('accommodation_bookings').insert({
-      id,
-      accommodation_id:   b.accommodationId,
-      accommodation_name: b.accommodationName,
-      space_type_name:    b.spaceTypeName,
-      price_per_night:    b.pricePerNight || 0,
-      check_in_date:      b.checkInDate,
-      check_out_date:     b.checkOutDate,
+    const id     = makeId('BK');
+    const row = {
+      accommodationId:   b.accommodationId,
+      accommodationName: b.accommodationName,
+      spaceTypeName:     b.spaceTypeName,
+      pricePerNight:     b.pricePerNight || 0,
+      checkInDate:       b.checkInDate,
+      checkOutDate:      b.checkOutDate,
       nights,
-      guests:             b.guests        || 1,
-      total_price:        (b.pricePerNight || 0) * nights,
-      customer_name:      b.customerName,
-      customer_email:     b.customerEmail,
-      customer_phone:     b.customerPhone || null,
-      special_requests:   b.specialRequests || null,
-      status:             'pending',
-    }).select().single();
-    if (error) throw error;
-    return data;
+      guests:            b.guests        || 1,
+      totalPrice:        (b.pricePerNight || 0) * nights,
+      customerName:      b.customerName,
+      customerEmail:     b.customerEmail,
+      customerPhone:     b.customerPhone || null,
+      specialRequests:   b.specialRequests || null,
+      status:            'pending',
+      createdAt:         new Date().toISOString(),
+    };
+    await db.collection('accommodationBookings').doc(id).set(row);
+    return toRawBooking(id, row);
   }
 
   /**
    * Seller-submitted accommodation listing. Always lands as `pending` so it
    * goes through the same admin review queue as an admin-created one.
-   *
-   * NOTE: `accommodations` may not have an `owner_id` column yet (it was an
-   * admin-only table historically). We try the insert with owner_id and, if
-   * the column is missing, retry without it so submissions still succeed the
-   * listing is then only visible/manageable from the admin panel until the
-   * column is added.
+   * `ownerId` is always set here — the Supabase version had to defensively
+   * retry without it since the column's existence was uncertain; Firestore
+   * has no such ambiguity, and the Security Rule requires it on create.
    */
   async function createAccommodation(data) {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) throw new Error('Please sign in to list accommodation.');
 
-    const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
+    const newId = makeId('ACC');
+    const now   = new Date().toISOString();
     const row = {
-      id:             newId,
-      name:           data.name,
-      description:    data.description   || null,
-      province:       data.province,
-      city:           data.city,
-      address:        data.address       || null,
-      check_in_time:  data.checkInTime   || '14:00',
-      check_out_time: data.checkOutTime  || '10:00',
-      price_from:     parseFloat(data.priceFrom) || 0,
-      amenities:      Array.isArray(data.amenities) ? data.amenities : [],
-      space_types:    Array.isArray(data.spaceTypes) ? data.spaceTypes : [],
-      images:         Array.isArray(data.images) ? data.images : [],
-      contact_email:  data.contactEmail  || user.email || null,
-      contact_phone:  data.contactPhone  || null,
-      website:        data.website       || null,
-      star_rating:    parseInt(data.starRating) || 0,
-      featured:       false,
-      status:         'pending',
+      name:          data.name,
+      description:   data.description   || null,
+      province:      data.province,
+      city:          data.city,
+      address:       data.address       || null,
+      checkInTime:   data.checkInTime   || '14:00',
+      checkOutTime:  data.checkOutTime  || '10:00',
+      priceFrom:     parseFloat(data.priceFrom) || 0,
+      amenities:     Array.isArray(data.amenities) ? data.amenities : [],
+      spaceTypes:    buildSpaceTypes(data.spaceTypes),
+      images:        Array.isArray(data.images) ? data.images : [],
+      contactEmail:  data.contactEmail  || user.email || null,
+      contactPhone:  data.contactPhone  || null,
+      website:       data.website       || null,
+      starRating:    parseInt(data.starRating) || 0,
+      refundPolicy:  data.refundPolicy  || null,
+      paymentType:   data.paymentType   || null,
+      paymentLink:   data.paymentLink   || null,
+      bankName:      data.bankName      || null,
+      accountHolder: data.accountHolder || null,
+      accountNumber: data.accountNumber || null,
+      branchCode:    data.branchCode    || null,
+      featured:      false,
+      status:        'pending',
+      ownerId:       user.id,
+      createdAt:     now,
+      updatedAt:     now,
     };
 
-    let { error } = await sb.from('accommodations').insert({ ...row, owner_id: user.id });
-
-    if (error && /owner_id/i.test(error.message || '')) {
-      // Column not present on this database retry without it.
-      ({ error } = await sb.from('accommodations').insert(row));
-    }
-    if (error) throw error;
-
+    await db.collection('accommodations').doc(newId).set(row);
     return { id: newId, ...data, status: 'pending' };
   }
 
-  /** Accommodation listings owned by the signed-in seller (empty if no owner_id column). */
+  /** Accommodation listings owned by the signed-in seller. */
   async function getMyAccommodations() {
-    const sb   = await client();
-    const user = window.Auth?.getUser();
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
     if (!user) return [];
-    const { data, error } = await sb
-      .from('accommodations')
-      .select('*')
-      .eq('owner_id', user.id)
-      .order('created_at', { ascending: false });
-    if (error) return [];            // column missing → caller shows the explanatory note
-    return (data || []).map(normaliseAccommodation);
+    try {
+      const snap = await db.collection('accommodations')
+        .where('ownerId', '==', user.id)
+        .orderBy('createdAt', 'desc')
+        .get();
+      return snap.docs.map(d => normaliseAccommodation(d.id, d.data()));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ════════════════════════════════════════
+  //  EQUIPMENT & MERCHANDISE LISTINGS (Firestore `sellerListings`)
+  //  These categories have no public page yet; sellers submit, admins review.
+  // ════════════════════════════════════════
+
+  function normaliseSellerListing(id, doc) {
+    return {
+      id,
+      category:     doc.category,
+      title:        doc.title,
+      status:       doc.status,
+      ownerId:      doc.ownerId       || null,
+      ownerEmail:   doc.ownerEmail    || null,
+      contactName:  doc.contactName   || null,
+      contactEmail: doc.contactEmail  || null,
+      contactPhone: doc.contactPhone  || null,
+      details:      Array.isArray(doc.details) ? doc.details : [],
+      images:       Array.isArray(doc.images)  ? doc.images  : [],
+      reviewNote:   doc.reviewNote    || null,
+      createdAt:    doc.createdAt     || null,
+    };
+  }
+
+  async function createSellerListing(d) {
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) throw new Error('Please sign in to submit a listing.');
+    const id = makeId('LST');
+    await db.collection('sellerListings').doc(id).set({
+      category:     d.category,
+      title:        d.title,
+      status:       'pending',
+      ownerId:      user.id,
+      ownerEmail:   user.email        || null,
+      contactName:  d.contactName     || null,
+      contactEmail: d.contactEmail    || null,
+      contactPhone: d.contactPhone    || null,
+      details:      Array.isArray(d.details) ? d.details : [],
+      images:       Array.isArray(d.images)  ? d.images  : [],
+      createdAt:    new Date().toISOString(),
+    });
+    return { id };
+  }
+
+  async function getMySellerListings() {
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) return [];
+    try {
+      // Sorted here rather than in the query, so no composite Firestore index is needed.
+      const snap = await db.collection('sellerListings').where('ownerId', '==', user.id).get();
+      return snap.docs.map(d => normaliseSellerListing(d.id, d.data()))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    } catch (_) { return []; }
+  }
+
+  async function adminGetSellerListings() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('sellerListings').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => normaliseSellerListing(d.id, d.data()));
+  }
+
+  async function adminDeleteSellerListing(id) {
+    const db = await firestoreClient();
+    await db.collection('sellerListings').doc(id).delete();
+  }
+
+  async function adminGetTickets() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('tickets').orderBy('bookedAt', 'desc').get();
+    return snap.docs.map(d => normaliseTicket(d.id, d.data()));
+  }
+
+  /** Contact details for the account that owns a listing (admin only; the rules enforce that). */
+  async function adminGetOwnerProfile(userId) {
+    if (!userId) return null;
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').doc(userId).get();
+    return snap.exists ? normaliseFirestoreUser(userId, snap.data()) : null;
+  }
+
+  /**
+   * Approve ('published') or decline ('rejected') a listing, keep the reason for the
+   * seller, and email the seller the outcome. kind: 'event' | 'accommodation' | 'listing'.
+   * Resolves { emailed }. The decision itself is saved even if the email fails.
+   */
+  async function adminReviewListing(kind, id, status, note) {
+    const collection = { event: 'events', accommodation: 'accommodations', listing: 'sellerListings' }[kind];
+    if (!collection) throw new Error('Unknown listing type.');
+    const db = await firestoreClient();
+    await db.collection(collection).doc(id).update({
+      status,
+      reviewNote: status === 'rejected' ? (note || null) : null,
+      updatedAt:  new Date().toISOString(),
+    });
+
+    let emailed = false;
+    try {
+      const res = await fetch('/.netlify/functions/notify-decision', {
+        method:  'POST',
+        headers: Auth?.headers ? Auth.headers() : { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ kind, id, status, note: note || '' }),
+      });
+      emailed = res.ok;
+    } catch { /* decision is saved; the email is a courtesy */ }
+    return { emailed };
+  }
+
+  /** Ask the server to email the owner, the customer and support about a booking that was just saved. Fire-and-forget. */
+  function notifyBooking(kind, id) {
+    return fetch('/.netlify/functions/notify-booking', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ kind, id }),
+    }).catch(() => {});
   }
 
   // ════════════════════════════════════════
@@ -787,58 +972,86 @@ const SupabaseAPI = (() => {
   // ════════════════════════════════════════
 
   async function adminSaveAccommodation(id, data) {
-    const sb  = await client();
+    const db  = await firestoreClient();
     const row = {
-      name:           data.name,
-      description:    data.description   || null,
-      province:       data.province,
-      city:           data.city,
-      address:        data.address       || null,
-      check_in_time:  data.checkInTime   || '14:00',
-      check_out_time: data.checkOutTime  || '10:00',
-      price_from:     parseFloat(data.priceFrom) || 0,
-      amenities:      Array.isArray(data.amenities) ? data.amenities : (data.amenities || '').split(',').map(a => a.trim()).filter(Boolean),
-      space_types:    data.spaceTypes    || [],
-      images:         Array.isArray(data.images) ? data.images : (data.images || '').split(',').map(i => i.trim()).filter(Boolean),
-      contact_email:  data.contactEmail  || null,
-      contact_phone:  data.contactPhone  || null,
-      website:        data.website       || null,
-      star_rating:    parseInt(data.starRating) || 0,
-      booking_url:    data.bookingUrl    || null,
-      featured:       !!data.featured,
-      status:         data.status        || 'published',
-      updated_at:     new Date().toISOString(),
+      name:          data.name,
+      description:   data.description   || null,
+      province:      data.province,
+      city:          data.city,
+      address:       data.address       || null,
+      checkInTime:   data.checkInTime   || '14:00',
+      checkOutTime:  data.checkOutTime  || '10:00',
+      priceFrom:     parseFloat(data.priceFrom) || 0,
+      amenities:     Array.isArray(data.amenities) ? data.amenities : (data.amenities || '').split(',').map(a => a.trim()).filter(Boolean),
+      spaceTypes:    buildSpaceTypes(data.spaceTypes),
+      images:        Array.isArray(data.images) ? data.images : (data.images || '').split(',').map(i => i.trim()).filter(Boolean),
+      contactEmail:  data.contactEmail  || null,
+      contactPhone:  data.contactPhone  || null,
+      website:       data.website       || null,
+      starRating:    parseInt(data.starRating) || 0,
+      bookingUrl:    data.bookingUrl    || null,
+      featured:      !!data.featured,
+      status:        data.status        || 'published',
+      updatedAt:     new Date().toISOString(),
     };
     if (id) {
-      const { error } = await sb.from('accommodations').update(row).eq('id', id);
-      if (error) throw error;
+      await db.collection('accommodations').doc(id).update(row);
     } else {
-      const newId = `ACC-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-      const { error } = await sb.from('accommodations').insert({ id: newId, ...row });
-      if (error) throw error;
+      const newId = makeId('ACC');
+      await db.collection('accommodations').doc(newId).set({ ...row, ownerId: null, createdAt: row.updatedAt });
     }
   }
 
+
+  // ════════════════════════════════════════
+  //  HERO SPOTLIGHT (admin picks what shows in the homepage hero)
+  // ════════════════════════════════════════
+
+  /** Published events and stays an admin has switched on for the hero. */
+  async function getHeroSpots() {
+    const db = await firestoreClient();
+    const pick = c => db.collection(c).where('hero', '==', true).where('status', '==', 'published').limit(6).get();
+    const [ev, ac] = await Promise.all([pick('events'), pick('accommodations')]);
+    const spots = [];
+    ev.docs.forEach(d => {
+      const e = normaliseEvent(d.id, d.data());
+      spots.push({ kind: 'event', id: e.id, title: e.title, image: e.image,
+        label: e.category || 'Event', where: [e.location, e.city].filter(Boolean).join(', '),
+        price: e.price > 0 ? 'From R ' + Math.round(e.price) : 'Free entry', href: 'event.html?id=' + encodeURIComponent(e.id) });
+    });
+    ac.docs.forEach(d => {
+      const a = normaliseAccommodation(d.id, d.data());
+      spots.push({ kind: 'accommodation', id: a.id, title: a.name, image: (a.images || [])[0] || null,
+        label: 'Stay', where: [a.city, a.province].filter(Boolean).join(', '),
+        price: a.priceFrom > 0 ? 'From R ' + Math.round(a.priceFrom) + ' / night' : 'Enquire for price', href: 'accommodation.html?id=' + encodeURIComponent(a.id) });
+    });
+    return spots;
+  }
+
+  /** Admin only (enforced by Firestore rules): show or hide a listing in the hero. */
+  async function adminSetHero(kind, id, value) {
+    const db = await firestoreClient();
+    const coll = kind === 'accommodation' ? 'accommodations' : 'events';
+    await db.collection(coll).doc(id).update({ hero: !!value, updatedAt: new Date().toISOString() });
+  }
+
   async function adminDeleteAccommodation(id) {
-    const sb = await client();
-    const { error } = await sb.from('accommodations').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('accommodations').doc(id).delete();
   }
 
   async function adminGetAccommodationBookings(filters = {}) {
-    const sb = await client();
-    let q = sb.from('accommodation_bookings').select('*');
-    if (filters.status) q = q.eq('status', filters.status);
-    q = q.order('created_at', { ascending: false });
-    const { data, error } = await q;
-    if (error) throw error;
-    return data || [];
+    const db = await firestoreClient();
+    let q = db.collection('accommodationBookings');
+    if (filters.status) q = q.where('status', '==', filters.status);
+    q = q.orderBy('createdAt', 'desc');
+    const snap = await q.get();
+    return snap.docs.map(d => toRawBooking(d.id, d.data()));
   }
 
   async function adminUpdateBookingStatus(id, status) {
-    const sb = await client();
-    const { error } = await sb.from('accommodation_bookings').update({ status }).eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('accommodationBookings').doc(id).update({ status });
   }
 
   // ════════════════════════════════════════
@@ -846,51 +1059,51 @@ const SupabaseAPI = (() => {
   // ════════════════════════════════════════
 
   async function adminSaveTouristDestination(id, data) {
-    const sb  = await client();
+    const db  = await firestoreClient();
     const row = {
-      name:      data.name,
+      name:        data.name,
       description: data.description || null,
-      province:  data.province,
-      city:      data.city       || null,
-      image:     data.image      || null,
-      category:  data.category   || 'Nature',
-      entry_fee: parseFloat(data.entryFee) || 0,
-      website:   data.website    || null,
-      featured:  !!data.featured,
-      status:    data.status     || 'published',
+      province:    data.province,
+      city:        data.city       || null,
+      image:       data.image      || null,
+      category:    data.category   || 'Nature',
+      entryFee:    parseFloat(data.entryFee) || 0,
+      website:     data.website    || null,
+      featured:    !!data.featured,
+      status:      data.status     || 'published',
     };
     if (id) {
-      const { error } = await sb.from('tourist_destinations').update(row).eq('id', id);
-      if (error) throw error;
+      await db.collection('touristDestinations').doc(id).update(row);
     } else {
-      const newId = `TD-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2,5).toUpperCase()}`;
-      const { error } = await sb.from('tourist_destinations').insert({ id: newId, ...row });
-      if (error) throw error;
+      const newId = makeId('TD');
+      await db.collection('touristDestinations').doc(newId).set({ ...row, createdAt: new Date().toISOString() });
     }
   }
 
   async function adminDeleteTouristDestination(id) {
-    const sb = await client();
-    const { error } = await sb.from('tourist_destinations').delete().eq('id', id);
-    if (error) throw error;
+    const db = await firestoreClient();
+    await db.collection('touristDestinations').doc(id).delete();
   }
 
   return {
     getEvents, getEvent,
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
-    adminGetStats, adminGetUsers, adminUpdateUserRole,
+    adminGetStats,
+    getMyFirestoreProfile, adminGetFirestoreUsers, adminSetUserRole,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
+    getHeroSpots, adminSetHero,
     adminGetAccommodationBookings, adminUpdateBookingStatus,
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
-    getMyTickets, submitTicket, getSalesForMyEvents,
-    getMyProfile,
+    getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
+    createSellerListing, getMySellerListings, adminGetSellerListings, adminDeleteSellerListing,
+    adminGetPendingSubmissions, adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
   };
 
 })();

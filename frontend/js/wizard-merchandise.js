@@ -10,9 +10,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=merchandise&signup=1'); return; }
 
   const user = Auth.getUser() || {};
 
@@ -149,6 +147,7 @@
         contactName:  String(s.contactName || '').trim(),
         contactEmail: String(s.contactEmail || '').trim(),
         contactPhone: String(s.contactPhone || '').trim(),
+        images:       Array.isArray(s.images) ? s.images : [],
         details: SellerApply.detailsFrom([
           ['Seller / brand',  s.business],
           ['Category',        s.category],
@@ -161,7 +160,7 @@
           ['Other variants',  s.variants],
           ['Delivery',        s.delivery],
           ['Delivery fee',    s.deliveryFee ? `R${s.deliveryFee}` : ''],
-          ['Photos supplied', (s.images || []).length ? `${s.images.length} attached in the seller's browser — request from seller` : 'None'],
+          ['Photos', (s.images || []).length ? `${s.images.length} uploaded (view them in the admin portal)` : 'None'],
         ]),
       });
     },

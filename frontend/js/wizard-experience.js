@@ -13,9 +13,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
-  const role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=experience&signup=1'); return; }
 
   const PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
 
@@ -110,7 +108,7 @@
         { name: 'paymentType', label: 'Payment method', type: 'cards', required: true,
           requiredMsg: 'Choose how guests should pay you.',
           options: [
-            { value: 'link', icon: '🔗', label: 'Payment link',  sub: 'Yoco, PayFast, SnapScan or similar.' },
+            { value: 'link', icon: '🔗', label: 'Payment link',  sub: 'Yoco, SnapScan or similar.' },
             { value: 'bank', icon: '🏦', label: 'Bank transfer', sub: 'Guests EFT you directly.' },
             { value: 'free', icon: '🎁', label: 'Free',          sub: 'No payment needed to join.' },
           ] },
@@ -121,6 +119,7 @@
         { name: 'accountHolder', label: 'Account holder', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'Name on the account' },
         { name: 'accountNumber', label: 'Account number', type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 62012345678' },
         { name: 'branchCode',    label: 'Branch code',    type: 'text', showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 250655' },
+        ...Utils.refundFields(),
       ],
     },
   ];
@@ -140,6 +139,7 @@
     title:       'List an experience',
     steps,
     draftTitleField: 'title',
+    notifyKind:  'experience',
     submitLabel: 'Submit for review',
     exitHref:    'dashboard.html?tab=listings',
     previewLabel: 'Exactly how your experience will be published',
@@ -178,6 +178,7 @@
           available:   parseInt(s.capacity) || 1,
         }],
         tags: [s.expType, 'experience'].filter(Boolean),
+        refundPolicy:  Utils.refundPolicyText(s.refundPolicy, s.refundNote),
         paymentType:   s.paymentType || null,
         paymentLink:   s.paymentType === 'link' ? (s.paymentLink || null) : null,
         bankName:      s.paymentType === 'bank' ? (s.bankName || null) : null,

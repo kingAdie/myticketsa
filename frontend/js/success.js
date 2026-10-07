@@ -1,22 +1,42 @@
 /**
  * TicketsSA Success Page (success.js)
  *
- * Reads the booking receipt from localStorage (set by checkout.js).
- * The ticket is already confirmed by the time we land here — booking
- * happens directly against Supabase, no payment webhook to wait on.
- * TicketsSA doesn't process payment itself; if the event's organiser
- * collects payment via their own link or bank details, we surface
- * those instructions here too.
+ * Normally reads the booking receipt from localStorage (set by checkout.js
+ * right after it books the ticket in Firestore). If that local state is
+ * missing (new tab, another device), we fetch the ticket by the `?ticket=`
+ * id in the URL. If the event's organiser collects payment themselves via
+ * their own link or bank details, we surface those instructions here too.
  */
 
-/* global Utils */
+/* global Utils, SupabaseAPI */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
   Utils.initMobileNav();
 
-  const booking = Utils.getStorage('mt_booking');
-  const ticketId = new URLSearchParams(window.location.search).get('ticket') || booking?.ticketId;
+  const ticketId = new URLSearchParams(window.location.search).get('ticket');
+  let booking = Utils.getStorage('mt_booking');
+
+  // No local receipt (opened in a new tab or on another device): look the ticket up by id.
+  if ((!booking || booking.ticketId !== ticketId) && ticketId && window.SupabaseAPI) {
+    try {
+      const row = await SupabaseAPI.getTicket(ticketId);
+      if (row) {
+        booking = {
+          ticketId:  row.id,
+          event:     row.event,
+          ticket:    row.ticket,
+          pricing:   row.pricing,
+          payment:   { type: null }, // payment instructions only show on the original receipt
+          buyer:     row.buyer,
+          qrCodeUrl: row.qrCodeUrl,
+          bookedAt:  row.bookedAt,
+        };
+      }
+    } catch (err) {
+      console.error('[Success] ticket lookup failed:', err);
+    }
+  }
 
   if (!booking || !ticketId) { showError(); return; }
 

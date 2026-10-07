@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TicketsSA Just a moment…</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#080808"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .cb-wrap { text-align:center; max-width:460px; width:100%; padding:0 24px; }
+    .cb-logo { position:fixed; top:24px; left:50%; transform:translateX(-50%); font-size:1.25rem; font-weight:800; letter-spacing:-.02em; white-space:nowrap; text-decoration:none; }
+    .cb-logo .w { color:#fff; } .cb-logo .g { color:var(--green); }
+    .cb-icon { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 24px; }
+    .cb-icon--loading { background:var(--bg-2); border:1px solid var(--b1); }
+    .cb-icon--success { background:var(--green-tint); border:1px solid var(--green-border); color:var(--green); }
+    .cb-icon--error   { background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25); color:#EF4444; }
+    .cb-icon--reset   { background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.25); color:var(--blue-hi,#60A5FA); }
+    .cb-spinner { width:32px; height:32px; border:3px solid var(--b1); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .cb-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:clamp(1.5rem,4vw,2rem); font-weight:800; letter-spacing:-.03em; margin-bottom:12px; color:var(--text); }
+    .cb-sub   { font-size:.9375rem; color:var(--text-2); line-height:1.65; margin-bottom:28px; }
+    .cb-email-badge { display:inline-flex; align-items:center; gap:7px; background:var(--bg-2); border:1px solid var(--b1); border-radius:var(--rx,6px); padding:7px 16px; font-size:.875rem; font-weight:600; color:var(--green); margin-bottom:28px; }
+    .cb-actions { display:flex; flex-direction:column; gap:12px; }
+    .cb-reset-form { text-align:left; margin-top:24px; }
+    .cb-reset-form .form-group { margin-bottom:16px; }
+    .cb-strength { display:flex; gap:4px; margin-top:8px; }
+    .cb-strength-bar { flex:1; height:4px; border-radius:2px; background:var(--b1); transition:background .3s; }
+    .cb-strength-bar.weak   { background:#EF4444; }
+    .cb-strength-bar.fair   { background:#F59E0B; }
+    .cb-strength-bar.good   { background:#22C55E; }
+    .cb-strength-bar.strong { background:#16A34A; }
+    .cb-hint { font-size:.8rem; color:var(--text-3); margin-top:4px; display:block; }
+    .cb-redirect-note { font-size:.8125rem; color:var(--text-3); margin-top:12px; }
+  </style>
+</head>
+<body>
+
+<a href="index.html" class="cb-logo">
+  <span class="w">tickets</span><span class="g">sa</span>
+</a>
+
+<div class="cb-wrap" id="cbWrap">
+  <div class="cb-icon cb-icon--loading"><div class="cb-spinner"></div></div>
+  <h1 class="cb-title">Just a moment…</h1>
+  <p class="cb-sub">Verifying your link.</p>
+</div>
+
+<script>
+/* ================================================================
+   auth-action.html Firebase auth action link handler
+
+   Firebase redirects here with ?mode=verifyEmail|resetPassword&
+   oobCode=... (set via actionCodeSettings.url in
+   firebase-send-auth-email.js). Much simpler than the old
+   auth-callback.html: Google sign-in uses a popup now (see
+   auth.js), so there's no OAuth redirect branch to handle here
+   any more just these two link types.
+   ================================================================ */
+(async () => {
+  // Keep these in sync with frontend/js/auth.js's firebaseConfig.
+  const firebaseConfig = {
+    apiKey:            'AIzaSyBG0O0MIOGa_8X1H-xUS1mz9r41TateJBE',
+    authDomain:        'tickets-sa.firebaseapp.com',
+    projectId:         'tickets-sa',
+    storageBucket:     'tickets-sa.firebasestorage.app',
+    messagingSenderId: '1033978636742',
+    appId:             '1:1033978636742:web:ea98ebe89d6daf3ce32ac7',
+  };
+  const FIREBASE_SDK_VERSION = '10.13.2';
+
+  const wrap = document.getElementById('cbWrap');
+
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function loadFirebase() {
+    if (!window.firebase) {
+      await loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app-compat.js`);
+      await loadScript(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-auth-compat.js`);
+    }
+    if (!window.firebase.apps.length) window.firebase.initializeApp(firebaseConfig);
+    return window.firebase;
+  }
+
+  function showLinkExpired() {
+    wrap.innerHTML = `
+      <div class="cb-icon cb-icon--error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <h1 class="cb-title">Link Expired</h1>
+      <p class="cb-sub">This link has already been used or has expired. Please request a new one from the login page.</p>
+      <div class="cb-actions"><a href="index.html" class="btn btn-primary btn-lg">Back to Home</a></div>`;
+  }
+
+  function showConfirmed(email) {
+    wrap.innerHTML = `
+      <div class="cb-icon cb-icon--success">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="36" height="36"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h1 class="cb-title">Email Confirmed!</h1>
+      <p class="cb-sub">Your email has been verified. You can now log in.</p>
+      ${email ? `<div class="cb-email-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>${esc(email)}</div>` : ''}
+      <div class="cb-actions">
+        <a href="index.html?login=1${email ? '&email=' + encodeURIComponent(email) : ''}" class="btn btn-primary btn-lg">Log In to TicketsSA</a>
+        <a href="index.html" class="btn btn-secondary btn-lg">Browse Events</a>
+      </div>`;
+  }
+
+  function showPasswordReset(fb, oobCode, email) {
+    wrap.innerHTML = `
+      <div class="cb-icon cb-icon--reset">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h1 class="cb-title">Set New Password</h1>
+      <p class="cb-sub">Enter a new password for <strong style="color:var(--text)">${esc(email || 'your account')}</strong>.</p>
+      <div class="cb-reset-form">
+        <div class="form-group">
+          <label class="form-label" for="newPw">New Password <span class="req">*</span></label>
+          <div class="form-input-wrap">
+            <input type="password" id="newPw" class="form-input" placeholder="At least 8 characters" autocomplete="new-password"/>
+            <button type="button" class="form-pw-toggle" data-target="newPw" aria-label="Show password">
+              <svg class="pw-eye pw-eye--show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="pw-eye pw-eye--hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <div class="cb-strength" id="strengthBars">
+            <div class="cb-strength-bar" id="s1"></div><div class="cb-strength-bar" id="s2"></div>
+            <div class="cb-strength-bar" id="s3"></div><div class="cb-strength-bar" id="s4"></div>
+          </div>
+          <span class="cb-hint" id="strengthLabel">Enter a strong password</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirmPw">Confirm Password <span class="req">*</span></label>
+          <div class="form-input-wrap">
+            <input type="password" id="confirmPw" class="form-input" placeholder="Repeat your password" autocomplete="new-password"/>
+            <button type="button" class="form-pw-toggle" data-target="confirmPw" aria-label="Show password">
+              <svg class="pw-eye pw-eye--show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="pw-eye pw-eye--hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <span class="form-error" id="confirmErr"></span>
+        </div>
+        <div class="form-error" id="resetErr" style="margin-bottom:12px"></div>
+        <button class="btn btn-primary btn-lg btn-full" id="resetBtn">Set New Password</button>
+      </div>`;
+
+    document.getElementById('newPw').addEventListener('input', function () {
+      const v = this.value; let score = 0;
+      if (v.length >= 8) score++;
+      if (/[A-Z]/.test(v)) score++;
+      if (/[0-9]/.test(v)) score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      const lbls = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+      const cls  = ['', 'weak', 'fair', 'good', 'strong'];
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('s' + i).className = 'cb-strength-bar' + (i <= score ? ' ' + cls[score] : '');
+      }
+      document.getElementById('strengthLabel').textContent = score > 0 ? lbls[score] : 'Enter a strong password';
+    });
+
+    document.querySelectorAll('.form-pw-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const toText = input.type === 'password';
+        input.type = toText ? 'text' : 'password';
+        btn.querySelector('.pw-eye--show').style.display = toText ? 'none' : '';
+        btn.querySelector('.pw-eye--hide').style.display = toText ? '' : 'none';
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      const pw    = document.getElementById('newPw').value;
+      const cpw   = document.getElementById('confirmPw').value;
+      const errEl = document.getElementById('resetErr');
+      const cfErr = document.getElementById('confirmErr');
+      errEl.textContent = ''; cfErr.textContent = '';
+
+      if (pw.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; return; }
+      if (pw !== cpw)    { cfErr.textContent = 'Passwords do not match.'; return; }
+
+      const btn = document.getElementById('resetBtn');
+      btn.disabled = true; btn.textContent = 'Updating…';
+
+      try {
+        await fb.auth().confirmPasswordReset(oobCode, pw);
+        wrap.innerHTML = `
+          <div class="cb-icon cb-icon--success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="36" height="36"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="cb-title">Password Updated!</h1>
+          <p class="cb-sub">Your password has been changed successfully. Please log in with your new password.</p>
+          <div class="cb-actions"><a href="index.html?login=1" class="btn btn-primary btn-lg">Log In</a></div>`;
+      } catch (e) {
+        errEl.textContent = 'This link has expired. Please request a new one.';
+        btn.disabled = false; btn.textContent = 'Set New Password';
+      }
+    });
+  }
+
+  /* ════════════════════════════════════════════════ MAIN FLOW ════ */
+  const params  = new URLSearchParams(window.location.search);
+  const mode    = params.get('mode');
+  const oobCode = params.get('oobCode');
+
+  if (!mode || !oobCode) { showLinkExpired(); return; }
+
+  try {
+    const fb = await loadFirebase();
+
+    if (mode === 'verifyEmail') {
+      const info = await fb.auth().checkActionCode(oobCode);
+      await fb.auth().applyActionCode(oobCode);
+      showConfirmed(info?.data?.email);
+
+    } else if (mode === 'resetPassword') {
+      const email = await fb.auth().verifyPasswordResetCode(oobCode);
+      showPasswordReset(fb, oobCode, email);
+
+    } else {
+      showLinkExpired();
+    }
+  } catch (err) {
+    showLinkExpired();
+  }
+})();
+</script>
+</body>
+</html>

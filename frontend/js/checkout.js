@@ -1,11 +1,12 @@
 
 /* ================================================
    TicketsSA Checkout
-   Books the ticket directly (client → Supabase) and
-   confirms it immediately. TicketsSA doesn't process
-   payment itself the organiser collects payment directly
-   from the buyer via their own payment link or bank
-   details, shown here and on the confirmation page.
+
+   TicketsSA doesn't process payment. The organiser collects
+   it directly (their own payment link or bank details, shown
+   here and on the confirmation page). The booking is saved to
+   Firestore and confirmed immediately, then the organiser, the
+   buyer and support are emailed (notify-booking.js).
    ================================================ */
 
 /* global Utils, Auth, SupabaseAPI */
@@ -38,9 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
     Utils.setText('#summaryQty',        `${sel.quantity} × ticket${sel.quantity !== 1 ? 's' : ''}`);
     Utils.setText('#summaryUnitPrice',  Utils.formatCurrency(sel.ticketPrice));
 
-    const fee   = Math.round(sel.ticketPrice * sel.quantity * 0.05 * 100) / 100;
-    const total = Math.round((sel.total + fee) * 100) / 100;
-    Utils.setText('#summaryFee',   Utils.formatCurrency(fee));
+    // TicketsSA adds no fee: the buyer pays the organiser exactly the ticket price.
+    const fee   = 0;
+    const total = Math.round(sel.total * 100) / 100;
+    document.getElementById('summaryFeeRow')?.setAttribute('hidden', '');
     Utils.setText('#summaryTotal', Utils.formatCurrency(total));
 
     sel.fee        = fee;
@@ -188,10 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      // Ticket is booked directly against Supabase and confirmed immediately.
-      // TicketsSA doesn't process payment the organiser collects it directly
-      // via their own payment link / bank details, shown above and on the receipt.
+      // Saved to Firestore and confirmed immediately. TicketsSA doesn't process
+      // payment: the organiser collects it directly via their own payment link /
+      // bank details, shown above and on the receipt.
       const result = await SupabaseAPI.submitTicket(payload);
+      SupabaseAPI.notifyBooking('ticket', result.id);   // emails the owner, the buyer and support
 
       Utils.setStorage('mt_booking', {
         ticketId: result.id,

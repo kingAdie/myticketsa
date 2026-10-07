@@ -1392,11 +1392,20 @@
 }
 
 @media(max-width:1100px) {
-  .hero__inner           { grid-template-columns: 1fr; gap: 0; padding: 80px 0 60px; }
-  .hero__visual          { display: none; }
+  .hero__inner           { gap: 36px; grid-template-columns: minmax(0, 1fr) 380px; padding: 72px var(--px) 56px; }
   .equip-bento           { grid-template-columns: 1fr 1fr; }
   .categories-row        { grid-template-columns: repeat(3,1fr); }
   .platform-pitch__inner { grid-template-columns: 1fr 320px; }
+}
+
+@media(max-width:980px) {
+  /* Portrait tablets: one centred column, copy and card share the same alignment */
+  .hero__inner           { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 72px var(--px) 56px; text-align: center; }
+  .hero__visual          { display: block; width: 100%; max-width: 520px; margin: 40px auto 0; text-align: left; }
+  .hero__tag             { margin-left: auto; margin-right: auto; }
+  .hero__sub             { margin-left: auto; margin-right: auto; }
+  .hero__search          { margin-left: auto; margin-right: auto; }
+  .hero__cats            { justify-content: center; max-width: 580px; margin-left: auto; margin-right: auto; }
 }
 
 @media(max-width:960px) {
@@ -1412,7 +1421,7 @@
 }
 
 @media(max-width:768px) {
-  .hero__inner    { padding: 72px 0 56px; text-align: center; }
+  .hero__inner    { padding: 72px var(--px) 56px; text-align: center; }
   .hero__tag      { margin: 0 auto var(--s3); }
   .hero__sub      { margin: 0 auto var(--s4); }
   .hero__cta      { justify-content: center; }
@@ -1429,7 +1438,7 @@
 
 @media(max-width:640px) {
   .hero           { min-height: auto; }
-  .hero__inner    { padding: 60px 0 48px; }
+  .hero__inner    { padding: 60px var(--px) 48px; }
   .hero__cta      { flex-direction: column; align-items: center; }
   .hero__cta .btn { width: 100%; max-width: 280px; }
   .hero__stats    { gap: var(--s2); }
@@ -1441,7 +1450,7 @@
   .newsletter-box { padding: var(--s4) var(--s3); }
   .newsletter-form { flex-direction: column; }
   .newsletter-form .btn { width: 100%; }
-  .ev-showcase__heading-row { flex-direction: column; gap: var(--s2); }
+  .ev-showcase__heading-row { flex-direction: column; align-items: flex-start; gap: var(--s2); }
   .ev-grid        { grid-template-columns: 1fr; }
   .ev-card__img-wrap { height: 220px; }
   .ev-coming-grid { grid-template-columns: repeat(2,1fr); }
@@ -1506,3 +1515,52 @@
   .hero__cats{gap:8px}
   .hero__cat{padding:0 13px;font-size:.8125rem}
 }
+
+/* ── Events: compact "list your event" banner ─────────────── */
+.ev-showcase-section{padding:var(--s4) 0 var(--s4)}
+.ev-list{
+  display:flex;align-items:center;gap:20px;padding:22px 26px;
+  background:var(--bg-2);border:1px solid var(--b1);border-radius:var(--r4);
+}
+.ev-list__icon{
+  width:52px;height:52px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  background:rgba(22,163,74,.12);color:var(--green-hi);
+}
+.ev-list__icon svg{width:26px;height:26px}
+.ev-list__text{flex:1;min-width:0}
+.ev-list__text h3{margin:0;font-size:1.0625rem;font-weight:700;color:var(--text)}
+.ev-list__text p{margin:4px 0 0;font-size:.9rem;color:var(--text-2);line-height:1.5}
+.ev-list .btn{flex-shrink:0;white-space:nowrap}
+.ev-grid{margin-bottom:0}
+
+/* ── Accommodation: minimal "list your place" card ───────── */
+.lodge-cta{
+  position:relative;overflow:hidden;margin-top:28px;
+  display:flex;align-items:center;gap:20px;padding:22px 26px;
+  border-radius:var(--r4);border:1px dashed var(--green-border);
+  background:linear-gradient(120deg,rgba(22,163,74,.09),rgba(22,163,74,.02) 60%);
+}
+.lodge-cta__mark{
+  width:52px;height:52px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--green-hi);border:1.5px solid var(--green-border);background:rgba(22,163,74,.1);
+}
+.lodge-cta__mark svg{width:26px;height:26px}
+.lodge-cta__text{flex:1;min-width:0}
+.lodge-cta__text h3{margin:0;font-size:1.0625rem;font-weight:700;color:var(--text)}
+.lodge-cta__text p{margin:4px 0 0;font-size:.9rem;color:var(--text-2);line-height:1.5}
+.lodge-cta__btn{
+  flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;
+  min-height:44px;padding:0 20px;border-radius:var(--rx);font-weight:700;font-size:.9rem;
+  color:var(--green-hi);border:1.5px solid var(--green-border);transition:background .2s,color .2s,border-color .2s;
+}
+.lodge-cta__btn span{transition:transform .2s}
+.lodge-cta__btn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.lodge-cta__btn:hover span{transform:translateX(4px)}
+@media (max-width:640px){
+  .ev-list,.lodge-cta{flex-direction:column;align-items:flex-start;gap:14px;padding:20px}
+  .ev-list .btn,.lodge-cta__btn{width:100%;justify-content:center}
+}
+
+/* Hero card badges never squash each other on narrower tablets */
+.featured-event-card__top{flex-wrap:wrap;gap:8px}
+.featured-event-badge--price{white-space:nowrap}

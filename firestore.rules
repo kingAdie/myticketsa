@@ -1,0 +1,219 @@
+rules_version = '2';
+
+/* ================================================
+   TicketsSA Firestore Security Rules
+   Phase 1 (auth) + Phase 2 (events/tickets) + Phase 3 (accommodations/
+   accommodationBookings/touristDestinations/equipmentRequests) — the
+   full Firebase migration's data layer, no Supabase dependency left
+   anywhere in this file's app code.
+
+   This is the FIRST real access control this data has ever had — the
+   Supabase anon-key client never attached an auth session, so
+   everything was effectively client-side-only "security" before this.
+
+   Deploy: firebase deploy --only firestore:rules
+   (requires the Firebase CLI, logged into the `tickets-sa` project)
+   ================================================ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      // A user may create ONLY their own doc, and must self-assign the
+      // 'attendee' role — this is what stops signup from being a vector for
+      // self-promotion. Real promotion only ever happens server-side, via
+      // firebase-set-role.js setting the custom claim (which this collection
+      // never grants access based on — see isAdmin() above, which reads the
+      // verified token claim, not this document).
+      allow create: if isOwner(userId)
+                    && request.resource.data.role == 'attendee';
+
+      // Owner can read their own doc freely...
+      allow read: if isOwner(userId) || isAdmin();
+
+      // ...but can't touch their own `role` field via update — `request.
+      // resource` (the incoming write) isn't defined for reads, which is why
+      // this check has to live in its own `update` rule rather than combined
+      // with `read` above (an earlier version of this rule mistakenly
+      // referenced request.resource.data on a read, which would have thrown
+      // and denied every owner from reading their own profile — caught while
+      // extending these rules for Phase 2, fixed here). Real role changes
+      // only ever happen server-side via firebase-set-role.js (Admin SDK,
+      // bypasses these rules entirely).
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role)
+                    || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      // Published events are public. Draft/pending/rejected events are only
+      // visible to their organiser or an admin — closes a gap that existed
+      // under Supabase (status filtering was app-side only, not enforced by
+      // the anon-key client).
+      allow read: if resource.data.status == 'published'
+                  || isOwner(resource.data.organiserId)
+                  || isAdmin();
+
+      // Organiser (or admin, creating on their own behalf via the admin
+      // panel) becomes the owner of whatever they create.
+      // New listings must start as 'pending' and unfeatured, so nobody can
+      // skip review by writing status: 'published' straight to Firestore.
+      allow create: if (isSignedIn()
+                        && request.resource.data.organiserId == request.auth.uid
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.featured == false
+                        && request.resource.data.get('hero', false) == false)
+                    || isAdmin();
+
+      // An owner can edit their own event, but can't self-publish or
+      // self-feature by writing directly to Firestore — updateEvent() (the
+      // organiser-facing function) never touches these fields either, this
+      // just closes the same gap for anyone bypassing the app. Only
+      // adminUpdateEvent() (admin.js) is meant to flip status/featured.
+      // The one status change an owner may make: sending a declined event
+      // back for review (rejected -> pending) after fixing it.
+      allow update: if (isOwner(resource.data.organiserId)
+                        && (request.resource.data.status == resource.data.status
+                            || (resource.data.status == 'rejected' && request.resource.data.status == 'pending'))
+                        && request.resource.data.featured == resource.data.featured
+                        && request.resource.data.get('hero', false) == resource.data.get('hero', false))
+                    || isAdmin();
+
+      allow delete: if isOwner(resource.data.organiserId) || isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      // Reads are public by design, matching today's actual behaviour
+      // (the Supabase anon-key client already had no read restriction on
+      // this table) — a ticket id is an unguessable random string, and
+      // buyers are frequently not signed in at all (guest checkout), so
+      // success.html's getTicket(id) must work without an auth session.
+      // Hardening ticket-read privacy is a separate, later decision — this
+      // phase's security work is about write integrity (below).
+      allow read: if true;
+
+      // submitTicket()'s client path must look like a legitimate UNPAID
+      // honour-system booking (TicketsSA takes no payment), never a forged
+      // "already paid" record.
+      allow create: if request.resource.data.status           == 'confirmed'
+                    && request.resource.data.paymentMethod     == 'pending'
+                    && request.resource.data.paymentReference  == null
+                    && request.resource.data.paidAt            == null
+                    && request.resource.data.qrCodeUrl          == null
+                    && request.resource.data.quantity is int
+                    && request.resource.data.quantity > 0
+                    && request.resource.data.ticketPrice is number
+                    && request.resource.data.ticketPrice >= 0
+                    && request.resource.data.subtotal   is number
+                    && request.resource.data.serviceFee is number
+                    && request.resource.data.total      is number
+                    && request.resource.data.buyerEmail is string
+                    && request.resource.data.buyerEmail.size() > 0
+                    && request.resource.data.eventId    is string
+                    && request.resource.data.eventId.size() > 0;
+
+      // Nothing in the app edits a ticket after creation today.
+      allow update, delete: if isAdmin();
+    }
+
+    match /accommodations/{id} {
+      // Same pattern as events, applied uniformly to list and single-doc
+      // reads (Supabase's getAccommodation(id) had no status check at all —
+      // this closes that gap too).
+      allow read: if resource.data.status == 'published'
+                  || isOwner(resource.data.ownerId)
+                  || isAdmin();
+
+      // Sellers own what they create. Admin can also create directly from
+      // the admin panel with no specific owner (adminSaveAccommodation sets
+      // ownerId: null in that case) — unlike events, an admin-created
+      // accommodation isn't necessarily "the admin's own listing," so the
+      // uid-match requirement doesn't apply to them.
+      allow create: if (isSignedIn()
+                        && request.resource.data.ownerId == request.auth.uid
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.featured == false
+                        && request.resource.data.get('hero', false) == false)
+                    || isAdmin();
+
+      // Same self-publish/self-feature protection as events.
+      allow update: if (isOwner(resource.data.ownerId)
+                        && request.resource.data.status   == resource.data.status
+                        && request.resource.data.featured == resource.data.featured
+                        && request.resource.data.get('hero', false) == resource.data.get('hero', false))
+                    || isAdmin();
+
+      allow delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+
+    match /sellerListings/{id} {
+      // Equipment-hire and merchandise submissions. Sellers can create and see
+      // their own; everything else (approving, declining, deleting) is admin-only.
+      allow read: if isOwner(resource.data.ownerId) || isAdmin();
+
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+
+      allow update, delete: if isAdmin();
+    }
+
+    match /accommodationBookings/{id} {
+      // Mirrors tickets: public read (unguessable id, booking enquiries are
+      // frequently made by guests with no account at all).
+      allow read: if true;
+
+      // submitAccommodationBooking()'s only client path — must look like a
+      // legitimate pending enquiry, matching the shape that function
+      // actually writes.
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.customerEmail is string
+                    && request.resource.data.customerEmail.size() > 0
+                    && request.resource.data.accommodationId is string
+                    && request.resource.data.accommodationId.size() > 0
+                    && request.resource.data.nights is int
+                    && request.resource.data.nights > 0
+                    && request.resource.data.guests is int
+                    && request.resource.data.guests > 0
+                    && request.resource.data.totalPrice is number
+                    && request.resource.data.totalPrice >= 0;
+
+      // Only admin.js changes a booking's status (pending/confirmed/cancelled).
+      allow update, delete: if isAdmin();
+    }
+
+    match /touristDestinations/{id} {
+      // No public submission path exists in the app at all — admin-only,
+      // same as today.
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /equipmentRequests/{id} {
+      // Buyer-side "I need equipment" requests — mirrors events' owner-by-
+      // uid pattern, since this table (unlike bookings/tickets) has a real
+      // userId column, preserved 1:1 from Supabase via migrate-users.js.
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+
+      // Only admin.js changes a request's status.
+      allow update, delete: if isAdmin();
+    }
+  }
+}

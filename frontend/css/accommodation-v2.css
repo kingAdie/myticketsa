@@ -1,0 +1,189 @@
+/* ================================================
+   Accommodation detail page: calm, spacious, alive.
+   Loaded after accommodations.css and only adds to it.
+   Generous white space, soft glow, gentle motion.
+   ================================================ */
+
+/* ── Reveal on scroll ───────────────────────────── */
+.acc-rv{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1) var(--d,0ms),transform .7s cubic-bezier(.2,.7,.2,1) var(--d,0ms)}
+.acc-rv.in{opacity:1;transform:none}
+
+/* ── Hero image ─────────────────────────────────── */
+.acc-detail__main-img-wrap{height:clamp(300px,52vh,560px)}
+.acc-detail__main-img{animation:accKen 2.2s cubic-bezier(.2,.7,.2,1) both}
+@keyframes accKen{from{transform:scale(1.08);filter:saturate(.8) brightness(.8)}to{transform:scale(1);filter:none}}
+.acc-detail__main-img-overlay{background:linear-gradient(to top,rgba(8,8,8,.88) 0%,rgba(8,8,8,.25) 38%,transparent 62%)}
+
+.acc-hero-info{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  display:flex;flex-wrap:wrap;gap:10px;
+  padding:0 max(24px,calc((100% - var(--mw,1280px))/2 + var(--px,32px))) 28px;
+}
+.acc-chip{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 16px;border-radius:999px;font-size:.875rem;font-weight:600;color:#fff;
+  background:rgba(12,12,12,.55);border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  opacity:0;transform:translateY(12px);animation:accUp .7s cubic-bezier(.2,.7,.2,1) .5s forwards;
+}
+.acc-chip:nth-child(2){animation-delay:.65s}
+.acc-chip:nth-child(3){animation-delay:.8s}
+.acc-chip--gold{color:#FCD34D;border-color:rgba(252,211,77,.35)}
+.acc-chip--green{color:#86EFAC;border-color:rgba(34,197,94,.45);box-shadow:0 0 28px rgba(34,197,94,.25)}
+@keyframes accUp{to{opacity:1;transform:none}}
+
+/* thumbnails */
+.acc-detail__thumb-strip{padding:18px 0 6px;gap:12px}
+.acc-detail__thumb{border-radius:12px;transition:transform .25s,box-shadow .25s,opacity .25s,border-color .25s}
+.acc-detail__thumb:hover{transform:translateY(-3px);opacity:1}
+.acc-detail__thumb.active{border-color:var(--green-hi);box-shadow:0 0 0 3px rgba(34,197,94,.22),0 8px 24px rgba(34,197,94,.22)}
+
+/* ── Layout and breathing room ──────────────────── */
+.acc-detail{padding:56px 0 110px}
+.acc-detail__cols{gap:72px;grid-template-columns:minmax(0,1fr) 400px}
+.acc-detail__name{font-size:clamp(2rem,4.2vw,3rem);letter-spacing:-.035em;line-height:1.08;margin-bottom:14px}
+.acc-detail__loc{margin-bottom:12px}
+.acc-detail__desc{font-size:1.0625rem;line-height:1.85;color:var(--text-2);max-width:62ch}
+.acc-sec{margin-top:64px}
+.acc-info-heading{font-size:.8125rem;letter-spacing:.14em;margin-bottom:26px}
+.acc-info-heading::after{transform-origin:left;transform:scaleX(0);transition:transform .9s cubic-bezier(.2,.7,.2,1) .25s}
+.acc-rv.in .acc-info-heading::after,.acc-info-heading.in::after{transform:scaleX(1)}
+#refundSection p{margin-bottom:10px}
+
+/* quick facts */
+.acc-facts{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.acc-fact{
+  display:inline-flex;align-items:center;gap:10px;padding:11px 18px;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--b1);font-size:.9375rem;font-weight:600;color:var(--text);
+  transition:border-color .25s,box-shadow .25s,transform .25s;
+}
+.acc-fact i{font-style:normal;font-size:1.05rem}
+.acc-fact:hover{transform:translateY(-2px);border-color:var(--green-border);box-shadow:0 8px 26px rgba(22,163,74,.15)}
+
+/* trust strip */
+.acc-trust{list-style:none;margin:44px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.acc-trust li{
+  display:flex;gap:14px;align-items:flex-start;padding:20px;border-radius:18px;
+  background:linear-gradient(160deg,rgba(22,163,74,.09),rgba(22,163,74,.01));
+  border:1px solid rgba(22,163,74,.2);font-size:.8125rem;line-height:1.55;color:var(--text-2);
+  transition:transform .3s,box-shadow .3s,border-color .3s;
+}
+.acc-trust li:hover{transform:translateY(-4px);border-color:var(--green-border);box-shadow:0 14px 34px rgba(22,163,74,.16)}
+.acc-trust strong{display:block;color:var(--text);font-size:.9375rem;margin-bottom:3px}
+.acc-trust__ic{font-size:1.5rem;line-height:1}
+
+/* how payment works */
+.acc-flow{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.acc-flow li{position:relative;display:flex;gap:18px;padding:0 0 28px}
+.acc-flow li:last-child{padding-bottom:0}
+.acc-flow li::before{content:"";position:absolute;left:19px;top:42px;bottom:2px;width:2px;background:var(--b2);overflow:hidden}
+.acc-flow li:last-child::before{display:none}
+.acc-flow__n{
+  flex:0 0 40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:#fff;background:var(--green);
+  box-shadow:0 0 0 6px rgba(34,197,94,.14);animation:accPulse 3s ease-in-out infinite;
+}
+.acc-flow li:nth-child(2) .acc-flow__n{animation-delay:.6s}
+.acc-flow li:nth-child(3) .acc-flow__n{animation-delay:1.2s}
+@keyframes accPulse{0%,100%{box-shadow:0 0 0 6px rgba(34,197,94,.14)}50%{box-shadow:0 0 0 12px rgba(34,197,94,.05)}}
+.acc-flow strong{display:block;color:var(--text);font-size:1rem;margin-top:8px}
+.acc-flow p{margin:4px 0 0;color:var(--text-2);font-size:.9375rem;line-height:1.65;max-width:52ch}
+
+/* amenities */
+.acc-amenities-grid{gap:14px}
+.acc-amenity-item{
+  padding:14px 16px;border-radius:14px;opacity:0;transform:translateY(10px);
+  transition:border-color .25s,box-shadow .25s,transform .25s,background .25s;
+}
+.acc-rv.in .acc-amenity-item{animation:accUp .6s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--k,0) * 45ms + 200ms)}
+.acc-amenity-item:hover{transform:translateY(-3px);border-color:var(--green-border);background:var(--green-tint);box-shadow:0 8px 24px rgba(22,163,74,.14)}
+.acc-amenity-item svg{color:var(--green-hi)}
+.acc-amenity-item:nth-child(n){--k:0}
+.acc-amenity-item:nth-child(2){--k:1}.acc-amenity-item:nth-child(3){--k:2}.acc-amenity-item:nth-child(4){--k:3}
+.acc-amenity-item:nth-child(5){--k:4}.acc-amenity-item:nth-child(6){--k:5}.acc-amenity-item:nth-child(7){--k:6}
+.acc-amenity-item:nth-child(8){--k:7}.acc-amenity-item:nth-child(n+9){--k:8}
+
+/* rooms */
+.acc-rooms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.acc-room{
+  position:relative;display:flex;flex-direction:column;gap:14px;text-align:left;cursor:pointer;
+  padding:24px;border-radius:20px;background:var(--bg-2);border:1px solid var(--b1);color:inherit;font-family:inherit;
+  transition:transform .3s,border-color .3s,box-shadow .3s,background .3s;
+}
+.acc-room::after{content:"";position:absolute;inset:-1px;border-radius:21px;pointer-events:none;opacity:0;transition:opacity .3s;
+  box-shadow:0 0 0 1px var(--green),0 0 34px rgba(34,197,94,.28)}
+.acc-room:hover,.acc-room:focus-visible{outline:none;transform:translateY(-5px);background:var(--bg-3)}
+.acc-room:hover::after,.acc-room:focus-visible::after,.acc-room.is-picked::after{opacity:1}
+.acc-room__top{display:flex;justify-content:space-between;gap:14px;align-items:baseline}
+.acc-room__name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1.0625rem;color:var(--text)}
+.acc-room__price{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:var(--green-hi);white-space:nowrap}
+.acc-room__price small{font-weight:500;color:var(--text-3);margin-left:3px}
+.acc-room__meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.875rem;color:var(--text-2)}
+.acc-room__go{margin-top:auto;font-size:.8125rem;font-weight:700;color:var(--green-hi);opacity:.85;transition:transform .25s}
+.acc-room:hover .acc-room__go{transform:translateX(4px)}
+
+/* check-in blocks and contact: more air */
+.acc-times-row{gap:16px}
+.acc-time-block{padding:22px 24px;border-radius:18px}
+.acc-contact-list{gap:6px}
+
+/* ── Booking card ───────────────────────────────── */
+.acc-booking-card{
+  padding:30px;border-radius:24px;opacity:0;transition:opacity .8s ease .2s;
+  background:linear-gradient(180deg,var(--bg-2),var(--bg-1));
+  border:1px solid rgba(34,197,94,.28);
+  box-shadow:0 30px 70px rgba(0,0,0,.45),0 0 60px rgba(22,163,74,.1);
+  animation:accGlow 5s ease-in-out infinite;
+}
+.acc-booking-card.in{opacity:1}
+@keyframes accGlow{
+  0%,100%{box-shadow:0 30px 70px rgba(0,0,0,.45),0 0 40px rgba(22,163,74,.08)}
+  50%{box-shadow:0 30px 70px rgba(0,0,0,.45),0 0 78px rgba(34,197,94,.22)}
+}
+.acc-booking-card__amount{font-size:2rem}
+.acc-booking-submit{position:relative;overflow:hidden;padding:16px;border-radius:14px;font-size:1rem}
+.acc-booking-submit::after{
+  content:"";position:absolute;top:0;bottom:0;width:60px;left:-80px;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);
+  transform:skewX(-20deg);animation:accShine 4.5s ease-in-out 1.5s infinite;
+}
+@keyframes accShine{0%{left:-80px}35%,100%{left:120%}}
+.acc-topbar__book{animation:accBtnGlow 3s ease-in-out infinite}
+@keyframes accBtnGlow{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 22px 2px rgba(34,197,94,.35)}}
+
+/* after the enquiry is sent: payment details */
+.acc-pay-info{width:100%;margin-top:18px;padding:18px;border-radius:16px;text-align:left;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.25)}
+.acc-pay-info__t{font-weight:700;color:var(--text);font-size:.9rem;margin-bottom:10px}
+.acc-pay-info__btn{display:block;text-align:center;padding:12px;border-radius:12px;background:var(--green);color:#fff;font-weight:700;font-size:.9rem}
+.acc-pay-info__btn:hover{background:var(--green-hi)}
+.acc-pay-info__dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:.875rem}
+.acc-pay-info__dl dt{color:var(--text-3)}
+.acc-pay-info__dl dd{margin:0;color:var(--text);font-weight:600;word-break:break-word}
+.acc-pay-info__n{margin-top:12px;font-size:.78rem;color:var(--text-3);line-height:1.55}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width:1100px){
+  .acc-detail__cols{grid-template-columns:minmax(0,1fr) 360px;gap:48px}
+}
+@media (max-width:900px){
+  .acc-detail{padding:40px 0 80px}
+  .acc-detail__cols{grid-template-columns:1fr;gap:56px}
+  .acc-booking-card{position:static;max-width:640px;margin:0 auto}
+  .acc-trust{grid-template-columns:1fr}
+  .acc-trust li{align-items:center}
+  .acc-detail__main-img-wrap{height:clamp(260px,46vh,420px)}
+}
+@media (max-width:600px){
+  .acc-rooms{grid-template-columns:1fr}
+  .acc-sec{margin-top:52px}
+  .acc-booking-card{padding:22px}
+  .acc-hero-info{padding:0 16px 20px}
+  .acc-chip{padding:8px 13px;font-size:.8125rem}
+  .acc-flow li{gap:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .acc-rv,.acc-booking-card{opacity:1;transform:none;transition:none}
+  .acc-chip,.acc-amenity-item{opacity:1;transform:none;animation:none}
+  .acc-detail__main-img,.acc-flow__n,.acc-booking-card,.acc-booking-submit::after,.acc-topbar__book{animation:none}
+}
+.acc-rooms > .acc-room:last-child:nth-child(odd){grid-column:1/-1}

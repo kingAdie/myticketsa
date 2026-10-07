@@ -331,7 +331,7 @@
         <div class="dash-empty-icon">🎟</div>
         <h3>No tickets yet</h3>
         <p>Once you book an event, your tickets will appear here.</p>
-        <a href="index.html#events" class="btn btn-primary" style="margin-top:20px">Browse Events</a>
+        <a href="browse.html" class="btn btn-primary" style="margin-top:20px">Browse Events</a>
       </div>
     </section>
 
@@ -339,27 +339,24 @@
 </div>
 
 
-<script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/seller-apply.js"></script>
 <script src="js/wizard-core.js"></script>
 <script>
 /* ============================================================
    API BASE works at port 5500 or 3000, file:// also handled
    ============================================================ */
 /* ============================================================
-   GUARD organisers and admins only
+   GUARD signed-in users only — anyone can access the Seller Hub
+   and start listing. Listings stay pending until we review them;
+   there is no separate "seller access" account gate any more.
    ============================================================ */
 (function() {
   if (!Auth.isLoggedIn()) {
     window.location.replace('index.html');
     return;
-  }
-  var role = Auth.getUser()?.role;
-  if (role !== 'organiser' && role !== 'admin') {
-    // Regular customers go to their tickets page, not here
-    window.location.replace('my-tickets.html');
   }
 })();
 
@@ -516,6 +513,8 @@ document.addEventListener('DOMContentLoaded', function() {
     btn.disabled = true; btn.textContent = 'Submitting…';
 
     try {
+      var svcUser = Auth.getUser() || {};
+      var svcName = document.getElementById('svcSelectedName').textContent.trim();
       await SupabaseAPI.submitServiceRequest({
         serviceId:    document.getElementById('svcId').value,
         serviceName:  document.getElementById('svcSelectedName').textContent.trim(),
@@ -527,6 +526,22 @@ document.addEventListener('DOMContentLoaded', function() {
         contactPhone: document.getElementById('svcPhone').value,
         budgetRange:  document.getElementById('svcBudget').value,
       });
+      // Tell the support inbox (and email the customer a receipt). The request is already saved.
+      SellerApply.submit('equipment_request', {
+        title:        svcName || 'Equipment request',
+        contactName:  [svcUser.firstName, svcUser.lastName].filter(Boolean).join(' ') || svcUser.email,
+        contactEmail: svcUser.email,
+        contactPhone: document.getElementById('svcPhone').value,
+        details: SellerApply.detailsFrom([
+          ['Equipment',    svcName],
+          ['Event date',   document.getElementById('svcEventDate').value],
+          ['Duration',     document.getElementById('svcDuration').value],
+          ['Location',     document.getElementById('svcLocation').value],
+          ['Quantity',     document.getElementById('svcQty').value || 1],
+          ['Budget',       document.getElementById('svcBudget').value],
+          ['Details',      document.getElementById('svcDetails').value]
+        ])
+      }).catch(function (e) { console.warn('Equipment request email not sent:', e && e.message); });
       document.getElementById('serviceForm').classList.add('hidden');
       document.getElementById('svcPickerStep').classList.add('hidden');
       document.getElementById('svcSuccess').classList.remove('hidden');
@@ -616,7 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
      Reads through existing SupabaseAPI calls only.
      ========================================================== */
 
-  var HUB = { loaded: {}, events: [], accs: [], reqs: [], sales: [], drafts: [] };
+  var HUB = { loaded: {}, events: [], accs: [], others: [], reqs: [], sales: [], drafts: [] };
 
   var CAT_META = {
     event:         { name: 'Event',         icon: '🎟️', href: 'sell-event.html' },
@@ -649,18 +664,20 @@ document.addEventListener('DOMContentLoaded', function() {
       SupabaseAPI.getEvents({ organiserId: user.id }),
       SupabaseAPI.getMyAccommodations ? SupabaseAPI.getMyAccommodations() : Promise.resolve([]),
       SupabaseAPI.getMyServiceRequests(),
-      SupabaseAPI.getSalesForMyEvents ? SupabaseAPI.getSalesForMyEvents() : Promise.resolve([])
+      SupabaseAPI.getSalesForMyEvents ? SupabaseAPI.getSalesForMyEvents() : Promise.resolve([]),
+      SupabaseAPI.getMySellerListings ? SupabaseAPI.getMySellerListings() : Promise.resolve([])
     ]);
     HUB.events = r[0].status === 'fulfilled' ? (r[0].value || []) : [];
     HUB.accs   = r[1].status === 'fulfilled' ? (r[1].value || []) : [];
     HUB.reqs   = r[2].status === 'fulfilled' ? (r[2].value || []) : [];
     HUB.sales  = r[3].status === 'fulfilled' ? (r[3].value || []) : [];
+    HUB.others = r[4].status === 'fulfilled' ? (r[4].value || []) : [];
     HUB.drafts = (typeof WizardCore !== 'undefined') ? WizardCore.listDrafts() : [];
   }
 
   function renderOverview() {
     var user      = Auth.getUser() || {};
-    var listings  = HUB.events.length + HUB.accs.length;
+    var listings  = HUB.events.length + HUB.accs.length + (HUB.others || []).length;
     var published = HUB.events.filter(function (e) { return e.status === 'published'; }).length;
     var isNew     = listings === 0 && HUB.drafts.length === 0;
 
@@ -704,6 +721,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var listingFilter = 'all';
 
+  /* Plain-language status for sellers */
+  function hubStatusLabel(raw) {
+    return { pending: 'In review', published: 'Live', rejected: 'Needs changes' }[raw] || raw || 'In review';
+  }
+
   function listingRow(o) {
     var badge = '<span class="sh-badge sh-badge--' + o.statusKey + '">' + escHtml(o.status) + '</span>';
     var thumb = o.image
@@ -716,6 +738,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '<span class="sh-badge sh-badge--cat">' + escHtml(o.category) + '</span>' +
         '</div>' +
         '<div class="sh-listing__meta">' + escHtml(o.meta) + '</div>' +
+        (o.note ? '<div class="sh-listing__meta" style="color:#F59E0B;margin-top:4px"><strong>Reason from our team:</strong> ' + escHtml(o.note) + '</div>' : '') +
         (o.perf ? '<div class="sh-listing__perf">' + o.perf + '</div>' : '') +
         (o.actions ? '<div class="sh-listing__actions">' + o.actions + '</div>' : '') +
       '</div></div>';
@@ -744,7 +767,8 @@ document.addEventListener('DOMContentLoaded', function() {
       var stKey = e.sold_out ? 'soldout' : (e.status === 'published' ? 'published' : (e.status === 'pending' ? 'pending' : 'archived'));
       rows.push({
         kind: isExp ? 'experience' : 'event', statusKey: stKey,
-        status: e.sold_out ? 'Sold out' : (e.status || 'draft'),
+        status: e.sold_out ? 'Sold out' : hubStatusLabel(e.status),
+        note: e.status === 'rejected' ? e.reviewNote : '',
         icon: isExp ? '🌍' : '🎟️', title: e.title,
         category: isExp ? 'Experience' : 'Event', image: e.image,
         meta: [Utils.formatDate(e.date), [e.location, e.city].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
@@ -759,12 +783,24 @@ document.addEventListener('DOMContentLoaded', function() {
     HUB.accs.forEach(function (a) {
       rows.push({
         kind: 'accommodation',
-        statusKey: a.status === 'published' ? 'published' : 'pending',
-        status: a.status || 'pending', icon: '🏨', title: a.name,
+        statusKey: a.status === 'published' ? 'published' : (a.status === 'rejected' ? 'archived' : 'pending'),
+        status: hubStatusLabel(a.status), note: a.status === 'rejected' ? a.reviewNote : '', icon: '🏨', title: a.name,
         category: 'Accommodation', image: (a.images || [])[0],
         meta: [a.city, a.province].filter(Boolean).join(', ') + ' · from ' + hubMoney(a.priceFrom) + ' per night',
         perf: '',
         actions: '<a class="btn btn-secondary btn-sm" href="accommodation.html?id=' + encodeURIComponent(a.id) + '">Preview</a>'
+      });
+    });
+
+    (HUB.others || []).forEach(function (l) {
+      var isMerch = l.category === 'merchandise';
+      rows.push({
+        kind: isMerch ? 'merchandise' : 'equipment',
+        statusKey: l.status === 'published' ? 'published' : (l.status === 'rejected' ? 'archived' : 'pending'),
+        status: hubStatusLabel(l.status), note: l.status === 'rejected' ? l.reviewNote : '',
+        icon: isMerch ? '🛍️' : '🔊', title: l.title,
+        category: isMerch ? 'Merchandise' : 'Equipment hire', image: null,
+        meta: 'Submitted ' + hubSince(l.createdAt), perf: '', actions: ''
       });
     });
 
@@ -785,7 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var counts = { all: rows.length };
     rows.forEach(function (r) { counts[r.kind] = (counts[r.kind] || 0) + 1; });
     var chips = [['all', 'All']].concat(
-      [['draft', 'Drafts'], ['event', 'Events'], ['accommodation', 'Stays'], ['experience', 'Experiences'], ['equipment', 'Equipment']]
+      [['draft', 'Drafts'], ['event', 'Events'], ['accommodation', 'Stays'], ['experience', 'Experiences'], ['equipment', 'Equipment'], ['merchandise', 'Merch']]
         .filter(function (c) { return counts[c[0]]; }));
     document.getElementById('listingFilters').innerHTML = chips.map(function (c) {
       return '<button class="mk-filter' + (listingFilter === c[0] ? ' is-active' : '') + '" data-lf="' + c[0] + '">' +
@@ -903,12 +939,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function renderEarnings() {
     var revenue = HUB.sales.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
-    var fees    = HUB.sales.reduce(function (n, t) { return n + (t.pricing.serviceFee || 0); }, 0);
     document.getElementById('earningsBody').innerHTML =
       '<div class="sh-stats">' +
         '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(revenue) + '</div><div class="sh-stat__label">Total booked</div></div>' +
-        '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(revenue - fees) + '</div><div class="sh-stat__label">Your share</div></div>' +
-        '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(fees) + '</div><div class="sh-stat__label">Service fee</div></div>' +
         '<div class="sh-stat"><div class="sh-stat__value">' + HUB.sales.length + '</div><div class="sh-stat__label">Bookings</div></div>' +
       '</div>' +
       '<div class="dash-info-strip" style="margin-top:20px">' +

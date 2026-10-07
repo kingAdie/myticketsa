@@ -11,8 +11,32 @@ const SellerApply = (() => {
 
   const ENDPOINT = '/.netlify/functions/submit-seller-application';
 
+  /* Categories with no table of their own are also recorded in `seller_listings`
+     so the admin portal can list them. Best effort: if the table has not been
+     created yet the email below is still the delivery path. */
+  const RECORDED = ['equipment', 'merchandise'];
+
+  async function record(kind, data) {
+    if (!RECORDED.includes(kind) || typeof SupabaseAPI === 'undefined' || !SupabaseAPI.createSellerListing) return false;
+    try {
+      await SupabaseAPI.createSellerListing({
+        category:     kind,
+        title:        data.title,
+        contactName:  data.contactName,
+        contactEmail: data.contactEmail,
+        contactPhone: data.contactPhone,
+        details:      data.details || [],
+        images:       data.images  || [],
+      });
+      return true;
+    } catch (e) {
+      console.warn('Could not record listing in seller_listings:', e && e.message);
+      return false;
+    }
+  }
+
   /**
-   * @param {string} kind            'equipment' | 'merchandise'
+   * @param {string} kind            'equipment' | 'merchandise' | 'event' | 'accommodation' | 'experience'
    * @param {Object} data
    * @param {string} data.title      Listing name (email subject)
    * @param {string} data.contactName
@@ -20,27 +44,36 @@ const SellerApply = (() => {
    * @param {string} data.contactPhone
    * @param {Array<{label:string,value:string}>} data.details
    * @returns {Promise<{success:boolean, reference:string}>}
+   *
+   * Emails the seller a confirmation and notifies the TicketsSA support inbox.
+   * For equipment / merchandise it also saves the listing for the admin portal,
+   * and only fails if BOTH the save and the email failed.
    */
   async function submit(kind, data) {
-    let res;
+    const saved = record(kind, data);
+    let result = null, failure = null;
+
     try {
-      res = await fetch(ENDPOINT, {
+      const res = await fetch(ENDPOINT, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ kind, ...data }),
+        body:    JSON.stringify({ kind, ...data, images: undefined }),   // photos live in storage, not in the email
       });
+      if (res.status === 404) {
+        // Running from a plain static server (local dev) rather than Netlify.
+        failure = 'Emails only send on the live site or under `netlify dev`.';
+      } else if (!res.ok) {
+        failure = 'We could not send that through. Please try again, or email support@ticketssa.co.za.';
+      } else {
+        result = await res.json().catch(() => ({ success: true }));
+      }
     } catch (e) {
-      throw new Error('No connection. Check your internet and try again.');
+      failure = 'No connection. Check your internet and try again.';
     }
 
-    if (res.status === 404) {
-      // Running from a plain static server (local dev) rather than Netlify.
-      throw new Error('Submissions only work on the live site. Please try again at ticketssa.co.za.');
-    }
-    if (!res.ok) {
-      throw new Error('We could not send that through. Please try again, or email support@ticketssa.co.za.');
-    }
-    return res.json().catch(() => ({ success: true }));
+    const dbOk = await saved;
+    if (result || dbOk) return result || { success: true };
+    throw new Error(failure || 'Could not submit right now. Please try again.');
   }
 
   /** Turn wizard state into the {label,value} rows the email renders. */

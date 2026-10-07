@@ -8,6 +8,12 @@ node_modules/
 
 # One-off local DB backups taken before destructive migrations not source
 backend/database/backup-*.json
+
+# Real-user-PII exports for scripts/migrate-users.js - never commit these
+scripts/supabase-users-export.json
+scripts/supabase-identities-export.json
+
 __pycache__/
 *.pyc
 frontend/images/*.original.*
+deploy/
