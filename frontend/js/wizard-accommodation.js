@@ -14,7 +14,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=accommodation&signup=1'); return; }
 
   const PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
 
@@ -132,6 +132,7 @@
           ],
           placeholder: 'Not graded',
           help: 'Only select a grading if your property is officially graded.' },
+        ...Utils.refundFields(),
         { name: '_availNote', type: 'info',
           html: '<strong>Availability:</strong> guests send you a booking enquiry with their dates, and you confirm the ones you can take. A self-serve availability calendar is coming later you do not need to block out dates here.' },
       ],
@@ -158,6 +159,7 @@
     title:       'List accommodation',
     steps,
     draftTitleField: 'name',
+    notifyKind:  'accommodation',
     submitLabel: 'Submit for review',
     exitHref:    'dashboard.html?tab=listings',
 
@@ -205,6 +207,7 @@
         amenities:    Array.isArray(s.amenities) ? s.amenities : [],
         spaceTypes,
         images:       Array.isArray(s.images) ? s.images : [],
+        refundPolicy: Utils.refundPolicyText(s.refundPolicy, s.refundNote),
         contactEmail: String(s.contactEmail || '').trim(),
         contactPhone: String(s.contactPhone || '').trim(),
         website:      String(s.website || '').trim(),

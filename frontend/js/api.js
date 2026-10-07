@@ -78,6 +78,8 @@ const SupabaseAPI = (() => {
       createdAt:      doc.createdAt,
       updatedAt:      doc.updatedAt || null,
       address:        doc.address        || null,
+      refundPolicy:   doc.refundPolicy   || null,
+      reviewNote:     doc.reviewNote     || null,
       paymentType:    doc.paymentType    || null,
       paymentLink:    doc.paymentLink    || null,
       bankName:       doc.bankName       || null,
@@ -193,6 +195,7 @@ const SupabaseAPI = (() => {
       accountHolder:  eventData.accountHolder  || null,
       accountNumber:  eventData.accountNumber  || null,
       branchCode:     eventData.branchCode     || null,
+      refundPolicy:   eventData.refundPolicy   || null,
       ticketTypes:    buildTicketTypes(eventData.ticketTypes, eventId, { resetSold: true }),
       tags:           buildTags(eventData.tags),
       createdAt:      now,
@@ -228,8 +231,15 @@ const SupabaseAPI = (() => {
       accountHolder:  eventData.accountHolder  || null,
       accountNumber:  eventData.accountNumber  || null,
       branchCode:     eventData.branchCode     || null,
+      refundPolicy:   eventData.refundPolicy   || null,
       updatedAt:      new Date().toISOString(),
     };
+    // An organiser who fixes a declined event is sending it back for review.
+    const current = await db.collection('events').doc(id).get();
+    if (current.exists && current.data().status === 'rejected') {
+      fields.status = 'pending';
+      fields.reviewNote = null;
+    }
     if (Array.isArray(eventData.ticketTypes)) fields.ticketTypes = buildTicketTypes(eventData.ticketTypes, id);
     if (Array.isArray(eventData.tags))        fields.tags        = buildTags(eventData.tags);
 
@@ -421,7 +431,7 @@ const SupabaseAPI = (() => {
   }
 
   /** Single ticket by id, for success.html when it lands here with no local
-   *  booking state (e.g. returning from Paystack's hosted checkout). */
+   *  booking state (e.g. opened on another device). */
   async function getTicket(id) {
     const db  = await firestoreClient();
     const doc = await db.collection('tickets').doc(id).get();
@@ -475,8 +485,8 @@ const SupabaseAPI = (() => {
 
     const ticketId   = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const subtotal   = payload.ticketPrice * payload.quantity;
-    const serviceFee = Math.round(subtotal * 0.05 * 100) / 100;
-    const total       = Math.round((subtotal + serviceFee) * 100) / 100;
+    const serviceFee = 0;   // TicketsSA takes no payment and adds no fee
+    const total       = subtotal;
     const now         = new Date().toISOString();
 
     const row = {
@@ -641,6 +651,9 @@ const SupabaseAPI = (() => {
       contactPhone: doc.contactPhone  || null,
       website:      doc.website        || null,
       bookingUrl:   doc.bookingUrl    || null,
+      refundPolicy: doc.refundPolicy  || null,
+      reviewNote:   doc.reviewNote    || null,
+      ownerId:      doc.ownerId       || null,
       featured:     !!doc.featured,
       status:       doc.status,
       createdAt:    doc.createdAt,
@@ -760,6 +773,7 @@ const SupabaseAPI = (() => {
       contactPhone:  data.contactPhone  || null,
       website:       data.website       || null,
       starRating:    parseInt(data.starRating) || 0,
+      refundPolicy:  data.refundPolicy  || null,
       featured:      false,
       status:        'pending',
       ownerId:       user.id,
@@ -785,6 +799,123 @@ const SupabaseAPI = (() => {
     } catch (_) {
       return [];
     }
+  }
+
+  // ════════════════════════════════════════
+  //  EQUIPMENT & MERCHANDISE LISTINGS (Firestore `sellerListings`)
+  //  These categories have no public page yet; sellers submit, admins review.
+  // ════════════════════════════════════════
+
+  function normaliseSellerListing(id, doc) {
+    return {
+      id,
+      category:     doc.category,
+      title:        doc.title,
+      status:       doc.status,
+      ownerId:      doc.ownerId       || null,
+      ownerEmail:   doc.ownerEmail    || null,
+      contactName:  doc.contactName   || null,
+      contactEmail: doc.contactEmail  || null,
+      contactPhone: doc.contactPhone  || null,
+      details:      Array.isArray(doc.details) ? doc.details : [],
+      images:       Array.isArray(doc.images)  ? doc.images  : [],
+      reviewNote:   doc.reviewNote    || null,
+      createdAt:    doc.createdAt     || null,
+    };
+  }
+
+  async function createSellerListing(d) {
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) throw new Error('Please sign in to submit a listing.');
+    const id = makeId('LST');
+    await db.collection('sellerListings').doc(id).create({
+      category:     d.category,
+      title:        d.title,
+      status:       'pending',
+      ownerId:      user.id,
+      ownerEmail:   user.email        || null,
+      contactName:  d.contactName     || null,
+      contactEmail: d.contactEmail    || null,
+      contactPhone: d.contactPhone    || null,
+      details:      Array.isArray(d.details) ? d.details : [],
+      images:       Array.isArray(d.images)  ? d.images  : [],
+      createdAt:    new Date().toISOString(),
+    });
+    return { id };
+  }
+
+  async function getMySellerListings() {
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) return [];
+    try {
+      // Sorted here rather than in the query, so no composite Firestore index is needed.
+      const snap = await db.collection('sellerListings').where('ownerId', '==', user.id).get();
+      return snap.docs.map(d => normaliseSellerListing(d.id, d.data()))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    } catch (_) { return []; }
+  }
+
+  async function adminGetSellerListings() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('sellerListings').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => normaliseSellerListing(d.id, d.data()));
+  }
+
+  async function adminDeleteSellerListing(id) {
+    const db = await firestoreClient();
+    await db.collection('sellerListings').doc(id).delete();
+  }
+
+  async function adminGetTickets() {
+    const db   = await firestoreClient();
+    const snap = await db.collection('tickets').orderBy('bookedAt', 'desc').get();
+    return snap.docs.map(d => normaliseTicket(d.id, d.data()));
+  }
+
+  /** Contact details for the account that owns a listing (admin only; the rules enforce that). */
+  async function adminGetOwnerProfile(userId) {
+    if (!userId) return null;
+    const db   = await firestoreClient();
+    const snap = await db.collection('users').doc(userId).get();
+    return snap.exists ? normaliseFirestoreUser(userId, snap.data()) : null;
+  }
+
+  /**
+   * Approve ('published') or decline ('rejected') a listing, keep the reason for the
+   * seller, and email the seller the outcome. kind: 'event' | 'accommodation' | 'listing'.
+   * Resolves { emailed }. The decision itself is saved even if the email fails.
+   */
+  async function adminReviewListing(kind, id, status, note) {
+    const collection = { event: 'events', accommodation: 'accommodations', listing: 'sellerListings' }[kind];
+    if (!collection) throw new Error('Unknown listing type.');
+    const db = await firestoreClient();
+    await db.collection(collection).doc(id).update({
+      status,
+      reviewNote: status === 'rejected' ? (note || null) : null,
+      updatedAt:  new Date().toISOString(),
+    });
+
+    let emailed = false;
+    try {
+      const res = await fetch('/.netlify/functions/notify-decision', {
+        method:  'POST',
+        headers: Auth?.headers ? Auth.headers() : { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ kind, id, status, note: note || '' }),
+      });
+      emailed = res.ok;
+    } catch { /* decision is saved; the email is a courtesy */ }
+    return { emailed };
+  }
+
+  /** Ask the server to email the owner, the customer and support about a booking that was just saved. Fire-and-forget. */
+  function notifyBooking(kind, id) {
+    return fetch('/.netlify/functions/notify-booking', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ kind, id }),
+    }).catch(() => {});
   }
 
   // ════════════════════════════════════════
@@ -888,6 +1019,8 @@ const SupabaseAPI = (() => {
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
     getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
+    createSellerListing, getMySellerListings, adminGetSellerListings, adminDeleteSellerListing,
+    adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
   };
 
 })();

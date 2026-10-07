@@ -16,3 +16,4 @@ scripts/supabase-identities-export.json
 __pycache__/
 *.pyc
 frontend/images/*.original.*
+deploy/

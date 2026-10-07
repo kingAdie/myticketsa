@@ -18,7 +18,7 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=equipment&signup=1'); return; }
 
   const user = Auth.getUser() || {};
 
@@ -83,6 +83,7 @@
           ] },
         { name: 'deposit', label: 'Refundable deposit (optional)', type: 'money', placeholder: '0.00',
           help: 'Leave blank if you do not take a deposit.' },
+        ...Utils.refundFields(),
       ],
     },
 
@@ -171,19 +172,21 @@
         contactName:  String(s.contactName || '').trim(),
         contactEmail: String(s.contactEmail || '').trim(),
         contactPhone: String(s.contactPhone || '').trim(),
+        images:       Array.isArray(s.images) ? s.images : [],
         details: SellerApply.detailsFrom([
           ['Category',          s.category],
           ['Description',       s.description],
           ['Quantity available', s.quantity],
           ['Rental price',      s.price ? `R${s.price} ${s.period || ''}`.trim() : ''],
           ['Deposit',           s.deposit ? `R${s.deposit}` : ''],
+          ['Cancellation & refunds', Utils.refundPolicyText(s.refundPolicy, s.refundNote)],
           ['Delivery',          s.delivery],
           ['Setup',             s.setup],
           ['Service area',      s.serviceArea],
           ['Based in',          [s.city, s.province].filter(Boolean).join(', ')],
           ['Availability notes', s.availability],
           ['Business name',     s.business],
-          ['Photos supplied',   (s.images || []).length ? `${s.images.length} attached in the seller's browser — request from supplier` : 'None'],
+          ['Photos',            (s.images || []).length ? `${s.images.length} uploaded (view them in the admin portal)` : 'None'],
         ]),
       });
     },

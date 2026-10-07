@@ -14,7 +14,7 @@
 (function () {
 
   /* ── Guard: sellers only ─────────────────────── */
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html'); return; }
+  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=event&signup=1'); return; }
 
   const CATEGORIES = ['Music', 'Sport', 'Food & Drink', 'Comedy', 'Arts & Culture', 'Business', 'Technology', 'Fashion', 'Other'];
   const PROVINCES  = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
@@ -98,7 +98,6 @@
         { name: 'paymentType', label: 'Payment method', type: 'cards', required: true,
           requiredMsg: 'Choose how buyers should pay you.',
           options: [
-            { value: 'paystack', icon: '💳', label: 'Card & instant EFT', sub: 'TicketsSA takes payment for you via Paystack and issues the eTicket automatically.' },
             { value: 'link', icon: '🔗', label: 'Payment link',  sub: 'You have a Yoco, SnapScan or similar link buyers can pay on.' },
             { value: 'bank', icon: '🏦', label: 'Bank transfer', sub: 'Buyers get your account details and make an EFT.' },
             { value: 'free', icon: '🎟️', label: 'Free event',    sub: 'No payment needed people just claim a ticket.' },
@@ -117,8 +116,7 @@
         { name: '_freeNote', type: 'info', showIf: s => s.paymentType === 'free',
           html: 'Buyers will be able to claim a ticket without paying. You can still limit how many are available on the tickets step.' },
 
-        { name: '_paystackNote', type: 'info', showIf: s => s.paymentType === 'paystack',
-          html: 'Buyers pay by card or instant EFT at checkout and get their eTicket automatically. Payment is collected into TicketsSA\'s account our team will contact you about payout arrangements.' },
+        ...Utils.refundFields(),
 
         { name: 'tags', label: 'Search tags (optional)', type: 'text',
           placeholder: 'e.g. live music, outdoor, family friendly',
@@ -153,6 +151,7 @@
       price:       ticketTypes.length ? Math.min(...ticketTypes.map(t => t.price)) : 0,
       ticketTypes,
       tags: String(s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
+      refundPolicy:  Utils.refundPolicyText(s.refundPolicy, s.refundNote),
       paymentType:   s.paymentType || null,
       paymentLink:   s.paymentType === 'link' ? (s.paymentLink || null) : null,
       bankName:      s.paymentType === 'bank' ? (s.bankName || null) : null,
@@ -168,6 +167,7 @@
     title:       editId ? 'Edit event' : 'List an event',
     steps,
     draftTitleField: 'title',
+    notifyKind:  editId ? null : 'event',
     submitLabel: editId ? 'Save changes' : 'Submit for review',
     exitHref:    'dashboard.html?tab=listings',
 
@@ -215,6 +215,7 @@
         ticketTypes: (ev.ticketTypes || []).map(t => ({
           name: t.name, price: t.price, available: t.available, description: t.description,
         })),
+        refundPolicy: ev.refundPolicy ? 'custom' : '', refundNote: ev.refundPolicy || '',
         paymentType: ev.paymentType || '', paymentLink: ev.paymentLink || '',
         bankName: ev.bankName || '', accountHolder: ev.accountHolder || '',
         accountNumber: ev.accountNumber || '', branchCode: ev.branchCode || '',

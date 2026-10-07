@@ -69,16 +69,24 @@ service cloud.firestore {
 
       // Organiser (or admin, creating on their own behalf via the admin
       // panel) becomes the owner of whatever they create.
-      allow create: if isSignedIn()
-                    && request.resource.data.organiserId == request.auth.uid;
+      // New listings must start as 'pending' and unfeatured, so nobody can
+      // skip review by writing status: 'published' straight to Firestore.
+      allow create: if (isSignedIn()
+                        && request.resource.data.organiserId == request.auth.uid
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.featured == false)
+                    || isAdmin();
 
       // An owner can edit their own event, but can't self-publish or
       // self-feature by writing directly to Firestore — updateEvent() (the
       // organiser-facing function) never touches these fields either, this
       // just closes the same gap for anyone bypassing the app. Only
       // adminUpdateEvent() (admin.js) is meant to flip status/featured.
+      // The one status change an owner may make: sending a declined event
+      // back for review (rejected -> pending) after fixing it.
       allow update: if (isOwner(resource.data.organiserId)
-                        && request.resource.data.status   == resource.data.status
+                        && (request.resource.data.status == resource.data.status
+                            || (resource.data.status == 'rejected' && request.resource.data.status == 'pending'))
                         && request.resource.data.featured == resource.data.featured)
                     || isAdmin();
 
@@ -95,12 +103,9 @@ service cloud.firestore {
       // phase's security work is about write integrity (below).
       allow read: if true;
 
-      // submitTicket()'s client path (free/link/bank events only) must look
-      // like a legitimate UNPAID honour-system booking, never a forged
-      // "already paid via Paystack" record. Paystack tickets are only ever
-      // written server-side via the Admin SDK (ticket-fulfillment.js),
-      // which bypasses these rules entirely — no client create path should
-      // ever be able to produce paymentMethod == 'paystack'.
+      // submitTicket()'s client path must look like a legitimate UNPAID
+      // honour-system booking (TicketsSA takes no payment), never a forged
+      // "already paid" record.
       allow create: if request.resource.data.status           == 'confirmed'
                     && request.resource.data.paymentMethod     == 'pending'
                     && request.resource.data.paymentReference  == null
@@ -135,7 +140,10 @@ service cloud.firestore {
       // ownerId: null in that case) — unlike events, an admin-created
       // accommodation isn't necessarily "the admin's own listing," so the
       // uid-match requirement doesn't apply to them.
-      allow create: if (isSignedIn() && request.resource.data.ownerId == request.auth.uid)
+      allow create: if (isSignedIn()
+                        && request.resource.data.ownerId == request.auth.uid
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.featured == false)
                     || isAdmin();
 
       // Same self-publish/self-feature protection as events.
@@ -145,6 +153,18 @@ service cloud.firestore {
                     || isAdmin();
 
       allow delete: if isOwner(resource.data.ownerId) || isAdmin();
+    }
+
+    match /sellerListings/{id} {
+      // Equipment-hire and merchandise submissions. Sellers can create and see
+      // their own; everything else (approving, declining, deleting) is admin-only.
+      allow read: if isOwner(resource.data.ownerId) || isAdmin();
+
+      allow create: if isSignedIn()
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+
+      allow update, delete: if isAdmin();
     }
 
     match /accommodationBookings/{id} {

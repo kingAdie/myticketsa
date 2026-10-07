@@ -1,17 +1,19 @@
-# Mirrors netlify.toml's [[headers]] rules — same reasoning as _redirects:
-# netlify.toml lives above frontend/, so a manual folder-only deploy never
-# sees it. Without the no-cache rule below, a browser that visited before a
-# re-deploy can keep serving its OLD cached css/js/html indefinitely, which
-# looks exactly like "the page updated but the styling/nav didn't."
+# Mirrors netlify.toml's [[headers]] rules (same reasoning as _redirects).
+#
+# "no-cache" means: the browser may keep a copy but must ask Netlify "has this
+# changed?" before using it. If not, Netlify answers with a tiny 304 and no file
+# is re-downloaded (cheap bandwidth). If it HAS changed after a deploy, visitors
+# get the new file straight away (no stale CSS/JS). The old "no-store" rule made
+# every visit download every file again.
 
 /js/*
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: no-cache
 
 /css/*
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: no-cache
 
 /*.html
-  Cache-Control: no-cache, no-store, must-revalidate
+  Cache-Control: no-cache
 
 /*
   X-Frame-Options: DENY
