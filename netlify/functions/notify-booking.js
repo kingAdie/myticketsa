@@ -129,7 +129,7 @@ async function ticketMails(id, one) {
 
 function paymentInstructions(ev) {
   if (!ev || !ev.paymentType || ev.paymentType === 'free') return '';
-  if (ev.paymentType === 'link' && ev.paymentLink) return `To pay, use the organiser's payment link: ${esc(ev.paymentLink)}.`;
+  if (ev.paymentType === 'link' && ev.paymentLink) return `To pay, use this payment link: ${esc(ev.paymentLink)}.`;
   if (ev.paymentType === 'bank') {
     return `To pay, make an EFT to ${esc(ev.accountHolder || '')} (${esc(ev.bankName || '')}), account ${esc(ev.accountNumber || '')}, branch ${esc(ev.branchCode || '')}, using your booking reference.`;
   }
@@ -166,7 +166,7 @@ async function accommodationMails(id, one) {
   mails.push({
     to: [b.customerEmail],
     subject: `Your booking enquiry: ${b.accommodationName} (${id})`,
-    html: shell('Enquiry sent', `Thanks ${esc(b.customerName || '')}! The owner has been notified and will contact you to confirm your stay. Nothing is charged by TicketsSA.`,
+    html: shell('Enquiry sent', `Thanks ${esc(b.customerName || '')}! The owner has been notified and will contact you to confirm your stay. Nothing is charged by TicketsSA.${acc && paymentInstructions(acc) ? ' Once the owner confirms your dates: ' + paymentInstructions(acc) : ''}`,
       [['Your enquiry', rows]]),
   });
   mails.push({

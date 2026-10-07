@@ -181,7 +181,7 @@ p{color:var(--text-2);line-height:1.75}
   background:var(--bg-2);border:1px solid var(--b1);
   border-radius:var(--rx);padding:4px;
   margin:0 var(--s2);flex:1;
-  max-width:760px;
+  max-width:760px;min-width:0;
 }
 .navbar__cat{
   display:flex;align-items:center;gap:7px;
@@ -218,6 +218,7 @@ p{color:var(--text-2);line-height:1.75}
 
 /* Scrolled state for navbar cats */
 @media(max-width:1100px){
+  .navbar__sell{display:none}
   .navbar__cats{max-width:560px}
   .navbar__cat{padding:9px 12px;font-size:.8125rem}
 }
@@ -234,8 +235,8 @@ p{color:var(--text-2);line-height:1.75}
   .navbar__inner{height:60px;gap:var(--s2)}
   /* Categories collapse into the drawer opened by the toggle below */
   .navbar__cats{display:none}
-  .navbar__toggle{display:block}
-  .navbar__actions{gap:8px}
+  .navbar__toggle{display:block;margin-left:0}
+  .navbar__actions{gap:8px;margin-left:auto}
   .navbar__actions .btn{padding:11px 14px;font-size:.75rem;min-height:44px}
   .navbar__logo-wordmark{font-size:1.125rem}
   /* Labels come back inside the drawer, where there is room */
@@ -506,7 +507,7 @@ a.nav-user__link--sell:hover{background:rgba(37,99,235,.12);border-color:var(--b
 .navbar__sell:hover{color:var(--green)}
 .navbar__sell:focus-visible{outline:none;color:var(--green);
   box-shadow:0 0 0 2px var(--green-border);border-radius:var(--r1)}
-@media(max-width:900px){ .navbar__sell{display:none} }
+@media(max-width:1100px){ .navbar__sell{display:none} }
 
 /* ── Mobile touch targets ────────────────────────────────
    Several controls across the site render under the 44px

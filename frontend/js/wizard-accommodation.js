@@ -139,6 +139,34 @@
     },
 
     {
+      id: 'payment',
+      title: 'How guests pay you',
+      hint: 'TicketsSA does not hold your money. Once you confirm a stay, guests pay you directly using the details you add here.',
+      fields: [
+        { name: 'paymentType', label: 'Payment method', type: 'cards', required: true,
+          requiredMsg: 'Choose how guests should pay you.',
+          options: [
+            { value: 'link',    icon: '🔗', label: 'Payment link',  sub: 'You have a Yoco, SnapScan or similar link guests can pay on.' },
+            { value: 'bank',    icon: '🏦', label: 'Bank transfer', sub: 'Guests get your account details and make an EFT.' },
+            { value: 'arrange', icon: '🤝', label: 'I will arrange it with each guest', sub: 'You contact the guest and agree how they pay.' },
+          ] },
+
+        { name: 'paymentLink', label: 'Payment link', type: 'url',
+          required: true, showIf: s => s.paymentType === 'link',
+          placeholder: 'https://pay.yoco.com/…',
+          validate: v => /^https?:\/\//i.test(v.trim()) ? null : 'Enter the full link, starting with https://' },
+
+        { name: 'bankName',      label: 'Bank',            type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. FNB' },
+        { name: 'accountHolder', label: 'Account holder',  type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'Name on the account' },
+        { name: 'accountNumber', label: 'Account number',  type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 62012345678' },
+        { name: 'branchCode',    label: 'Branch code',     type: 'text', showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 250655' },
+
+        { name: '_arrangeNote', type: 'info', showIf: s => s.paymentType === 'arrange',
+          html: 'Guests will be told you will contact them to arrange payment once you confirm their dates.' },
+      ],
+    },
+
+    {
       id: 'contact',
       title: 'How guests reach you',
       hint: 'We pass these on when someone makes a booking enquiry.',
@@ -211,6 +239,12 @@
         contactEmail: String(s.contactEmail || '').trim(),
         contactPhone: String(s.contactPhone || '').trim(),
         website:      String(s.website || '').trim(),
+        paymentType:   s.paymentType || null,
+        paymentLink:   s.paymentType === 'link' ? String(s.paymentLink || '').trim() : null,
+        bankName:      s.paymentType === 'bank' ? String(s.bankName || '').trim() : null,
+        accountHolder: s.paymentType === 'bank' ? String(s.accountHolder || '').trim() : null,
+        accountNumber: s.paymentType === 'bank' ? String(s.accountNumber || '').trim() : null,
+        branchCode:    s.paymentType === 'bank' ? String(s.branchCode || '').trim() : null,
       });
     },
 

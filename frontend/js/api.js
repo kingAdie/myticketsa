@@ -72,6 +72,7 @@ const SupabaseAPI = (() => {
       image:          doc.image      || null,
       price:          parseFloat(doc.price) || 0,
       featured:       !!doc.featured,
+      hero:           !!doc.hero,
       sold_out:       !!doc.soldOut,
       organiser:      doc.organiserName,
       organiserId:    doc.organiserId,
@@ -575,27 +576,62 @@ const SupabaseAPI = (() => {
    * counts moved off Supabase since profiles stopped getting new rows the
    * moment Phase 1 shipped (signups no longer touch Supabase Auth).
    */
+  /** Counts a query. The browser SDK build used here may not have count()
+   *  aggregation, so fall back to reading the documents and counting them. */
+  async function countOf(q) {
+    try {
+      if (typeof q.count === 'function') return (await q.count().get()).data().count;
+    } catch (_) { /* fall through to a plain read */ }
+    return (await q.get()).size;
+  }
+
   async function adminGetStats() {
     const db = await firestoreClient();
+    const C  = n => db.collection(n);
 
-    const [totalEvents, published, pending, tickets, users, organisers, pendingRequests] = await Promise.all([
-      db.collection('events').count().get(),
-      db.collection('events').where('status', '==', 'published').count().get(),
-      db.collection('events').where('status', '==', 'pending').count().get(),
-      db.collection('tickets').count().get(),
-      db.collection('users').count().get(),
-      db.collection('users').where('role', '==', 'organiser').count().get(),
-      db.collection('equipmentRequests').where('status', '==', 'pending').count().get(),
-    ]);
-    return {
-      totalEvents:     totalEvents.data().count,
-      publishedEvents: published.data().count,
-      pendingEvents:   pending.data().count,
-      ticketsSold:     tickets.data().count,
-      totalUsers:      users.data().count,
-      organisers:      organisers.data().count,
-      pendingRequests: pendingRequests.data().count,
+    // allSettled: one collection failing must not blank every number on the dashboard.
+    const jobs = {
+      totalEvents:         countOf(C('events')),
+      publishedEvents:     countOf(C('events').where('status', '==', 'published')),
+      pendingEvents:       countOf(C('events').where('status', '==', 'pending')),
+      ticketsSold:         countOf(C('tickets')),
+      totalUsers:          countOf(C('users')),
+      organisers:          countOf(C('users').where('role', '==', 'organiser')),
+      pendingRequests:     countOf(C('equipmentRequests').where('status', '==', 'pending')),
+      totalAccommodations: countOf(C('accommodations')),
+      pendingAccommodations: countOf(C('accommodations').where('status', '==', 'pending')),
+      pendingListings:     countOf(C('sellerListings').where('status', '==', 'pending')),
+      pendingBookings:     countOf(C('accommodationBookings').where('status', '==', 'pending')),
     };
+    const keys = Object.keys(jobs);
+    const res  = await Promise.allSettled(keys.map(k => jobs[k]));
+    const out  = {};
+    res.forEach((r, i) => {
+      if (r.status === 'fulfilled') out[keys[i]] = r.value;
+      else { out[keys[i]] = null; console.warn('[Stats]', keys[i], r.reason && r.reason.message); }
+    });
+    return out;
+  }
+
+  /** Everything waiting for an admin decision, newest first (dashboard inbox). */
+  async function adminGetPendingSubmissions() {
+    const db = await firestoreClient();
+    const pend = async (coll, norm) => {
+      const snap = await db.collection(coll).where('status', '==', 'pending').get();
+      return snap.docs.map(d => norm(d.id, d.data()));
+    };
+    const [ev, ac, li] = await Promise.all([
+      pend('events', normaliseEvent).catch(() => []),
+      pend('accommodations', normaliseAccommodation).catch(() => []),
+      pend('sellerListings', normaliseSellerListing).catch(() => []),
+    ]);
+    const rows = [
+      ...ev.map(e => ({ kind: 'event', id: e.id, label: e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, by: e.organiser || '', image: e.image, at: e.createdAt })),
+      ...ac.map(a => ({ kind: 'accommodation', id: a.id, label: 'Stay', title: a.name, by: a.contactEmail || '', image: (a.images || [])[0], at: a.createdAt })),
+      ...li.map(l => ({ kind: 'listing', id: l.id, label: l.category === 'merchandise' ? 'Merchandise' : 'Equipment', title: l.title, by: l.contactEmail || l.contactName || '', image: (Array.isArray(l.images) ? l.images : [])[0], at: l.createdAt })),
+    ];
+    rows.sort((x, y) => String(y.at || '').localeCompare(String(x.at || '')));
+    return rows;
   }
 
 
@@ -653,8 +689,15 @@ const SupabaseAPI = (() => {
       bookingUrl:   doc.bookingUrl    || null,
       refundPolicy: doc.refundPolicy  || null,
       reviewNote:   doc.reviewNote    || null,
+      paymentType:  doc.paymentType   || null,
+      paymentLink:  doc.paymentLink   || null,
+      bankName:     doc.bankName      || null,
+      accountHolder: doc.accountHolder || null,
+      accountNumber: doc.accountNumber || null,
+      branchCode:   doc.branchCode    || null,
       ownerId:      doc.ownerId       || null,
       featured:     !!doc.featured,
+      hero:         !!doc.hero,
       status:       doc.status,
       createdAt:    doc.createdAt,
     };
@@ -774,6 +817,12 @@ const SupabaseAPI = (() => {
       website:       data.website       || null,
       starRating:    parseInt(data.starRating) || 0,
       refundPolicy:  data.refundPolicy  || null,
+      paymentType:   data.paymentType   || null,
+      paymentLink:   data.paymentLink   || null,
+      bankName:      data.bankName      || null,
+      accountHolder: data.accountHolder || null,
+      accountNumber: data.accountNumber || null,
+      branchCode:    data.branchCode    || null,
       featured:      false,
       status:        'pending',
       ownerId:       user.id,
@@ -953,6 +1002,39 @@ const SupabaseAPI = (() => {
     }
   }
 
+
+  // ════════════════════════════════════════
+  //  HERO SPOTLIGHT (admin picks what shows in the homepage hero)
+  // ════════════════════════════════════════
+
+  /** Published events and stays an admin has switched on for the hero. */
+  async function getHeroSpots() {
+    const db = await firestoreClient();
+    const pick = c => db.collection(c).where('hero', '==', true).where('status', '==', 'published').limit(6).get();
+    const [ev, ac] = await Promise.all([pick('events'), pick('accommodations')]);
+    const spots = [];
+    ev.docs.forEach(d => {
+      const e = normaliseEvent(d.id, d.data());
+      spots.push({ kind: 'event', id: e.id, title: e.title, image: e.image,
+        label: e.category || 'Event', where: [e.location, e.city].filter(Boolean).join(', '),
+        price: e.price > 0 ? 'From R ' + Math.round(e.price) : 'Free entry', href: 'event.html?id=' + encodeURIComponent(e.id) });
+    });
+    ac.docs.forEach(d => {
+      const a = normaliseAccommodation(d.id, d.data());
+      spots.push({ kind: 'accommodation', id: a.id, title: a.name, image: (a.images || [])[0] || null,
+        label: 'Stay', where: [a.city, a.province].filter(Boolean).join(', '),
+        price: a.priceFrom > 0 ? 'From R ' + Math.round(a.priceFrom) + ' / night' : 'Enquire for price', href: 'accommodation.html?id=' + encodeURIComponent(a.id) });
+    });
+    return spots;
+  }
+
+  /** Admin only (enforced by Firestore rules): show or hide a listing in the hero. */
+  async function adminSetHero(kind, id, value) {
+    const db = await firestoreClient();
+    const coll = kind === 'accommodation' ? 'accommodations' : 'events';
+    await db.collection(coll).doc(id).update({ hero: !!value, updatedAt: new Date().toISOString() });
+  }
+
   async function adminDeleteAccommodation(id) {
     const db = await firestoreClient();
     await db.collection('accommodations').doc(id).delete();
@@ -1015,12 +1097,13 @@ const SupabaseAPI = (() => {
     getMyAccommodationBookings,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
+    getHeroSpots, adminSetHero,
     adminGetAccommodationBookings, adminUpdateBookingStatus,
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
     getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
     createSellerListing, getMySellerListings, adminGetSellerListings, adminDeleteSellerListing,
-    adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
+    adminGetPendingSubmissions, adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
   };
 
 })();
