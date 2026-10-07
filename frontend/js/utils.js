@@ -310,7 +310,7 @@ const Utils = (() => {
    * @param {number} [opts.quality=0.82]  - png quality 0–1
    * @returns {Promise<File>}
    */
-  async function compressImage(file, { maxWidth = 1920, maxHeight = 1920, quality = 0.82 } = {}) {
+  async function compressImage(file, { maxWidth = 1920, maxHeight = 1920, quality = 0.82, type = null } = {}) {
     if (!file || !file.type.startsWith('image/')) return file;
     if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
 
@@ -332,15 +332,16 @@ const Utils = (() => {
           canvas.width  = w;
           canvas.height = h;
           const ctx = canvas.getContext('2d');
+          const outType = type || (file.type === 'image/png' ? 'image/png' : 'image/jpeg');
+          if (outType === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); } // no black where PNG was transparent
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, w, h);
 
-          const outType = file.type === 'image/png' ? 'image/png' : 'image/png';
-          const outQuality = outType === 'image/png' ? quality : undefined;
+          const outQuality = outType === 'image/jpeg' ? quality : undefined;
 
           canvas.toBlob((blob) => {
-            if (!blob || blob.size >= file.size) {
+            if (!blob || (!type && blob.size >= file.size)) {
               resolve(file); // compression didn't help keep original
             } else {
               const ext  = outType === 'image/png' ? '.png' : '.jpg';
@@ -384,13 +385,48 @@ const Utils = (() => {
     const user = Auth.getUser();
     if (!user) throw new Error('Please sign in first.');
 
-    const compressed = await compressImage(file);
+    const compressed = await compressImage(file, { type: 'image/jpeg' });
 
     const fb   = await Auth.getFirebaseApp();
     const path = `uploads/${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${compressed.name}`;
     const ref  = fb.storage().ref(path);
     await ref.put(compressed, { contentType: compressed.type });
     return await ref.getDownloadURL();
+  }
+
+  /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */
+
+  const REFUND_OPTIONS = [
+    { value: 'none',   icon: '🚫', label: 'No refunds',     sub: 'Bookings are final once confirmed.',
+      text: 'No refunds. All bookings are final once confirmed, unless the provider cancels.' },
+    { value: 'half_7', icon: '½',  label: '50% refund',     sub: 'Half back if cancelled 7+ days before.',
+      text: '50% refund if cancelled at least 7 days before the start date. No refund after that.' },
+    { value: 'full_7', icon: '✅', label: 'Full refund',    sub: 'Everything back if cancelled 7+ days before.',
+      text: 'Full refund if cancelled at least 7 days before the start date. No refund after that.' },
+    { value: 'custom', icon: '✍️', label: 'My own policy',  sub: 'Write your own terms.', text: '' },
+  ];
+
+  /** Turn the wizard's choice (+ optional custom note) into the sentence stored on the listing. */
+  function refundPolicyText(code, note) {
+    const opt = REFUND_OPTIONS.find(o => o.value === code);
+    if (!opt) return null;
+    if (code === 'custom') return String(note || '').trim() || null;
+    return opt.text;
+  }
+
+  /** The two wizard fields every listing form uses, so they stay identical everywhere. */
+  function refundFields() {
+    return [
+      { name: 'refundPolicy', label: 'Cancellation & refund policy', type: 'cards', required: true,
+        requiredMsg: 'Choose a cancellation and refund policy.',
+        options: REFUND_OPTIONS.map(({ value, icon, label, sub }) => ({ value, icon, label, sub })) },
+      { name: 'refundNote', label: 'Your cancellation & refund terms', type: 'textarea', rows: 3, required: true,
+        showIf: st => st.refundPolicy === 'custom',
+        placeholder: 'e.g. 30% refund up to 14 days before. Date changes are free up to 48 hours before.',
+        help: 'Customers see this on your listing and in their booking email.' },
+      { name: '_refundInfo', type: 'info',
+        html: 'You decide your policy and refund customers yourself. TicketsSA does not hold or refund payments. See our <a href="refunds.html" target="_blank" rel="noopener">Refunds &amp; Cancellations</a> page.' },
+    ];
   }
 
   /* ---------- Public API ---------- */
@@ -413,6 +449,8 @@ const Utils = (() => {
     imgUrl,
     compressImage,
     uploadImage,
+    refundPolicyText,
+    refundFields,
   };
 
 })();

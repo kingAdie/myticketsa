@@ -1,6 +1,8 @@
 {
+  "scripts": {
+    "dev": "node dev-server.js"
+  },
   "dependencies": {
-    "firebase-admin": "^12.7.0",
-    "motion": "^12.38.0"
+    "firebase-admin": "^12.7.0"
   }
 }

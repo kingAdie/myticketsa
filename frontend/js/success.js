@@ -2,12 +2,10 @@
  * TicketsSA Success Page (success.js)
  *
  * Normally reads the booking receipt from localStorage (set by checkout.js
- * right after it books the ticket directly against Supabase). Returning
- * from Paystack's hosted checkout is a full page navigation, so there is no
- * local state in that case instead we fetch the ticket paystack-verify.js
- * already created, by the `?ticket=` id in the URL. If the event's organiser
- * collects payment themselves via their own link or bank details, we
- * surface those instructions here too.
+ * right after it books the ticket in Firestore). If that local state is
+ * missing (new tab, another device), we fetch the ticket by the `?ticket=`
+ * id in the URL. If the event's organiser collects payment themselves via
+ * their own link or bank details, we surface those instructions here too.
  */
 
 /* global Utils, SupabaseAPI */
@@ -19,9 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ticketId = new URLSearchParams(window.location.search).get('ticket');
   let booking = Utils.getStorage('mt_booking');
 
-  // Paystack redirects back here with no local state (fresh page load after
-  // a full navigation to Paystack's hosted checkout and back) fetch the
-  // ticket that paystack-verify.js already created.
+  // No local receipt (opened in a new tab or on another device): look the ticket up by id.
   if ((!booking || booking.ticketId !== ticketId) && ticketId && window.SupabaseAPI) {
     try {
       const row = await SupabaseAPI.getTicket(ticketId);
@@ -31,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           event:     row.event,
           ticket:    row.ticket,
           pricing:   row.pricing,
-          payment:   { type: null }, // paid in full via Paystack no organiser instructions to show
+          payment:   { type: null }, // payment instructions only show on the original receipt
           buyer:     row.buyer,
           qrCodeUrl: row.qrCodeUrl,
           bookedAt:  row.bookedAt,

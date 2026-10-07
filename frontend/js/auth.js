@@ -82,17 +82,32 @@ const Auth = (() => {
     }
   }
 
+  /* Why the last captcha check failed: 'invalid' (the token was rejected) or
+     'unavailable' (the verify-turnstile function is missing/misconfigured/offline).
+     Lets the login form tell people the truth instead of "try again" forever. */
+  let _captchaFailure = 'invalid';
+  const CAPTCHA_UNAVAILABLE_MSG = 'Login is temporarily unavailable: the security check service could not be reached. Please try again in a few minutes, or email support@ticketssa.co.za.';
+
   async function _verifyTurnstile(token) {
+    _captchaFailure = 'invalid';
     try {
       const res = await fetch('/.netlify/functions/verify-turnstile', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ token }),
       });
-      if (!res.ok) return false;
+      if (!res.ok) {
+        // 400 = bad request/token; anything else (404 not deployed, 500 secret missing, 502) = service problem
+        if (res.status !== 400) _captchaFailure = 'unavailable';
+        return false;
+      }
       const data = await res.json();
       return !!data.success;
-    } catch (_) { return false; }
+    } catch (_) { _captchaFailure = 'unavailable'; return false; }
+  }
+
+  function _captchaFailureMessage() {
+    return _captchaFailure === 'unavailable' ? CAPTCHA_UNAVAILABLE_MSG : 'CAPTCHA check failed. Please try again.';
   }
 
   // ── Firebase lazy-loader ──────────────────────────────────────────────────
@@ -244,12 +259,12 @@ const Auth = (() => {
   /* ── requireAuth ──────────────────────────────────────────────────────── */
   let _pendingCallback = null;
 
-  function requireAuth(callback, message) {
+  function requireAuth(callback, message, tab) {
     if (isLoggedIn()) {
       callback();
     } else {
       _pendingCallback = callback;
-      openModal('login', message);
+      openModal(tab || 'login', message);
     }
   }
 
@@ -641,7 +656,7 @@ const Auth = (() => {
     try {
       if (RC_ENABLED && !(await _verifyTurnstile(captchaToken))) {
         _resetRc(_rcWidgetLogin);
-        showError('CAPTCHA check failed. Please try again.');
+        showError(_captchaFailureMessage());
         btn.disabled = false; btn.textContent = 'Log In';
         return;
       }
@@ -684,7 +699,7 @@ const Auth = (() => {
     try {
       if (RC_ENABLED && !(await _verifyTurnstile(captchaToken))) {
         _resetRc(_rcWidgetSignup);
-        showError('CAPTCHA check failed. Please try again.');
+        showError(_captchaFailureMessage());
         btn.disabled = false; btn.textContent = 'Create Account';
         return;
       }

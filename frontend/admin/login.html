@@ -389,16 +389,19 @@
       return _fbReady;
     }
 
+    // 'invalid' = the token was rejected; 'unavailable' = the verify-turnstile function is missing/offline
+    let captchaFailure = 'invalid';
     async function verifyTurnstile(token) {
+      captchaFailure = 'invalid';
       try {
         const res = await fetch('/.netlify/functions/verify-turnstile', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
         });
-        if (!res.ok) return false;
+        if (!res.ok) { if (res.status !== 400) captchaFailure = 'unavailable'; return false; }
         const data = await res.json();
         return !!data.success;
-      } catch { return false; }
+      } catch { captchaFailure = 'unavailable'; return false; }
     }
 
     // ── Login form submit ────────────────────────────────────────────────
@@ -432,7 +435,9 @@
       try {
         if (RC_ENABLED && !(await verifyTurnstile(captchaToken))) {
           _resetRc();
-          errorEl.textContent   = 'CAPTCHA check failed. Please try again.';
+          errorEl.textContent   = captchaFailure === 'unavailable'
+            ? 'Login is temporarily unavailable: the security check service could not be reached. Please try again shortly.'
+            : 'CAPTCHA check failed. Please try again.';
           errorEl.style.display = 'block';
           _updateSubmitState();
           btn.textContent = 'Sign In to Admin Portal';

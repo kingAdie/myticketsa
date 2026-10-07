@@ -1,28 +1,33 @@
 'use strict';
 
-/* Seller onboarding intake.
+/* Listing notifications.
  *
- * Covers the listing categories that do not have their own Supabase table yet:
- *   - equipment    a supplier offering gear for hire (NOT the buyer-side
- *                   `equipment_requests` table, which is a customer asking for
- *                   equipment; mixing the two would corrupt the admin queue)
- *   - merchandise  a seller wanting to sell products
+ * Called by the listing wizards after a seller submits something.
+ *   - event / accommodation / experience  already saved in Supabase as `pending`;
+ *     this just tells the team and sends the seller a receipt.
+ *   - equipment / merchandise  also saved to `seller_listings` by the browser;
+ *     the email is the backup delivery path.
+ *   - seller_access  a legacy request type, still accepted.
  *
- * Until those tables exist, the wizard collects the full field set and this
- * function delivers it to the team, who list it manually. The UI says so
- * plainly nothing here pretends to be a live self-serve listing.
+ * Two emails per call: a notification to the support inbox (reply-to is the
+ * seller, so "Reply" goes straight to them) and a receipt to the seller.
  *
- * Mirrors send-mbombela-booking.js: same verified sending domain, same
- * RESEND_API_KEY env var.
+ * Env vars (Netlify): RESEND_API_KEY (required), SUPPORT_EMAIL (default
+ * support@ticketssa.co.za), ADMIN_EXTRA_EMAILS (optional, comma separated).
  */
 
-const FROM     = 'TicketsSA <support@mail.ticketssa.co.za>';
-const REPLY_TO = 'support@ticketssa.co.za';
-const ADMIN_NOTIFICATION_EMAIL = 'ratshimolo112@gmail.com';
+const FROM          = 'TicketsSA <support@mail.ticketssa.co.za>';
+const REPLY_TO      = 'support@ticketssa.co.za';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@ticketssa.co.za';
+const EXTRA_EMAILS  = (process.env.ADMIN_EXTRA_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
 const KINDS = {
+  event:         { label: 'Event listing',              prefix: 'EVT' },
+  accommodation: { label: 'Accommodation listing',      prefix: 'ACC' },
+  experience:    { label: 'Experience listing',         prefix: 'EXP' },
   equipment:     { label: 'Equipment hire listing',     prefix: 'EQP' },
   merchandise:   { label: 'Merchandise seller',         prefix: 'MRC' },
+  equipment_request: { label: 'Equipment request',      prefix: 'REQ', next: 'the TicketsSA team has received your request and will match you with available equipment and come back to you with a quote, usually within one working day.' },
   seller_access: { label: 'Seller account request',     prefix: 'SEL' },
 };
 
@@ -52,7 +57,7 @@ exports.handler = async (event) => {
   const contactPhone = String(payload.contactPhone || '').trim();
   const title        = String(payload.title        || '').trim();
 
-  if (!contactName || !contactEmail || !contactPhone || !title) {
+  if (!contactName || !contactEmail || !title) {
     return { statusCode: 400, body: 'Missing required fields' };
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
@@ -67,29 +72,34 @@ exports.handler = async (event) => {
   const ref  = `${meta.prefix}-${Date.now().toString(36).toUpperCase().slice(-5)}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
   const now  = new Date().toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg', dateStyle: 'medium', timeStyle: 'short' });
 
-  const html = buildEmail({ meta, ref, now, contactName, contactEmail, contactPhone, title, details });
+  const phone = contactPhone || 'Not provided';
+  const html  = buildEmail({ meta, ref, now, contactName, contactEmail, contactPhone: phone, title, details });
+
+  const send = (payload) => fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: FROM, html, ...payload }),
+  });
 
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        from:     FROM,
-        to:       [contactEmail, ADMIN_NOTIFICATION_EMAIL],
-        reply_to: REPLY_TO,
-        subject:  `${meta.label} — ${title} (${ref})`,
-        html,
-      }),
+    /* Team notification first: this is the one that must not be lost. */
+    const adminRes = await send({
+      to:       [SUPPORT_EMAIL, ...EXTRA_EMAILS],
+      reply_to: contactEmail,
+      subject:  `New ${meta.label.toLowerCase()}: ${title} (${ref})`,
     });
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('Resend error:', err);
+    if (!adminRes.ok) {
+      console.error('Resend error (team notification):', await adminRes.text());
       return { statusCode: 500, body: 'Email delivery failed' };
     }
+
+    /* Seller receipt. Failure here is logged but not fatal. */
+    const sellerRes = await send({
+      to:       [contactEmail],
+      reply_to: REPLY_TO,
+      subject:  `We received your ${meta.label.toLowerCase()} — ${title} (${ref})`,
+    });
+    if (!sellerRes.ok) console.error('Resend error (seller receipt):', await sellerRes.text());
   } catch (e) {
     console.error('Resend request failed:', e);
     return { statusCode: 500, body: 'Email delivery failed' };
@@ -151,7 +161,7 @@ function buildEmail({ meta, ref, now, contactName, contactEmail, contactPhone, t
 
         <tr><td style="padding:0 28px 26px;">
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;font-size:13px;color:#166534;line-height:1.6;">
-            <strong>What happens next:</strong> the TicketsSA team reviews this and gets in touch to finish setting the listing up usually within one working day.
+            <strong>What happens next:</strong> ${esc(meta.next || 'the TicketsSA team has received this and will review it, usually within one working day. Once everything is confirmed the listing is published on TicketsSA, and customers will contact you directly on the details above.')}
           </div>
         </td></tr>
 

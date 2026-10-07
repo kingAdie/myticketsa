@@ -745,6 +745,7 @@ const WizardCore = (() => {
       try {
         const result = await cfg.onSubmit(state);
         finished = true;
+        notifyTeam();
         clearDraft(cfg.category);
         showDone(result);
       } catch (e) {
@@ -752,6 +753,46 @@ const WizardCore = (() => {
         console.error('Wizard submit failed:', e);
         render();
         Utils.showToast(e && e.message ? e.message : 'Could not submit right now. Please try again.', 'error', 6000);
+      }
+    }
+
+    /* Tell the TicketsSA support inbox (and email the seller a receipt) about a
+       listing that was just saved. Fire-and-forget: the listing is already safely
+       in the database, so a mail problem must never turn into a failed submission. */
+    function notifyTeam() {
+      if (!cfg.notifyKind || typeof SellerApply === 'undefined') return;
+      try {
+        const user  = (typeof Auth !== 'undefined' && Auth.getUser()) || {};
+        const rows  = [];
+        steps.filter(st => !st.review).forEach(st => (st.fields || []).forEach(f => {
+          if (['info', 'image', 'images'].includes(f.type)) return;
+          const v = state[f.name];
+          if (v === undefined || v === null || v === '') return;
+          let text;
+          if (f.type === 'repeater' && Array.isArray(v)) {
+            text = v.map(row => (f.fields || [])
+              .filter(sf => row[sf.name] !== '' && row[sf.name] != null)
+              .map(sf => `${sf.label}: ${row[sf.name]}`).join(', ')).filter(Boolean).join('  |  ');
+          } else if (Array.isArray(v)) {
+            text = v.join(', ');
+          } else {
+            text = String(v);
+          }
+          if (text) rows.push({ label: f.label || f.name, value: text });
+        }));
+        const photos = (state.images || []).length + (state.image ? 1 : 0);
+        if (photos) rows.push({ label: 'Photos', value: `${photos} uploaded` });
+
+        const title = String(state[cfg.draftTitleField || 'title'] || '').trim() || 'Untitled listing';
+        SellerApply.submit(cfg.notifyKind, {
+          title,
+          contactName:  state.contactName || [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'TicketsSA seller',
+          contactEmail: state.contactEmail || user.email || '',
+          contactPhone: state.contactPhone || state.phone || '',
+          details:      rows,
+        }).catch(e => console.warn('Listing notification not sent:', e && e.message));
+      } catch (e) {
+        console.warn('Listing notification not sent:', e && e.message);
       }
     }
 
