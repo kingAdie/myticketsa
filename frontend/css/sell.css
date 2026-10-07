@@ -33,6 +33,7 @@
   font-size:clamp(2.1rem,6.4vw,3.75rem);margin:14px 0 0;color:var(--text);
 }
 .sl-hero h1 .accent{color:var(--green-hi)}
+.sl-hero h1,.sl-title{text-wrap:balance}
 .sl-hero p{margin:18px auto 0;max-width:560px;color:var(--text-2);font-size:1.0625rem;line-height:1.7}
 .sl-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:30px}
 .sl-cta .btn{min-height:50px;padding:0 28px;font-size:1rem}
@@ -61,7 +62,7 @@
 .sl-types{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-top:34px}
 .sl-types > .sl-type{flex:1 1 100%}
 @media (min-width:640px){.sl-types > .sl-type{flex:0 0 calc((100% - 16px)/2)}}
-@media (min-width:980px){.sl-types > .sl-type{flex:0 0 calc((100% - 32px)/3)}}
+@media (min-width:760px){.sl-types > .sl-type{flex:0 0 calc((100% - 32px)/3)}}
 .sl-type{
   position:relative;display:flex;flex-direction:column;gap:10px;
   padding:24px 22px 20px;text-align:left;cursor:pointer;

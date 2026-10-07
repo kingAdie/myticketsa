@@ -542,21 +542,29 @@
    5. RESPONSIVE
    ──────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-  .merch-grid--v2    { grid-template-columns: repeat(3, 1fr); }
+  /* 3 across, then the last two share the second row evenly (no lone card) */
+  .merch-grid--v2    { grid-template-columns: repeat(6, 1fr); }
+  .merch-grid--v2 > .merch-card--v2 { grid-column: span 2; }
+  .merch-grid--v2 > .merch-card--v2:nth-child(n+4) { grid-column: span 3; }
 }
 @media (max-width: 900px) {
-  .prov-grid         { grid-template-columns: repeat(2, 1fr); }
-  .prov-card         { height: 320px; }
+  /* Tablets keep the 3x3 province grid so nothing is left on its own */
+  .prov-card         { height: 300px; }
 }
 @media (max-width: 860px) {
   .merch-grid--v2                     { grid-template-columns: repeat(2, 1fr); }
+  .merch-grid--v2 > .merch-card--v2,
+  .merch-grid--v2 > .merch-card--v2:nth-child(n+4) { grid-column: auto; }
+  .merch-grid--v2 > .merch-card--v2:last-child { grid-column: 1 / -1; }
   .how-section--compact .steps-grid   { grid-template-columns: 1fr; max-width: 340px; margin: 0 auto; }
 }
 @media (max-width: 600px) {
   .prov-grid         { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .prov-grid > .prov-card:last-child { grid-column: 1 / -1; }
   .prov-card         { height: 270px; }
   .prov-card__name   { font-size: 1.1rem; }
   .merch-grid--v2    { grid-template-columns: 1fr; }
+  .merch-grid--v2 > .merch-card--v2:last-child { grid-column: auto; }
   .prov-modal__body  { padding: 20px; }
   .prov-modal__hero  { height: 220px; }
   .prov-modal__actions { flex-direction: column; }
