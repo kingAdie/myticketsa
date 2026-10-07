@@ -163,54 +163,79 @@ document.addEventListener('DOMContentLoaded', async () => {
   initImageUploads();
 
   /* ── Dashboard stats ────────────────────────────── */
+  const showNum = (sel, v) => Utils.setText(sel, v == null ? '—' : v);
+  let _lastInbox = null;
+
+  function setNavCount(id, n) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n > 99 ? '99+' : n;
+    el.hidden = !(n > 0);
+  }
+
   async function loadStats() {
     try {
       const s = await SupabaseAPI.adminGetStats();
-      Utils.setText('#st-total',      s.totalEvents);
-      Utils.setText('#st-published',  s.publishedEvents);
-      Utils.setText('#st-pending',    s.pendingEvents);
-      Utils.setText('#st-tickets',    s.ticketsSold);
-      Utils.setText('#st-users',      s.totalUsers);
-      Utils.setText('#st-organisers', s.organisers);
-      Utils.setText('#st-requests',   s.pendingRequests);
+      showNum('#st-total',      s.totalEvents);
+      showNum('#st-published',  s.publishedEvents);
+      showNum('#st-pending',    s.pendingEvents);
+      showNum('#st-tickets',    s.ticketsSold);
+      showNum('#st-users',      s.totalUsers);
+      showNum('#st-pending-stays',     s.pendingAccommodations);
+      showNum('#st-pending-listings',  s.pendingListings);
+      showNum('#st-requests',   s.pendingRequests);
+      setNavCount('nc-events',         s.pendingEvents || 0);
+      setNavCount('nc-accommodations', (s.pendingAccommodations || 0) + (s.pendingBookings || 0));
+      setNavCount('nc-sellerlistings', s.pendingListings || 0);
+      setNavCount('nc-requests',       s.pendingRequests || 0);
     } catch (err) {
       console.warn('[Admin] Stats load failed:', err.message);
     }
   }
 
-  /* ── Pending events quick list on dashboard ────────────────────────── */
+  /* ── Inbox: everything waiting for a decision (events, stays, equipment, merch) ─ */
   async function loadPendingList() {
+    const list = document.getElementById('pendingList');
+    if (!list) return;
     try {
-      const list    = document.getElementById('pendingList');
-      const events  = await SupabaseAPI.getEvents({ adminAll: true });
-      const pending = events.filter(e => e.status === 'pending');
+      const rows = await SupabaseAPI.adminGetPendingSubmissions();
+      const badge = document.getElementById('inboxCount');
+      if (badge) { badge.textContent = rows.length; badge.hidden = !rows.length; }
+      document.title = (rows.length ? `(${rows.length}) ` : '') + 'Admin Portal';
 
-      if (!pending.length) {
-        list.innerHTML = `<div class="org-empty"><p>No events pending review. ✅</p></div>`;
+      // A new submission arrived while the portal was open: say so.
+      if (_lastInbox !== null && rows.length > _lastInbox) {
+        const n = rows.length - _lastInbox;
+        Utils.showToast(`${n} new submission${n > 1 ? 's' : ''} to review`, 'success');
+      }
+      _lastInbox = rows.length;
+
+      if (!rows.length) {
+        list.innerHTML = `<div class="org-empty"><p>Nothing waiting for review. ✅</p></div>`;
         return;
       }
-
-      list.innerHTML = `
-        <div style="padding:0 var(--sp-xl) var(--sp-md);display:flex;gap:var(--sp-sm);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);border-bottom:1px solid var(--border-subtle);padding-top:var(--sp-md);">
-          <span style="flex:1;">Event</span><span style="width:100px;">Organiser</span><span style="width:90px;text-align:right;">Actions</span>
-        </div>
-        ${pending.map(e => `
-          <div class="admin-row admin-row-event" style="grid-template-columns:52px 1fr 100px 120px;">
-            <img class="admin-row-thumb" src="${escH(e.image || '')}" alt=""
-              onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=100&q=60'"/>
-            <div>
-              <div class="admin-row-title">${escH(e.title)}</div>
-              <div class="admin-row-meta">${escH(e.city)} · ${Utils.formatDate(e.date)}</div>
-            </div>
-            <div class="admin-row-meta" style="text-align:center;">${escH(e.organiser || '—')}</div>
-            <div style="display:flex;gap:6px;justify-content:flex-end;">
-              <button class="btn btn-primary btn-sm review-btn" data-id="${escH(e.id)}">Review</button>
-            </div>
-          </div>`).join('')}`;
-
-      list.querySelectorAll('.review-btn').forEach(btn => btn.addEventListener('click', () => openReview('event', btn.dataset.id)));
+      const cls = { Stay: 'inbox-row__kind--stay', Equipment: 'inbox-row__kind--gear', Merchandise: 'inbox-row__kind--gear', Event: 'inbox-row__kind--event' };
+      list.innerHTML = rows.map(r => `
+        <div class="inbox-row">
+          <img class="admin-row-thumb" src="${escH(r.image || '')}" alt="" onerror="this.style.visibility='hidden'"/>
+          <div>
+            <div class="admin-row-title">${escH(r.title)}</div>
+            <div class="admin-row-meta">${escH(r.by || '—')}${r.at ? ' · ' + escH(Utils.formatDate(r.at)) : ''}</div>
+          </div>
+          <span class="inbox-row__kind ${cls[r.label] || ''}">${escH(r.label)}</span>
+          <button class="btn btn-primary btn-sm" data-kind="${escH(r.kind)}" data-id="${escH(r.id)}">Review</button>
+        </div>`).join('');
+      list.querySelectorAll('button[data-id]').forEach(btn => btn.addEventListener('click', async () => {
+        if (btn.dataset.kind === 'listing') {
+          try { allSellerListings = await SupabaseAPI.adminGetSellerListings(); } catch (_) { /* review shows its own error */ }
+        }
+        openReview(btn.dataset.kind, btn.dataset.id);
+      }));
     } catch { /* silently fail */ }
   }
+  document.getElementById('inboxRefresh')?.addEventListener('click', () => { loadStats(); loadPendingList(); });
+  // Keep the numbers fresh while the portal is open.
+  setInterval(() => { if (!document.hidden) { loadStats(); loadPendingList(); } }, 60000);
 
   /* ── Events section ────────────────────────────────────────────────── */
   let allAdminEvents = [];
@@ -1488,11 +1513,13 @@ async function buildReviewData(kind, id) {
     const missing = [];
     if (!(a.images || []).length) missing.push('No photos');
     if (!a.contactEmail) missing.push('No contact email, so booking enquiries cannot reach the owner');
+    if (!a.paymentType) missing.push('No payment details');
     return {
       label: 'Accommodation', title: a.name, status: a.status, note: a.reviewNote, images: a.images || [],
       submitter: [['Contact email', a.contactEmail ? `<a href="mailto:${escH(a.contactEmail)}">${escH(a.contactEmail)}</a>` : '—', true], ['Phone', a.contactPhone], ['Website', a.website], ['Submitted', rvDate(a.createdAt)]],
       sections: [
         ['Property', [['Location', [a.address, a.city, a.province].filter(Boolean).join(', ')], ['Star grading', a.starRating ? a.starRating + ' star' : 'Not graded'], ['From', a.priceFrom ? rvMoney(a.priceFrom) + ' per night' : '—'], ['Check-in / out', `${a.checkInTime || '—'} / ${a.checkOutTime || '—'}`]]],
+        ['How guests pay', a.paymentType === 'link' ? [['Payment link', a.paymentLink]] : a.paymentType === 'bank' ? [['Bank', a.bankName], ['Account holder', a.accountHolder], ['Account no.', a.accountNumber], ['Branch code', a.branchCode]] : [['Method', a.paymentType === 'arrange' ? 'Owner arranges with each guest' : 'Not provided']]],
         ['Rooms & units', (a.spaceTypes || []).map(r => [r.name, `${rvMoney(r.price)} per night · sleeps ${r.capacity || '?'}${r.bedrooms != null ? ' · ' + r.bedrooms + ' bedroom(s)' : ''}`])],
       ],
       description: a.description, refund: a.refundPolicy, tags: a.amenities, tagLabel: 'Amenities', missing,

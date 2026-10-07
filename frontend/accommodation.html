@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
   <link rel="stylesheet" href="css/accommodations.css"/>
+  <link rel="stylesheet" href="css/accommodation-v2.css"/>
 </head>
 <body>
 
@@ -102,6 +103,7 @@
       <div class="acc-detail__main-img-wrap">
         <img class="acc-detail__main-img" id="mainImg" src="" alt=""/>
         <div class="acc-detail__main-img-overlay"></div>
+        <div class="acc-hero-info" id="heroInfo"></div>
         <div class="acc-detail__img-placeholder" id="imgPlaceholder" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           No image available
@@ -127,23 +129,42 @@
             <div class="acc-detail__stars" id="detailStars"></div>
             <p class="acc-detail__desc" id="detailDesc"></p>
 
+            <div class="acc-facts acc-rv" id="factsRow"></div>
+
+            <ul class="acc-trust acc-rv" aria-label="Why book here">
+              <li><span class="acc-trust__ic">🤝</span><span><strong>Direct from the host</strong>You deal with the owner, no middleman.</span></li>
+              <li><span class="acc-trust__ic">✅</span><span><strong>Checked by TicketsSA</strong>Every listing is reviewed before it goes live.</span></li>
+              <li><span class="acc-trust__ic">🔒</span><span><strong>No booking fees</strong>We never take payment or add charges.</span></li>
+            </ul>
+
+            <!-- How payment works -->
+            <div class="acc-sec acc-rv" id="paySection" style="display:none;">
+              <div class="acc-info-heading">How booking and payment work</div>
+              <ol class="acc-flow">
+                <li><span class="acc-flow__n">1</span><div><strong>Send an enquiry</strong><p>Pick your dates and room. It costs nothing.</p></div></li>
+                <li><span class="acc-flow__n">2</span><div><strong>The host confirms</strong><p>They check availability and reply to you directly.</p></div></li>
+                <li><span class="acc-flow__n">3</span><div><strong>Pay the host</strong><p id="payHow">Payment is arranged directly with the host.</p></div></li>
+              </ol>
+            </div>
+
             <!-- Cancellation & refunds -->
-            <div id="refundSection" style="display:none;">
+            <div class="acc-sec acc-rv" id="refundSection" style="display:none;">
               <div class="acc-info-heading">Cancellations &amp; refunds</div>
               <p class="acc-detail__desc" id="detailRefund" style="margin-bottom:6px"></p>
               <p style="font-size:.8125rem;color:var(--text-3)">Set by the owner. TicketsSA does not take payment or issue refunds. <a href="refunds.html" style="color:var(--green)">How refunds work</a></p>
             </div>
 
             <!-- Amenities -->
-            <div id="amenitiesSection" style="display:none;">
+            <div class="acc-sec acc-rv" id="amenitiesSection" style="display:none;">
               <div class="acc-info-heading">Amenities &amp; Features</div>
               <div class="acc-amenities-grid" id="amenitiesGrid"></div>
             </div>
 
             <!-- Space types -->
-            <div id="spacesSection" style="display:none;">
+            <div class="acc-sec acc-rv" id="spacesSection" style="display:none;">
               <div class="acc-info-heading">Room &amp; Space Types</div>
-              <table class="acc-spaces-table">
+              <div class="acc-rooms" id="roomCards"></div>
+              <table class="acc-spaces-table" style="display:none">
                 <thead>
                   <tr>
                     <th>Type</th>
@@ -156,7 +177,7 @@
             </div>
 
             <!-- Check-in / out times -->
-            <div id="timesSection">
+            <div class="acc-sec acc-rv" id="timesSection">
               <div class="acc-info-heading">Check-in &amp; Check-out</div>
               <div class="acc-times-row">
                 <div class="acc-time-block">
@@ -171,7 +192,7 @@
             </div>
 
             <!-- Contact -->
-            <div id="contactSection" style="display:none;">
+            <div class="acc-sec acc-rv" id="contactSection" style="display:none;">
               <div class="acc-info-heading">Contact &amp; Info</div>
               <div class="acc-contact-list" id="contactList"></div>
             </div>
@@ -284,6 +305,7 @@
                 <div class="acc-booking-success__icon">✅</div>
                 <div class="acc-booking-success__title">Enquiry Sent!</div>
                 <p class="acc-booking-success__body">Your booking enquiry has been received. The host will contact you at your email address within 24 hours to confirm and arrange payment.</p>
+                <div class="acc-pay-info" id="bkPayInfo" style="display:none"></div>
                 <a id="bkSuccessShareBtn" href="#" class="acc-booking-success__ext" style="background:var(--blue);">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                   Share this property
@@ -421,9 +443,67 @@ function renderPage(a) {
   // Booking card
   renderBookingCard(a);
 
+  // Hero chips, quick facts, payment explainer
+  renderHero(a);
+  renderFacts(a);
+  renderPay(a);
+
   // Show content, hide loader
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('detailContent').style.display = '';
+  initReveal();
+}
+
+/* ── Hero overlay chips ─────────────────────────────────────── */
+function renderHero(a) {
+  const chips = [];
+  const place = [a.city, a.province].filter(Boolean).join(', ');
+  if (place) chips.push(`<span class="acc-chip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${escH(place)}</span>`);
+  if (a.starRating) chips.push(`<span class="acc-chip acc-chip--gold">★ ${escH(String(a.starRating))}-star</span>`);
+  if (a.priceFrom > 0) chips.push(`<span class="acc-chip acc-chip--green">From R ${Math.round(a.priceFrom).toLocaleString('en-ZA')} / night</span>`);
+  document.getElementById('heroInfo').innerHTML = chips.join('');
+}
+
+/* ── Quick facts ────────────────────────────────────────────── */
+function renderFacts(a) {
+  const rooms  = (a.spaceTypes || []).length;
+  const sleeps = Math.max(0, ...(a.spaceTypes || []).map(r => parseInt(r.capacity) || 0));
+  const f = [];
+  if (sleeps) f.push(['👥', `Sleeps up to ${sleeps}`]);
+  if (rooms)  f.push(['🛏️', `${rooms} room type${rooms > 1 ? 's' : ''}`]);
+  f.push(['🕑', `Check-in ${a.checkInTime || '14:00'}`]);
+  f.push(['🚪', `Check-out ${a.checkOutTime || '10:00'}`]);
+  document.getElementById('factsRow').innerHTML = f.map(x => `<span class="acc-fact"><i>${x[0]}</i>${escH(x[1])}</span>`).join('');
+}
+
+/* ── How payment works (no account numbers shown before the host confirms) ── */
+function payMethodText(a) {
+  if (a.paymentType === 'link') return 'Once they confirm, you pay the host directly using their secure payment link.';
+  if (a.paymentType === 'bank') return 'Once they confirm, you pay the host directly by bank transfer. The details are sent to you by email.';
+  return 'Once they confirm, the host tells you how to pay. TicketsSA never handles your money.';
+}
+function renderPay(a) {
+  document.getElementById('payHow').textContent = payMethodText(a);
+  document.getElementById('paySection').style.display = '';
+}
+function payInfoHtml(a) {
+  if (a.paymentType === 'link' && a.paymentLink)
+    return `<div class="acc-pay-info__t">When the host confirms your dates, pay here:</div><a class="acc-pay-info__btn" href="${escH(a.paymentLink)}" target="_blank" rel="noopener noreferrer">Open the host's payment link →</a>`;
+  if (a.paymentType === 'bank')
+    return `<div class="acc-pay-info__t">When the host confirms your dates, pay by EFT:</div>
+      <dl class="acc-pay-info__dl"><dt>Bank</dt><dd>${escH(a.bankName)}</dd><dt>Account holder</dt><dd>${escH(a.accountHolder)}</dd><dt>Account no.</dt><dd>${escH(a.accountNumber)}</dd>${a.branchCode ? `<dt>Branch code</dt><dd>${escH(a.branchCode)}</dd>` : ''}</dl>
+      <div class="acc-pay-info__n">Wait for the host to confirm before you pay. Use your enquiry reference. These details are also in your email.</div>`;
+  return '';
+}
+
+/* ── Reveal on scroll + animated counters ───────────────────── */
+function initReveal() {
+  const els = document.querySelectorAll('.acc-rv, .acc-booking-card');
+  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    els.forEach(e => e.classList.add('in')); return;
+  }
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .1 });
+  els.forEach((e, i) => { e.style.setProperty('--d', (i % 4) * 70 + 'ms'); io.observe(e); });
 }
 
 /* ── Gallery ────────────────────────────────────────────────── */
@@ -537,14 +617,26 @@ function renderAmenities(amenities) {
 function renderSpaces(spaces, priceFrom) {
   if (!spaces.length) return;
   const section = document.getElementById('spacesSection');
-  const tbody   = document.getElementById('spacesTableBody');
   section.style.display = '';
-  tbody.innerHTML = spaces.map(s => `
-    <tr>
-      <td>${escH(s.name)}</td>
-      <td>${s.capacity ? `Up to ${escH(String(s.capacity))} guests` : '—'}</td>
-      <td>R ${parseFloat(s.price || priceFrom || 0).toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-    </tr>`).join('');
+  const money = v => 'R ' + parseFloat(v || priceFrom || 0).toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  document.getElementById('roomCards').innerHTML = spaces.map((r, i) => `
+    <button type="button" class="acc-room" data-room="${escH(r.name)}" style="--i:${i}">
+      <span class="acc-room__top">
+        <span class="acc-room__name">${escH(r.name)}</span>
+        <span class="acc-room__price">${money(r.price)}<small>/night</small></span>
+      </span>
+      <span class="acc-room__meta">
+        ${r.capacity ? `<span>👥 Up to ${escH(String(r.capacity))} guests</span>` : ''}
+        ${r.bedrooms != null ? `<span>🛏️ ${escH(String(r.bedrooms))} bedroom${r.bedrooms == 1 ? '' : 's'}</span>` : ''}
+      </span>
+      <span class="acc-room__go">Choose this room →</span>
+    </button>`).join('');
+  document.querySelectorAll('.acc-room').forEach(btn => btn.addEventListener('click', () => {
+    const sel = document.getElementById('bkSpaceType');
+    sel.value = btn.dataset.room; if (typeof calcPrice === 'function') calcPrice();
+    document.querySelectorAll('.acc-room').forEach(x => x.classList.toggle('is-picked', x === btn));
+    document.getElementById('bookingCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
 }
 
 /* ── Contact ────────────────────────────────────────────────── */
@@ -701,6 +793,9 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     // Show inline success state no redirect, user can share or explore further
     document.getElementById('bookingForm').style.display = 'none';
     document.getElementById('bkSuccess').classList.add('visible');
+    const pay = payInfoHtml(currentAcc || {});
+    const payBox = document.getElementById('bkPayInfo');
+    if (pay && payBox) { payBox.innerHTML = pay; payBox.style.display = ''; }
     document.getElementById('bkCardPrice').closest('.acc-booking-card__price')?.remove?.();
     document.getElementById('bkSuccessShareBtn').addEventListener('click', e => {
       e.preventDefault();
