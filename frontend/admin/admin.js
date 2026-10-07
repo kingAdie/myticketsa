@@ -237,6 +237,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Keep the numbers fresh while the portal is open.
   setInterval(() => { if (!document.hidden) { loadStats(); loadPendingList(); } }, 60000);
 
+  const EV_ICONS = {
+    eye:    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+    pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+    image:  '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+    check:  '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    pause:  '<circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/>',
+    star:   '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    x:      '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+    trash:  '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>',
+  };
+  function evAct(cls, id, icon, label, extra = '', danger = false) {
+    return `<button type="button" class="event-action-btn ${cls}${danger ? ' is-danger' : ''}" data-id="${escH(id)}" ${extra}>` +
+      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${EV_ICONS[icon] || ''}</svg>${escH(label)}</button>`;
+  }
+
+  let _evPop = null;
+  function closeEvMenu() { if (_evPop) { _evPop.remove(); _evPop = null; } }
+  function openEvMenu(toggle) {
+    const wasFor = _evPop && _evPop.dataset.for;
+    closeEvMenu();
+    if (wasFor === toggle.dataset.id) return;                  // second click closes
+    const src = toggle.parentElement.querySelector('.ev-menu-src');
+    if (!src) return;
+    const pop = document.createElement('div');
+    pop.className = 'ev-pop';
+    pop.setAttribute('role', 'menu');
+    pop.dataset.for = toggle.dataset.id;
+    [...src.children].forEach(node => {
+      if (node.tagName === 'HR') { pop.appendChild(document.createElement('hr')); return; }
+      const b = node.cloneNode(true);
+      b.setAttribute('role', 'menuitem');
+      b.addEventListener('click', ev => { ev.stopPropagation(); closeEvMenu(); node.click(); });
+      pop.appendChild(b);
+    });
+    document.body.appendChild(pop);
+    // Place under the button, flip above when there is no room, and keep inside the screen
+    const r = toggle.getBoundingClientRect(), ph = pop.offsetHeight, pw = pop.offsetWidth;
+    let top = r.bottom + 8;
+    if (top + ph > innerHeight - 12) top = Math.max(12, r.top - ph - 8);
+    let left = Math.min(Math.max(12, r.right - pw), innerWidth - pw - 12);
+    pop.style.top = top + 'px'; pop.style.left = left + 'px';
+    pop.classList.add('open');
+    _evPop = pop;
+  }
+  document.addEventListener('click', closeEvMenu);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEvMenu(); });
+  window.addEventListener('resize', closeEvMenu);
+  window.addEventListener('scroll', closeEvMenu, true);
+
   /* ── Events section ────────────────────────────────────────────────── */
   let allAdminEvents = [];
 
@@ -273,33 +323,30 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span style="font-weight:700;color:var(--green);font-size:.875rem;min-width:56px;text-align:right;">
             ${Utils.formatCurrency(e.price)}
           </span>
-          <div class="admin-event-actions-dropdown" style="position:relative;">
-            <button class="org-btn-icon actions-toggle" data-id="${e.id}" title="Actions">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          <div class="admin-event-actions-dropdown">
+            <button class="org-btn-icon actions-toggle" data-id="${e.id}" title="Actions" aria-haspopup="menu" aria-label="Actions for ${escH(e.title)}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
-            <div class="event-action-menu hidden" data-id="${e.id}">
-              <button class="event-action-btn review-ev" data-id="${e.id}">🔍 Review</button>
-              <button class="event-action-btn edit-adm-ev" data-id="${e.id}">✏️ Edit</button>
-              ${e.status !== 'published' ? `<button class="event-action-btn approve-ev" data-id="${e.id}">✅ Publish</button>` : `<button class="event-action-btn unpublish-ev" data-id="${e.id}">⏸ Unpublish</button>`}
-              ${!e.featured ? `<button class="event-action-btn feature-ev" data-id="${e.id}">⭐ Feature</button>` : `<button class="event-action-btn unfeature-ev" data-id="${e.id}">☆ Unfeature</button>`}
-              ${e.status === 'published' ? (!e.hero ? `<button class="event-action-btn hero-ev" data-id="${e.id}">🎯 Show in hero</button>` : `<button class="event-action-btn unhero-ev" data-id="${e.id}">🎯 Remove from hero</button>`) : ''}
-              <button class="event-action-btn reject-ev" data-id="${e.id}">❌ Reject</button>
-              <button class="event-action-btn view-poster-ev" data-id="${e.id}" data-img="${escH(e.image || '')}">🖼 View Poster</button>
-              <button class="event-action-btn delete-ev" data-id="${e.id}" style="color:#EF4444;">🗑 Delete</button>
+            <div class="ev-menu-src" data-id="${e.id}" hidden>
+              ${evAct('review-ev', e.id, 'eye', 'Review details')}
+              ${evAct('edit-adm-ev', e.id, 'pencil', 'Edit event')}
+              ${evAct('view-poster-ev', e.id, 'image', 'View poster', `data-img="${escH(e.image || '')}"`)}
+              <hr/>
+              ${e.status !== 'published' ? evAct('approve-ev', e.id, 'check', 'Publish') : evAct('unpublish-ev', e.id, 'pause', 'Unpublish')}
+              ${!e.featured ? evAct('feature-ev', e.id, 'star', 'Mark as featured') : evAct('unfeature-ev', e.id, 'star', 'Remove featured')}
+              ${e.status === 'published' ? (!e.hero ? evAct('hero-ev', e.id, 'target', 'Show in hero') : evAct('unhero-ev', e.id, 'target', 'Remove from hero')) : ''}
+              ${e.status !== 'rejected' ? evAct('reject-ev', e.id, 'x', 'Decline with a reason') : ''}
+              <hr/>
+              ${evAct('delete-ev', e.id, 'trash', 'Delete event', '', true)}
             </div>
           </div>
         </div>
       </div>`).join('');
 
-    /* Action menu toggles */
+    /* Action menu: a floating popover on <body>, so no card can clip it */
     body.querySelectorAll('.actions-toggle').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        body.querySelectorAll('.event-action-menu').forEach(m => { if (m.dataset.id !== btn.dataset.id) m.classList.add('hidden'); });
-        body.querySelector(`.event-action-menu[data-id="${btn.dataset.id}"]`)?.classList.toggle('hidden');
-      });
+      btn.addEventListener('click', e => { e.stopPropagation(); openEvMenu(btn); });
     });
-    document.addEventListener('click', () => body.querySelectorAll('.event-action-menu').forEach(m => m.classList.add('hidden')));
 
     body.querySelectorAll('.review-ev')   .forEach(b => b.addEventListener('click', () => openReview('event', b.dataset.id)));
     body.querySelectorAll('.edit-adm-ev') .forEach(b => b.addEventListener('click', () => {
