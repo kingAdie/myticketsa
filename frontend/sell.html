@@ -12,7 +12,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
-  <link rel="stylesheet" href="css/marketplace.css"/>
+  <link rel="stylesheet" href="css/sell.css"/>
 </head>
 <body>
 
@@ -47,74 +47,55 @@
 
 <main>
 
-  <section class="mk-hero">
-    <div class="container">
-      <div class="mk-hero__eyebrow">Sell on TicketsSA</div>
-      <h1 class="mk-hero__title">Reach people planning<br/>their next experience</h1>
-      <p class="mk-hero__sub">
-        Whether you run events, a guesthouse, a tour company, an equipment hire business or a merch line
-        one account puts you in front of customers across South Africa.
-      </p>
-      <div class="mk-hero__cta" id="sellCta"></div>
+  <section class="sl-hero">
+    <div class="sl-wrap">
+      <div class="sl-eyebrow">Sell on TicketsSA</div>
+      <h1>Get your listing in front of <span class="accent">South Africa</span></h1>
+      <p>Events, stays, tours, equipment or merch. One free account, simple steps, and customers contact you directly.</p>
+      <div class="sl-cta" id="sellCta"></div>
+      <div class="sl-cta-note" id="sellNote"></div>
     </div>
   </section>
 
-  <section class="container">
-    <div class="mk-steps">
-      <h2 class="section-title" style="margin-bottom:26px">How it works</h2>
+  <div class="sl-wrap">
 
-      <div class="mk-steps-grid">
-        <div class="mk-step">
-          <span class="mk-step__num">1</span>
-          <div class="mk-step__title">Create your free account</div>
-          <div class="mk-step__body">Takes under a minute. You only need an email address to start.</div>
-        </div>
+    <section class="sl-section sl-center sl-rv" aria-labelledby="whyTitle">
+      <div class="sl-eyebrow">Why list with us</div>
+      <h2 class="sl-title" id="whyTitle">Simple for you, <span class="accent">trusted by customers</span></h2>
+      <div class="sl-circles"><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><div class="sl-circle__label">Free account<small>Under a minute to set up</small></div></div><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div><div class="sl-circle__label">Reviewed by our team<small>Quality you can trust</small></div></div><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div><div class="sl-circle__label">Customers contact you<small>Straight to your email</small></div></div><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><circle cx="7" cy="7" r="1"/></svg></div><div class="sl-circle__label">You set your price<small>Your terms, your refunds</small></div></div><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div class="sl-circle__label">Paid directly<small>We never hold your money</small></div></div><div class="sl-circle"><div class="sl-circle__ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1v-6h3zM3 19a2 2 0 002 2h1v-6H3z"/></svg></div><div class="sl-circle__label">SA-based support<small>Real people, local help</small></div></div></div>
+    </section>
 
-      <div class="mk-step">
-        <span class="mk-step__num">2</span>
-        <div>
-          <div class="mk-step__title">Create your listing</div>
-          <div class="mk-step__body">
-            Pick what you are listing and answer only the questions that apply to it. Save a draft at any
-            point and finish later.
-          </div>
-        </div>
+    <section class="sl-section sl-center sl-rv" id="chooser" aria-labelledby="listTitle">
+      <div class="sl-eyebrow">What would you like to list?</div>
+      <h2 class="sl-title" id="listTitle">Pick one to <span class="accent">get started</span></h2>
+      <div class="sl-types" id="sellTypes"><a class="sl-type" data-type="event" href="sell-event.html"><div class="sl-type__icon">🎟️</div><div class="sl-type__name">Events &amp; tickets</div><div class="sl-type__desc">Concerts, sport, festivals and shows.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="accommodation" href="sell-accommodation.html"><div class="sl-type__icon">🏨</div><div class="sl-type__name">Accommodation</div><div class="sl-type__desc">Lodges, guesthouses, B&amp;Bs and hotels.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="experience" href="sell-experience.html"><div class="sl-type__icon">🌍</div><div class="sl-type__name">Experiences &amp; tours</div><div class="sl-type__desc">Day trips, safaris and guided activities.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="equipment" href="sell-equipment.html"><div class="sl-type__icon">🔊</div><div class="sl-type__name">Equipment hire</div><div class="sl-type__desc">Sound, staging, tents, generators and more.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="merchandise" href="sell-merchandise.html"><div class="sl-type__icon">🛍️</div><div class="sl-type__name">Merchandise</div><div class="sl-type__desc">Branded apparel, tags and printing.</div><div class="sl-type__go">Start listing <span>→</span></div></a></div>
+    </section>
+
+    <section class="sl-section sl-center sl-rv" aria-labelledby="howTitle">
+      <div class="sl-eyebrow">How it works</div>
+      <h2 class="sl-title" id="howTitle">Four easy steps</h2>
+      <div class="sl-flow">
+        <div class="sl-flow__track" aria-hidden="true"></div>
+        <ol class="sl-flow__steps"><li class="sl-step"><span class="sl-step__num">1</span><div class="sl-step__text"><div class="sl-step__title">Create your free account</div><div class="sl-step__body">Takes under a minute. You only need an email address.</div></div></li><li class="sl-step"><span class="sl-step__num">2</span><div class="sl-step__text"><div class="sl-step__title">Create your listing</div><div class="sl-step__body">Add photos and details. Save a draft and finish later.</div></div></li><li class="sl-step"><span class="sl-step__num">3</span><div class="sl-step__text"><div class="sl-step__title">We review and publish</div><div class="sl-step__body">Our team checks it, then it goes live on TicketsSA.</div></div></li><li class="sl-step"><span class="sl-step__num">4</span><div class="sl-step__text"><div class="sl-step__title">Customers contact you</div><div class="sl-step__body">Bookings go straight to your email. We never take payments.</div></div></li></ol>
       </div>
+    </section>
 
-      <div class="mk-step">
-        <span class="mk-step__num">3</span>
-        <div>
-          <div class="mk-step__title">We review it and publish it</div>
-          <div class="mk-step__body">
-            Your submission reaches our team straight away. Once we have checked the details and confirmed
-            your listing, it goes live on TicketsSA.
-          </div>
-        </div>
+    <section class="sl-band sl-rv">
+      <h2>Ready to list?</h2>
+      <p>Create your account, add your details and our team takes it from there.</p>
+      <button class="btn" id="bandBtn" type="button">List something</button>
+    </section>
 
-      <div class="mk-step">
-        <span class="mk-step__num">4</span>
-        <div>
-          <div class="mk-step__title">Customers contact you directly</div>
-          <div class="mk-step__body">
-            Bookings and enquiries go straight to the email you give us. TicketsSA does not collect payments
-            or sit between you and your customers.
-          </div>
-        </div>
+    <section class="sl-buy" aria-label="Looking to book instead">
+      <div><strong>Looking to book instead?</strong><span>Find events, places to stay, tours and equipment.</span></div>
+      <div class="sl-buy__links">
+        <a class="btn btn-secondary" href="browse.html">Events</a>
+        <a class="btn btn-secondary" href="accommodations.html">Stays</a>
+        <a class="btn btn-secondary" href="services/index.html">Equipment</a>
       </div>
-    </div>
+    </section>
 
-    <h2 class="section-title" style="margin-bottom:20px">What you can list</h2>
-    <div class="mk-what">
-      <div class="mk-what__item"><span class="mk-what__icon">🎟️</span><span class="mk-what__text">Events &amp; tickets</span></div>
-      <div class="mk-what__item"><span class="mk-what__icon">🏨</span><span class="mk-what__text">Accommodation</span></div>
-      <div class="mk-what__item"><span class="mk-what__icon">🌍</span><span class="mk-what__text">Experiences &amp; tours</span></div>
-      <div class="mk-what__item"><span class="mk-what__icon">🔊</span><span class="mk-what__text">Equipment hire</span></div>
-      <div class="mk-what__item"><span class="mk-what__icon">🛍️</span><span class="mk-what__text">Merchandise</span></div>
-    </div>
-
-    <div class="mk-panel" id="accessPanel"></div>
-  </section>
-
+  </div>
 </main>
 
 <script src="js/api.js"></script>
@@ -125,8 +106,8 @@ document.addEventListener('DOMContentLoaded', function () {
   Auth.updateNavbar();
   Utils.initMobileNav();
 
-  var cta   = document.getElementById('sellCta');
-  var panel = document.getElementById('accessPanel');
+  var cta    = document.getElementById('sellCta');
+  var note   = document.getElementById('sellNote');
   var params = new URLSearchParams(location.search);
   var type   = params.get('type');
 
@@ -137,37 +118,66 @@ document.addEventListener('DOMContentLoaded', function () {
     experience:    { href: 'sell-experience.html',    label: 'List your experience' },
     merchandise:   { href: 'sell-merchandise.html',   label: 'List your merchandise' }
   };
-  var target = TARGETS[type] || { href: 'create-listing.html', label: 'Create a listing' };
+  var target = TARGETS[type] || null;
 
-  /* ── Signed in: every account can list straight away ── */
-  if (Auth.isLoggedIn()) {
+  function scrollToChooser() {
+    var el = document.getElementById('chooser');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* Signed out: sign up / log in first, then carry on to where they were going. */
+  function withAccount(next, tab) {
+    Auth.requireAuth(function () { render(); next(); }, 'Create a free account to list on TicketsSA', tab);
+  }
+
+  function render() {
+    var loggedIn = Auth.isLoggedIn();
+    var label = target ? target.label : 'List something';
     cta.innerHTML =
-      '<a class="btn btn-primary btn-lg" href="' + target.href + '">+ ' + target.label + '</a>' +
-      '<a class="btn btn-secondary btn-lg" href="dashboard.html">Go to Seller Hub</a>';
-    panel.innerHTML =
-      '<div class="mk-panel__title">You are all set</div>' +
-      '<div class="mk-panel__body">Your account can list straight away. Fill in the details and submit. ' +
-      'Our team receives it immediately, reviews it, and publishes it once approved.</div>';
-    return;
+      '<button class="btn btn-primary btn-lg" id="listBtn" type="button">' + (loggedIn ? '' : (target ? '' : '')) + label + '</button>' +
+      '<a class="btn btn-secondary btn-lg" href="browse.html">I want to buy</a>';
+    note.innerHTML = loggedIn
+      ? 'Signed in. <a href="dashboard.html" style="color:var(--green-hi);font-weight:700">Go to your Seller Hub</a>'
+      : 'New here? Creating an account is free. Already have one? <button type="button" id="loginLink">Log in</button>';
+
+    document.getElementById('listBtn').addEventListener('click', function () {
+      var go = function () { if (target) window.location.href = target.href; else scrollToChooser(); };
+      if (loggedIn) go(); else withAccount(go, 'signup');
+    });
+    var ll = document.getElementById('loginLink');
+    if (ll) ll.addEventListener('click', function () {
+      withAccount(function () { if (target) window.location.href = target.href; else scrollToChooser(); }, 'login');
+    });
+  }
+  render();
+
+  /* Chooser cards: go straight to the form when signed in, otherwise sign up first. */
+  document.querySelectorAll('.sl-type').forEach(function (card) {
+    if (card.dataset.type === type) card.classList.add('sl-type--pick');
+    card.addEventListener('click', function (e) {
+      if (Auth.isLoggedIn()) return;            /* normal link */
+      e.preventDefault();
+      withAccount(function () { window.location.href = card.getAttribute('href'); }, 'signup');
+    });
+  });
+
+  document.getElementById('bandBtn').addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(function () { document.getElementById('listBtn').click(); }, 350);
+  });
+
+  if (params.get('signup') && !Auth.isLoggedIn()) {
+    withAccount(function () { if (target) window.location.href = target.href; else scrollToChooser(); }, 'signup');
   }
 
-  /* ── Signed out: create an account first, then carry on listing ── */
-  function startAuth(tab) {
-    Auth.requireAuth(function () { window.location.href = target.href; },
-      'Create a free account to list on TicketsSA', tab);
-  }
-  cta.innerHTML =
-    '<button class="btn btn-primary btn-lg" id="signupBtn">Create a free account</button>' +
-    '<button class="btn btn-secondary btn-lg" id="loginBtn">I already have one</button>';
-  panel.innerHTML =
-    '<div class="mk-panel__title">Start in under a minute</div>' +
-    '<div class="mk-panel__body">Create a free account, then list straight away. ' +
-    'Questions? Email <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</div>';
-
-  document.getElementById('signupBtn').addEventListener('click', function () { startAuth('signup'); });
-  document.getElementById('loginBtn').addEventListener('click',  function () { startAuth('login'); });
-
-  if (params.get('signup')) startAuth('signup');
+  /* Reveal sections as they scroll into view */
+  var rv = document.querySelectorAll('.sl-rv');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: .12 });
+    rv.forEach(function (el) { io.observe(el); });
+  } else { rv.forEach(function (el) { el.classList.add('in'); }); }
 });
 </script>
 </body>
