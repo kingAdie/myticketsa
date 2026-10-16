@@ -372,6 +372,11 @@ const Utils = (() => {
    * @param {string} [folder='uploads']
    * @returns {Promise<string>}  Firebase Storage download URL
    */
+  /* Photos are stored on Cloudinary (free plan, no card needed). These two values
+     are public by design: the preset is "unsigned" and limited to images in the
+     Cloudinary settings, so nothing secret lives in this file. */
+  const CLOUDINARY = { cloudName: 'drfj200vu', uploadPreset: 'ticketssa_unsigned' };
+
   async function uploadImage(file, folder = 'uploads') {
     if (!UPLOAD_ALLOWED.includes(file.type)) {
       throw new Error('Only JPG, PNG, WebP images are allowed.');
@@ -379,31 +384,31 @@ const Utils = (() => {
     if (file.size > UPLOAD_MAX_MB * 1024 * 1024) {
       throw new Error(`Image must be under ${UPLOAD_MAX_MB} MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
     }
-    if (typeof Auth === 'undefined' || !Auth.getFirebaseApp) {
-      throw new Error('Not ready to upload yet. Please try again.');
-    }
-    const user = Auth.getUser();
+    const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
     if (!user) throw new Error('Please sign in first.');
 
-    // 1600px at 78% quality looks sharp on every screen and keeps each photo small,
-    // so the free storage and bandwidth allowance lasts much longer.
+    // 1600px at 78% quality looks sharp on every screen and keeps each photo small.
     const compressed = await compressImage(file, { type: 'image/jpeg', maxWidth: 1600, maxHeight: 1600, quality: 0.78 });
 
-    const fb   = await Auth.getFirebaseApp();
-    const path = `uploads/${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${compressed.name}`;
-    const ref  = fb.storage().ref(path);
+    const form = new FormData();
+    form.append('file', compressed);
+    form.append('upload_preset', CLOUDINARY.uploadPreset);
+    form.append('folder', `ticketssa/${folder}`);
+
+    let res;
     try {
-      await ref.put(compressed, { contentType: compressed.type });
-      return await ref.getDownloadURL();
-    } catch (err) {
-      const code = (err && err.code) || '';
-      if (code === 'storage/quota-exceeded') {
-        throw new Error('Photo storage is full on our side right now, so we cannot save photos. Please email support@ticketssa.co.za and we will sort it out quickly.');
-      }
-      if (code === 'storage/unauthorized') throw new Error('You need to be signed in to upload photos.');
-      if (code === 'storage/retry-limit-exceeded' || code === 'storage/canceled') throw new Error('The upload took too long. Check your connection and try again.');
-      throw err;
+      res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/image/upload`, { method: 'POST', body: form });
+    } catch {
+      throw new Error('The upload could not start. Check your connection and try again.');
     }
+    let data = null;
+    try { data = await res.json(); } catch { /* handled below */ }
+    if (!res.ok || !data || !data.secure_url) {
+      const why = data && data.error && data.error.message;
+      if (/preset/i.test(why || '')) throw new Error('Photo uploads are not set up yet. Please email support@ticketssa.co.za.');
+      throw new Error(why ? `Upload failed: ${why}` : 'Upload failed. Please try again.');
+    }
+    return data.secure_url;
   }
 
   /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */

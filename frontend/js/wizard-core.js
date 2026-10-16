@@ -9,8 +9,8 @@
    Depends on: utils.js (Utils), auth.js (Auth).
    Styles:     css/wizard.css
 
-   IMAGES: uploaded via Utils.uploadImage() (Firebase
-   Storage, see Firebase migration Phase 4) — state[name]
+   IMAGES: uploaded via Utils.uploadImage() (Cloudinary,
+   free plan) — state[name]
    holds the resulting download URL, not raw image data.
    Previously these were compressed client-side and stored
    as base64 data URLs directly on the record, since
