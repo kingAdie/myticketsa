@@ -385,13 +385,25 @@ const Utils = (() => {
     const user = Auth.getUser();
     if (!user) throw new Error('Please sign in first.');
 
-    const compressed = await compressImage(file, { type: 'image/jpeg' });
+    // 1600px at 78% quality looks sharp on every screen and keeps each photo small,
+    // so the free storage and bandwidth allowance lasts much longer.
+    const compressed = await compressImage(file, { type: 'image/jpeg', maxWidth: 1600, maxHeight: 1600, quality: 0.78 });
 
     const fb   = await Auth.getFirebaseApp();
     const path = `uploads/${folder}/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${compressed.name}`;
     const ref  = fb.storage().ref(path);
-    await ref.put(compressed, { contentType: compressed.type });
-    return await ref.getDownloadURL();
+    try {
+      await ref.put(compressed, { contentType: compressed.type });
+      return await ref.getDownloadURL();
+    } catch (err) {
+      const code = (err && err.code) || '';
+      if (code === 'storage/quota-exceeded') {
+        throw new Error('Photo storage is full on our side right now, so we cannot save photos. Please email support@ticketssa.co.za and we will sort it out quickly.');
+      }
+      if (code === 'storage/unauthorized') throw new Error('You need to be signed in to upload photos.');
+      if (code === 'storage/retry-limit-exceeded' || code === 'storage/canceled') throw new Error('The upload took too long. Check your connection and try again.');
+      throw err;
+    }
   }
 
   /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */
