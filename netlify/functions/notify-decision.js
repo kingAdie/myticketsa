@@ -11,7 +11,7 @@
 
 const { admin, getDb } = require('./lib/firebase-admin');
 
-const SITE_URL      = 'https://www.ticketssa.co.za';
+const SITE_URL      = 'https://ticketssa.co.za';
 const FROM          = 'TicketsSA <support@mail.ticketssa.co.za>';
 const REPLY_TO      = process.env.SUPPORT_EMAIL || 'support@ticketssa.co.za';
 
@@ -72,13 +72,36 @@ exports.handler = async (event) => {
 
     const title = row[kind.titleField] || 'your listing';
     const approved = status === 'published';
+    const isEvent = body.kind === 'event';
+    const isStay  = body.kind === 'accommodation';
+    const shareUrl = (isEvent || isStay) ? kind.page(id) : null;
     const mail = approved
       ? {
           subject: `Your ${kind.label} is live: ${title}`,
           heading: 'Your listing is live 🎉',
-          lines: [`Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
-                  'Customers can now find it. Bookings and enquiries go straight to the email address on your listing.'],
-          cta: { href: kind.page(id), label: 'View your listing' },
+          lines: isEvent ? [
+            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
+            '<strong>Share this link to sell tickets.</strong> It is the page where people choose tickets, see your payment details and upload their proof of payment. Copy it and paste it on WhatsApp, Instagram, Facebook, posters, anywhere:',
+          ] : isStay ? [
+            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
+            '<strong>Share this link to get bookings.</strong> Guests see your rooms, prices and how to pay you, and send their booking enquiry from it. Copy it and paste it wherever you market your place:',
+          ] : [
+            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
+            'Customers can now find it. Enquiries go straight to the email address on your listing.',
+          ],
+          shareUrl,
+          steps: isEvent ? [
+            ['Share your link', 'People open it, reserve tickets and pay you directly (TicketsSA never holds the money).'],
+            ['Check payments', 'Each booking and its proof of payment appears in your Seller Hub → Bookings. When the money is in your account, click <strong>Mark as paid</strong>: the buyer gets their QR ticket by email.'],
+            ['Scan at the door', 'On event day open the scanner on your phone and scan each QR. A ticket can only get in once.'],
+          ] : null,
+          cta: { href: kind.page(id), label: isEvent ? 'View your event' : 'View your listing' },
+          more: isEvent ? [
+            { href: `${SITE_URL}/dashboard.html?tab=orders`, label: 'Manage bookings & payments' },
+            { href: `${SITE_URL}/scan.html?event=${encodeURIComponent(id)}`, label: 'Open the door scanner' },
+          ] : isStay ? [
+            { href: `${SITE_URL}/dashboard.html?tab=listings`, label: 'Open my Seller Hub' },
+          ] : [],
         }
       : {
           subject: `Your ${kind.label} needs changes: ${title}`,
@@ -106,7 +129,22 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function render({ heading, lines, cta }) {
+function render({ heading, lines, cta, shareUrl, steps, more }) {
+  const share = shareUrl ? `
+      <tr><td style="padding:0 28px 6px;">
+        <div style="border:1px dashed #16A34A;background:#f0fdf4;border-radius:10px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#15803d;margin-bottom:6px;">Your link to share (press and hold, or select it, to copy)</div>
+          <a href="${esc(shareUrl)}" style="font-family:Menlo,Consolas,monospace;font-size:14px;color:#111827;word-break:break-all;text-decoration:none;">${esc(shareUrl)}</a>
+        </div>
+      </td></tr>` : '';
+  const how = steps ? `
+      <tr><td style="padding:16px 28px 0;">
+        <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #e5e7eb;padding-top:14px;margin-bottom:6px;">How it works from here</div>
+        ${steps.map((st, i) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0;"><tr>
+          <td style="vertical-align:top;padding-right:12px;"><div style="width:24px;height:24px;border-radius:12px;background:#16A34A;color:#fff;font-size:12px;font-weight:700;text-align:center;line-height:24px;">${i + 1}</div></td>
+          <td style="font-size:14px;color:#374151;line-height:1.6;"><strong style="color:#111827;">${esc(st[0])}</strong><br>${st[1]}</td></tr></table>`).join('')}
+      </td></tr>` : '';
+  const extra = (more || []).length ? `<div style="margin-top:10px;">${more.map(m => `<a href="${esc(m.href)}" style="display:inline-block;margin:6px 8px 0 0;border:1px solid #d1d5db;color:#111827;text-decoration:none;font-weight:600;font-size:13px;padding:10px 16px;border-radius:10px;">${esc(m.label)}</a>`).join('')}</div>` : '';
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:28px 12px;"><tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:14px;overflow:hidden;">
@@ -114,7 +152,9 @@ function render({ heading, lines, cta }) {
       <tr><td style="padding:26px 28px 8px;"><h1 style="margin:0 0 12px;font-size:20px;color:#111827;">${heading}</h1>
         ${lines.map(l => `<p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.7;">${l}</p>`).join('')}
       </td></tr>
-      <tr><td style="padding:8px 28px 28px;"><a href="${esc(cta.href)}" style="display:inline-block;background:#16A34A;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;">${esc(cta.label)}</a></td></tr>
+      ${share}
+      ${how}
+      <tr><td style="padding:14px 28px 28px;"><a href="${esc(cta.href)}" style="display:inline-block;background:#16A34A;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:10px;">${esc(cta.label)}</a>${extra}</td></tr>
       <tr><td style="background:#fafafa;border-top:1px solid #e5e7eb;padding:16px 28px;text-align:center;color:#9ca3af;font-size:12px;">TicketsSA · South Africa · ticketssa.co.za</td></tr>
     </table></td></tr></table></body></html>`;
 }
