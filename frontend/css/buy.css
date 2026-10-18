@@ -12,7 +12,7 @@ body.buy{padding-bottom:96px}
 @keyframes sk{to{background-position:-200% 0}}
 
 /* ── Event page layout ── */
-.ep{max-width:1120px;margin:0 auto;padding:16px 16px 40px;display:grid;gap:20px;
+.ep{max-width:1120px;margin:0 auto;padding:16px 16px 40px;display:grid;gap:20px;grid-template-columns:minmax(0,1fr);
   grid-template-areas:"poster" "card" "about"}
 .ep-poster{grid-area:poster}
 .ep-card{grid-area:card}
@@ -126,7 +126,7 @@ body.buy{padding-bottom:96px}
 .co-card h2{margin:0 0 4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text)}
 .co-card > p{margin:0 0 18px;color:var(--text-2);font-size:.86rem}
 .co-fields{display:grid;gap:14px}
-.co-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.co-two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
 .co .form-group{margin:0}
 .co .form-label{display:block;margin-bottom:6px;color:var(--text-2);font-size:.82rem;font-weight:600}
 .co .form-label small{color:var(--text-3);font-weight:400}
@@ -169,11 +169,11 @@ body.buy{padding-bottom:96px}
 .sg__empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(135deg,#14532d,#0b0b0b)}
 .sg__count{position:absolute;z-index:2;right:12px;bottom:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;font-weight:700}
 .bk-step{margin-top:22px}
-.bk-dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.bk-dates label{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3)}
+.bk-dates{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.bk-dates label{min-width:0;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3)}
 .bk-dates label:focus-within{border-color:var(--green)}
 .bk-dates span{color:var(--text-3);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-.bk-dates input{border:0;background:none;color:var(--text);font:inherit;font-size:.95rem;font-weight:600;padding:0;min-height:24px;color-scheme:dark;width:100%}
+.bk-dates input{min-width:0;border:0;background:none;color:var(--text);font:inherit;font-size:.95rem;font-weight:600;padding:0;min-height:24px;color-scheme:dark;width:100%}
 .bk-dates input:focus{outline:none}
 .bk-guests{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 8px 8px 14px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3);color:var(--text);font-weight:600}
 .bk-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:14px;border-radius:14px;background:var(--green-tint);border:1px solid var(--green-border);color:var(--text-2);font-size:.88rem}
@@ -227,3 +227,7 @@ body.buy{padding-bottom:96px}
 .co-bank[hidden]{display:none}
 .co-bank dt{color:var(--text-3)}
 .co-bank dd{margin:0;color:var(--text);font-weight:600;overflow-wrap:anywhere}
+
+.ep-map{display:inline-flex;align-items:center;gap:5px;min-height:32px;margin-top:4px;padding:0 12px;border-radius:999px;background:var(--bg-5);color:var(--green-hi);font-size:.78rem;font-weight:700}
+.ep-map[hidden]{display:none}
+.ep-map::before{content:'↗'}

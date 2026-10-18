@@ -1,0 +1,61 @@
+/* ================================================
+   Phone polish (loaded last on every page)
+   Readable labels, tappable links, nothing wider
+   than the screen.
+   ================================================ */
+
+/* Long words, emails and links wrap instead of pushing the page sideways. */
+h1, h2, h3, p, li, dd, td, label, .hub-meta { overflow-wrap: anywhere; }
+img, video, iframe { max-width: 100%; }
+input, select, textarea { max-width: 100%; min-width: 0; }
+
+/* Labels and badges never smaller than 11px. */
+.event-card__cat, .event-card__date, .featured-event-label, .featured-event-badge--price,
+.prov-badge, .eq-pill, .eq-tile__pill, .merch-card__badge, .merch-card__turn,
+.hub-pill, .tk-pill, .mt-hero__role, .step-n { font-size: 11px !important; letter-spacing: .05em; }
+.event-card__date b { font-size: 1rem !important; }
+.form-label small, .acct__grid label small, .co .form-label small { font-size: 12px; }
+
+/* Small text links get a comfortable tap area without changing how they look. */
+#loginLink, .tk-linkbtn, .eq-details, .hero__sell a, .breadcrumb a, .ep-more, .co-login button, .login-hint button {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 6px 4px; margin: -6px -4px;
+}
+
+@media (max-width: 600px) {
+  /* Seller Hub footer: one line each, never on top of each other. */
+  .hub-foot { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .hub-foot #hubEmail { overflow-wrap: anywhere; }
+
+  /* My Tickets header: wraps under the name on small screens. */
+  .mt-hero__inner { flex-wrap: wrap; }
+  .mt-hero__inner > div:nth-child(2) { flex: 1; min-width: 0; }
+  .mt-hero__name, .mt-hero__email { overflow-wrap: anywhere; }
+  .mt-hero__inner > div:last-child { margin-left: 0 !important; width: 100%; }
+  .mt-signout { padding: 8px 0; }
+}
+
+/* Event card titles: the whole line is the link. */
+.event-card__title a { display: block; }
+
+/* The big faint logo behind the hero collides with text on phones. */
+.hero__bg-logo { display: none !important; }
+
+/* Buttons inside text panels keep their own colours. */
+.mk-panel__body a.btn-primary { color: #fff; }
+.mk-panel__body a.btn-secondary { color: var(--text); }
+
+/* Small phones: give long names the full width, price underneath. */
+@media (max-width: 440px) {
+  .tt__row { flex-wrap: wrap; }
+  .tt__main { flex: 1 1 calc(100% - 36px); }
+  .tt__price { flex-basis: 100%; padding-left: 34px; margin-top: 4px; }
+  .co-opt__tick { display: none; }
+  .co-opt__row { align-items: flex-start; }
+  .co-opt__icon { flex-basis: 40px; height: 40px; }
+  .co-order__tix { flex-wrap: wrap; }
+  .co-order__tix strong { flex-basis: 100%; }
+}
+@media (max-width: 360px) {
+  .bk-dates { grid-template-columns: minmax(0, 1fr); }
+  .co-order__img { display: none; }
+}

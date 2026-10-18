@@ -118,6 +118,12 @@
   to   = "/event.html"
   status = 200
 
+# ... and for stays: ticketssa.co.za/s/river-lodge
+[[redirects]]
+  from = "/s/*"
+  to   = "/accommodation.html"
+  status = 200
+
 # /events had pointed at events.html, which does not exist it 404'd.
 # Browse is the real listing page.
 [[redirects]]

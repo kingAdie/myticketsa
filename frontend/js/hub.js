@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ? `<div class="hub-thumb"><img src="${esc(Utils.imgUrl(img, 200))}" alt="" loading="lazy" onerror="this.remove()"/></div>`
     : '<div class="hub-thumb hub-thumb--empty">🎟</div>';
   const STATUS = { pending: 'In review', published: 'Live', rejected: 'Needs changes' };
-  const stayUrl  = id => `${location.origin}/accommodation.html?id=${encodeURIComponent(id)}`;
 
   const hr = new Date().getHours();
   $('hubHello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + (user.firstName ? ', ' + user.firstName : '');
@@ -81,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderShare() {
     const live = [
       ...HUB.events.filter(e => e.status === 'published').map(e => ({ title: e.title, img: e.image, url: Utils.eventLink(e), meta: [e.date ? Utils.formatDate(e.date) : '', e.city].filter(Boolean).join(' · '), sold: soldFor(e.id) })),
-      ...HUB.accs.filter(a => a.status === 'published').map(a => ({ title: a.name, img: (a.images || [])[0], url: stayUrl(a.id), meta: [a.city, a.province].filter(Boolean).join(', ') })),
+      ...HUB.accs.filter(a => a.status === 'published').map(a => ({ title: a.name, img: (a.images || [])[0], url: Utils.stayLink(a), meta: [a.city, a.province].filter(Boolean).join(', ') })),
     ];
     const waiting = [...HUB.events, ...HUB.accs].filter(x => x.status !== 'published');
 
@@ -151,7 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="hub-row">
           <div class="hub-row__main"><b>${esc(b.customer_name)}</b>
             <span class="hub-meta">${esc([b.accommodation_name, b.space_type_name].filter(Boolean).join(' · '))} · ${esc(b.check_in_date)} → ${esc(b.check_out_date)} · ${esc(b.guests)} guest${b.guests > 1 ? 's' : ''} · <b>${money(b.total_price)}</b></span>
-            <span class="hub-meta"><a href="mailto:${esc(b.customer_email)}">${esc(b.customer_email)}</a>${b.customer_phone ? ' · <a href="tel:' + esc(b.customer_phone) + '">' + esc(b.customer_phone) + '</a>' : ''} · ${ago(b.created_at)}</span></div>
+            <span class="hub-meta"><a href="mailto:${esc(b.customer_email)}">${esc(b.customer_email)}</a></span>
+            <span class="hub-meta">${b.customer_phone ? `<a href="tel:${esc(b.customer_phone)}">${esc(b.customer_phone)}</a> · ` : ''}${ago(b.created_at)}</span></div>
           <a class="btn btn-secondary btn-sm" href="mailto:${esc(b.customer_email)}?subject=${encodeURIComponent('Your booking at ' + (b.accommodation_name || ''))}">Reply</a>
         </div>`).join('') : '');
 
@@ -170,7 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="hub-row__top"><b>${esc([t.buyer.firstName, t.buyer.lastName].filter(Boolean).join(' '))}</b><span class="hub-pill hub-pill--${st}">${LABEL[st] || st}</span></div>
         <span class="hub-meta">${esc(t.event.title)} · ${esc(t.ticket.quantity)} × ${esc(t.ticket.typeName)} · <b>${money(t.pricing.total)}</b></span>
         <span class="hub-meta">Ref <code>${esc(t.id)}</code> · ${ago(t.bookedAt)}${st === 'reserved' && t.expiresAt ? ' · held until ' + esc(new Date(t.expiresAt).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : ''}</span>
-        <span class="hub-meta"><a href="mailto:${esc(t.buyer.email)}">${esc(t.buyer.email)}</a>${t.buyer.phone ? ' · <a href="tel:' + esc(t.buyer.phone) + '">' + esc(t.buyer.phone) + '</a>' : ''}</span>
+        <span class="hub-meta"><a href="mailto:${esc(t.buyer.email)}">${esc(t.buyer.email)}</a></span>
+        ${t.buyer.phone ? `<span class="hub-meta"><a href="tel:${esc(t.buyer.phone)}">${esc(t.buyer.phone)}</a></span>` : ''}
       </div>
       <div class="hub-row__side">
         ${t.proofUrl ? `<a class="hub-proof" href="${esc(t.proofUrl)}" target="_blank" rel="noopener"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/>Proof of payment</a>` : (st === 'reserved' ? '<span class="hub-meta">No proof yet</span>' : '')}

@@ -2,6 +2,8 @@
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
+  <!-- Served at /accommodation.html and at the short link /s/<slug>: resolve files from the site root. -->
+  <base href="/"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Accommodation TicketsSA</title>
   <meta name="description" content="Book your stay at one of South Africa's finest accommodations through TicketsSA."/>
@@ -12,6 +14,7 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
   <link rel="stylesheet" href="css/buy.css"/>
+  <link rel="stylesheet" href="css/phone.css"/>
 </head>
 <body class="buy">
 
@@ -64,7 +67,7 @@
       <div class="ep-facts">
         <div class="ep-fact">
           <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-          <div><b id="detailLocText"><span class="sk"></span></b><span><span id="detailArea"></span> <a id="mapLink" href="#" target="_blank" rel="noopener" hidden>· Map</a></span></div>
+          <div><b id="detailLocText"><span class="sk"></span></b><span id="detailArea"></span><a class="ep-map" id="mapLink" href="#" target="_blank" rel="noopener" hidden>Open in Maps</a></div>
         </div>
         <div class="ep-fact">
           <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
@@ -169,9 +172,12 @@ let acc = null, room = null, guests = 2;
 
 (async function init() {
   Auth.updateNavbar(); Utils.initMobileNav();
-  const id = new URLSearchParams(location.search).get('id');
+  // Either accommodation.html?id=ACC-... or the short share link /s/<slug>.
+  const qid = new URLSearchParams(location.search).get('id');
+  const m = location.pathname.match(/^\/s\/([^/?#]+)/);
+  const id = qid || (m ? decodeURIComponent(m[1]) : '');
   if (!id) return showError('This link is missing the stay. Please check it and try again.');
-  try { acc = await SupabaseAPI.getAccommodation(id); } catch (e) { return showError('Could not load this stay. Please check your connection.'); }
+  try { acc = qid ? await SupabaseAPI.getAccommodation(id) : await SupabaseAPI.getAccommodationBySlug(id); } catch (e) { return showError('Could not load this stay. Please check your connection.'); }
   if (!acc) return showError('We could not find this stay. It may have been removed.');
   render(acc);
 })();
@@ -314,7 +320,7 @@ $('barBtn').addEventListener('click', () => {
   $('bookingForm').requestSubmit();
 });
 
-$('shareBtn').addEventListener('click', () => Utils.shareLink(location.href.split('#')[0], (acc ? acc.name : 'Stay') + ' | TicketsSA'));
+$('shareBtn').addEventListener('click', () => Utils.shareLink(acc ? Utils.stayLink(acc) : location.href.split('#')[0], (acc ? acc.name : 'Stay') + ' | TicketsSA'));
 
 function renderContact(a) {
   const items = [];
@@ -356,7 +362,7 @@ $('bookingForm').addEventListener('submit', async e => {
     $('bkFormWrap').hidden = true; $('bkSuccess').hidden = false; $('buybar').remove();
     const pay = payInfoHtml(acc);
     if (pay) { $('bkPayInfo').innerHTML = pay; $('bkPayInfo').hidden = false; }
-    $('bkSuccessShareBtn').onclick = () => Utils.shareLink(location.href.split('#')[0], acc.name + ' | TicketsSA');
+    $('bkSuccessShareBtn').onclick = () => Utils.shareLink(Utils.stayLink(acc), acc.name + ' | TicketsSA');
     $('bookingCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (x) {
     err((x && x.message) || 'Could not send your request. Please try again.');
