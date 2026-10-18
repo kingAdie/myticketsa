@@ -1,0 +1,200 @@
+/* ================================================
+   TicketsSA buying pages (event page, checkout)
+   One calm style: the poster, the facts, the tickets,
+   one obvious button. Built for phones first.
+   ================================================ */
+
+body.buy{padding-bottom:96px}
+@media(min-width:900px){body.buy{padding-bottom:0}}
+
+/* ── Skeleton while loading ── */
+.sk{background:linear-gradient(90deg,var(--bg-3) 0%,var(--bg-4) 50%,var(--bg-3) 100%);background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:10px}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* ── Event page layout ── */
+.ep{max-width:1120px;margin:0 auto;padding:16px 16px 40px;display:grid;gap:20px;
+  grid-template-areas:"poster" "card" "about"}
+.ep-poster{grid-area:poster}
+.ep-card{grid-area:card}
+.ep-about{grid-area:about}
+@media(min-width:900px){
+  .ep{grid-template-columns:minmax(0,1fr) 420px;grid-template-areas:"poster card" "about card";grid-template-rows:auto 1fr;gap:28px 36px;padding-top:32px;align-items:start}
+  .ep-card{position:sticky;top:92px}
+}
+
+/* poster: always the whole picture, on a soft blurred backdrop */
+.ep-poster{position:relative;border-radius:24px;overflow:hidden;background:var(--bg-2);aspect-ratio:4/5;max-height:72vh;width:100%}
+@media(min-width:900px){.ep-poster{max-height:min(80vh,760px)}}
+.ep-poster__bg{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(32px) brightness(.55) saturate(1.3);opacity:0;transition:opacity .4s}
+.ep-poster__img{position:relative;z-index:1;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .4s}
+.ep-poster.is-ready .ep-poster__bg,.ep-poster.is-ready .ep-poster__img{opacity:1}
+.ep-poster .sk{position:absolute;inset:0;border-radius:0}
+.ep-poster.is-ready .sk{display:none}
+.ep-share{position:absolute;z-index:2;top:12px;right:12px;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.ep-share svg{width:18px;height:18px}
+.ep-back{position:absolute;z-index:2;top:12px;left:12px;height:42px;padding:0 14px 0 10px;border-radius:999px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600}
+.ep-back svg{width:16px;height:16px}
+
+/* the main card: title, facts, tickets */
+.ep-card{background:var(--bg-2);border:1px solid var(--b1);border-radius:24px;padding:22px}
+.ep-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--green-tint);border:1px solid var(--green-border);
+  color:var(--green-hi);font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.ep-title{margin:12px 0 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(1.5rem,5.5vw,2.1rem);font-weight:800;letter-spacing:-.03em;line-height:1.15;color:var(--text);word-break:break-word}
+.ep-title .sk{display:block;height:1.1em;width:80%}
+
+.ep-facts{display:grid;gap:4px;margin:0 0 20px;padding:6px;border-radius:18px;background:var(--bg-3)}
+.ep-fact{display:flex;align-items:center;gap:14px;padding:10px;border-radius:13px}
+.ep-fact__icon{flex:0 0 44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--bg-5);color:var(--green-hi)}
+.ep-fact__icon svg{width:20px;height:20px}
+.ep-fact .ep-fact__icon{display:flex}
+.ep-fact b{display:block;color:var(--text);font-size:.95rem;font-weight:700;line-height:1.35}
+.ep-fact div>span{display:block;color:var(--text-2);font-size:.84rem;margin-top:2px}
+.ep-fact a{color:var(--green-hi);font-weight:600}
+.ep-fact .sk{display:block;height:12px;width:140px;margin:4px 0}
+
+.ep-h{margin:0 0 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text)}
+
+/* ticket types */
+.tt-list{display:grid;gap:10px}
+.tt{display:block;width:100%;text-align:left;padding:16px;border-radius:16px;border:1.5px solid var(--b2);background:var(--bg-3);cursor:pointer;color:inherit;font:inherit;transition:border-color .2s,background .2s,transform .15s}
+.tt:hover{border-color:var(--b3)}
+.tt:active{transform:scale(.99)}
+.tt.is-on{border-color:var(--green);background:rgba(22,163,74,.09)}
+.tt.is-out{opacity:.5;cursor:not-allowed}
+.tt__row{display:flex;align-items:flex-start;gap:12px}
+.tt__radio{flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--b3);margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.tt.is-on .tt__radio{border-color:var(--green);background:var(--green)}
+.tt.is-on .tt__radio::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff}
+.tt__main{flex:1;min-width:0}
+.tt__name{display:block;color:var(--text);font-weight:700;font-size:.98rem}
+.tt__desc{display:block;color:var(--text-2);font-size:.82rem;line-height:1.5;margin-top:3px}
+.tt__left{display:inline-block;margin-top:6px;color:#FBBF24;font-size:.75rem;font-weight:700}
+.tt__price{flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.05rem;color:var(--text)}
+.tt__qty{display:none;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--b1)}
+.tt.is-on .tt__qty{display:flex}
+.tt__qty small{color:var(--text-2);font-size:.82rem}
+.stepper{display:flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--bg-5)}
+.stepper button{width:38px;height:38px;border-radius:50%;border:0;background:var(--bg-2);color:var(--text);font-size:1.2rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:30px;text-align:center;font-weight:800;color:var(--text)}
+
+.ep-buy{margin-top:16px}
+.ep-buy .btn{width:100%;min-height:56px;font-size:1rem;border-radius:16px}
+.ep-steps{display:flex;justify-content:space-between;gap:6px;margin-top:14px;color:var(--text-3);font-size:.74rem;text-align:center}
+.ep-steps span{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.ep-steps i{width:22px;height:22px;border-radius:50%;background:var(--bg-4);color:var(--text-2);font-style:normal;font-weight:800;font-size:.7rem;display:flex;align-items:center;justify-content:center}
+
+/* about */
+.ep-about{display:grid;gap:14px}
+.ep-block{background:var(--bg-2);border:1px solid var(--b1);border-radius:22px;padding:22px}
+.ep-desc{color:var(--text-2);font-size:.95rem;line-height:1.8;white-space:pre-line;word-break:break-word}
+.ep-desc.is-clamped{max-height:10.8em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 60%,transparent)}
+.ep-more{margin-top:8px;background:none;border:0;padding:0;color:var(--green-hi);font:inherit;font-weight:700;cursor:pointer}
+.ep-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ep-tags span{padding:5px 12px;border-radius:999px;background:var(--bg-3);border:1px solid var(--b1);color:var(--text-2);font-size:.8rem}
+.ep-small{color:var(--text-3);font-size:.8rem;margin-top:10px}
+.ep-small a{color:var(--green-hi)}
+
+/* sticky bar: phones only, always one tap from buying */
+.buybar{position:fixed;z-index:50;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:rgba(12,12,12,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--b1);
+  display:flex;align-items:center;gap:14px;transform:translateY(0);transition:transform .3s}
+.buybar__info{flex:1;min-width:0}
+.buybar__info b{display:block;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:1.1rem;font-weight:800}
+.buybar__info span{display:block;color:var(--text-2);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.buybar .btn{min-height:50px;padding:0 24px;border-radius:14px;font-size:.95rem;flex-shrink:0}
+@media(min-width:900px){.buybar{display:none}}
+@media(max-width:899px){.ep-buy{display:none}}
+
+/* ── Checkout ── */
+.co{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+.co-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;color:var(--text-2);font-size:.88rem;font-weight:600}
+.co-back svg{width:16px;height:16px}
+.co-order{display:flex;gap:14px;align-items:center;padding:14px;margin:6px 0 18px;border-radius:20px;background:var(--bg-2);border:1px solid var(--b1)}
+.co-order__img{flex:0 0 64px;height:80px;border-radius:12px;overflow:hidden;background:var(--bg-4)}
+.co-order__img img{width:100%;height:100%;object-fit:cover}
+.co-order__main{flex:1;min-width:0}
+.co-order__main b{display:block;color:var(--text);font-size:1rem;line-height:1.3;word-break:break-word}
+.co-order__main>span{display:block;color:var(--text-2);font-size:.8rem;margin-top:3px}
+.co-order__tix{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+.co-order__tix em{font-style:normal;color:var(--text);font-size:.85rem;font-weight:600}
+.co-order__tix strong{color:var(--green-hi);font-family:'Plus Jakarta Sans',sans-serif;font-size:1.05rem}
+
+.co-card{padding:22px;margin-bottom:14px;border-radius:22px;background:var(--bg-2);border:1px solid var(--b1)}
+.co-card h2{margin:0 0 4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text)}
+.co-card > p{margin:0 0 18px;color:var(--text-2);font-size:.86rem}
+.co-fields{display:grid;gap:14px}
+.co-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.co .form-group{margin:0}
+.co .form-label{display:block;margin-bottom:6px;color:var(--text-2);font-size:.82rem;font-weight:600}
+.co .form-label small{color:var(--text-3);font-weight:400}
+.co .form-input{width:100%;min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3);color:var(--text);font:inherit;font-size:1rem}
+.co .form-input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(22,163,74,.15)}
+.co .form-input.error{border-color:#EF4444}
+.co .form-error{display:none;color:#F87171;font-size:.78rem;margin-top:5px}
+.co .form-error.visible{display:block}
+.co-hint{display:block;color:var(--text-3);font-size:.76rem;margin-top:5px}
+
+.co-pay{display:flex;gap:14px;align-items:flex-start}
+.co-pay__icon{flex:0 0 46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:var(--green-tint);border:1px solid var(--green-border);color:var(--green-hi);font-size:1.3rem}
+.co-pay b{display:block;color:var(--text);font-size:.98rem}
+.co-pay span{display:block;color:var(--text-2);font-size:.84rem;line-height:1.55;margin-top:3px}
+
+.co-check{display:flex;gap:10px;align-items:flex-start;margin:4px 2px 16px;color:var(--text-2);font-size:.84rem;line-height:1.5;cursor:pointer}
+.co-check input{margin-top:2px;width:18px;height:18px;accent-color:#16A34A;flex-shrink:0}
+.co-login{margin:0 2px 16px;color:var(--text-2);font-size:.84rem}
+.co-login button{background:none;border:0;padding:0;color:var(--green-hi);font:inherit;font-weight:700;cursor:pointer}
+.co-submit{width:100%;min-height:58px;border-radius:16px;font-size:1.02rem}
+.co-terms{margin:12px 4px 0;text-align:center;color:var(--text-3);font-size:.76rem;line-height:1.55}
+.co-terms a{color:var(--text-2);text-decoration:underline}
+@media(max-width:899px){
+  .co-submitbar{position:fixed;z-index:50;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(12,12,12,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--b1)}
+  .co-terms{margin-bottom:8px}
+}
+@media(max-width:380px){.co-two{grid-template-columns:1fr}}
+@media(max-width:899px){body.buy.co-page{padding-bottom:180px}}
+.tt-list.pulse .tt{animation:ttPulse .9s ease}
+@keyframes ttPulse{40%{border-color:var(--green);box-shadow:0 0 0 4px rgba(22,163,74,.2)}}
+
+/* ── Stay page extras ── */
+.sg{aspect-ratio:4/3}
+@media(min-width:900px){.sg{aspect-ratio:4/3}}
+.sg__track{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;opacity:0;transition:opacity .4s}
+.sg__track::-webkit-scrollbar{display:none}
+.sg.is-ready .sg__track{opacity:1}
+.sg__track img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:start}
+.sg__empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:4rem;background:linear-gradient(135deg,#14532d,#0b0b0b)}
+.sg__count{position:absolute;z-index:2;right:12px;bottom:12px;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font-size:.75rem;font-weight:700}
+.bk-step{margin-top:22px}
+.bk-dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bk-dates label{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3)}
+.bk-dates label:focus-within{border-color:var(--green)}
+.bk-dates span{color:var(--text-3);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.bk-dates input{border:0;background:none;color:var(--text);font:inherit;font-size:.95rem;font-weight:600;padding:0;min-height:24px;color-scheme:dark;width:100%}
+.bk-dates input:focus{outline:none}
+.bk-guests{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 8px 8px 14px;border-radius:14px;border:1.5px solid var(--b2);background:var(--bg-3);color:var(--text);font-weight:600}
+.bk-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:14px;border-radius:14px;background:var(--green-tint);border:1px solid var(--green-border);color:var(--text-2);font-size:.88rem}
+.bk-total[hidden]{display:none}
+.bk-total b{color:var(--green-hi);font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem}
+.co.co--inline{padding:0;max-width:none;margin:0}
+.bk-err{color:#F87171;font-size:.85rem;margin:12px 0 0;min-height:0}
+.bk-err:empty{display:none}
+.bk-done{text-align:center;padding:10px 0}
+.bk-done[hidden]{display:none}
+.bk-done__icon{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:var(--green);color:#fff;font-size:1.8rem;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(22,163,74,.15)}
+.bk-done h2{margin:0 0 6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;color:var(--text)}
+.bk-done > p{margin:0 0 18px;color:var(--text-2);font-size:.92rem}
+.bk-pay{text-align:left;margin:0 0 16px;padding:16px;border-radius:16px;background:var(--bg-3);border:1px solid var(--b1);color:var(--text-2);font-size:.88rem}
+.bk-pay[hidden]{display:none}
+.bk-pay p{margin:0 0 10px}
+.bk-pay dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 10px}
+.bk-pay dt{color:var(--text-3)}
+.bk-pay dd{margin:0;color:var(--text);font-weight:600;word-break:break-all}
+.bk-pay .tk-paylink{display:block;text-align:center;padding:15px;border-radius:14px;background:var(--green);color:#fff;font-weight:700}
+.bk-contact{display:grid;gap:8px}
+.bk-contact a{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:var(--bg-3);color:var(--text);font-size:.9rem;word-break:break-all}
+@media(min-width:900px){.ep--stay .ep-card{position:static}}
+.ep-fact[hidden]{display:none}

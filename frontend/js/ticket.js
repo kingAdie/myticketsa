@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function payBox() {
     const ev = event || {};
     if (ev.paymentType === 'link' && /^https?:\/\//i.test(ev.paymentLink || '')) {
-      return `<a class="tk-paylink" href="${esc(ev.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay with the organiser's link →</a>
+      return `<a class="tk-paylink" href="${esc(ev.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay ${ticket.pricing && ticket.pricing.total ? Utils.formatCurrency(ticket.pricing.total) : ''} by card →</a>
         <p class="tk-small">Use <strong class="tk-mono">${esc(ticket.id)}</strong> as the payment reference.</p>`;
     }
     if (ev.paymentType === 'bank' && ev.bankName) {

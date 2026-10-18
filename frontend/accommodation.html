@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
@@ -11,10 +11,9 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏨</text></svg>"/>
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
-  <link rel="stylesheet" href="css/accommodations.css"/>
-  <link rel="stylesheet" href="css/accommodation-v2.css"/>
+  <link rel="stylesheet" href="css/buy.css"/>
 </head>
-<body>
+<body class="buy">
 
 <!-- ═══════════ NAVBAR ═══════════ -->
 <nav class="navbar" id="navbar">
@@ -43,795 +42,332 @@
   </div>
 </nav>
 
-<!-- ═══════════ STICKY TOP BAR ═══════════ -->
-<div class="acc-topbar" id="accTopbar">
-  <div class="container acc-topbar__inner">
-    <div class="acc-topbar__breadcrumb">
-      <a href="accommodations.html" id="backLink">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back to Accommodations
-      </a>
-      <span class="acc-topbar__sep">|</span>
-      <span id="topbarProvince" style="color:var(--text-2);">Loading…</span>
-    </div>
-    <div class="acc-topbar__right">
-      <div class="acc-topbar__price" id="topbarPrice" style="display:none;"></div>
-      <button class="acc-topbar__share" id="topbarShareBtn" title="Copy shareable link" style="display:none;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        Share
-      </button>
-      <a href="#bookingCard" class="acc-topbar__book" id="topbarBookBtn" style="display:none;">
-        Book Now
-      </a>
-    </div>
+<main class="ep ep--stay" id="epMain">
+
+  <!-- Photos: swipe through, the whole stay at a glance -->
+  <div class="ep-poster sg" id="epPoster">
+    <div class="sk"></div>
+    <div class="sg__track" id="sgTrack"></div>
+    <span class="sg__count" id="sgCount" hidden></span>
+    <a class="ep-back" id="backLink" href="accommodations.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>Stays</a>
+    <button class="ep-share" id="shareBtn" type="button" aria-label="Share this stay">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
   </div>
+
+  <!-- Name, facts, rooms, dates, details: all in one card -->
+  <section class="ep-card" id="bookingCard">
+    <div id="bkFormWrap">
+      <span class="ep-chip" id="detailStars">Stay</span>
+      <h1 class="ep-title" id="detailName"><span class="sk"></span></h1>
+
+      <div class="ep-facts">
+        <div class="ep-fact">
+          <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+          <div><b id="detailLocText"><span class="sk"></span></b><span><span id="detailArea"></span> <a id="mapLink" href="#" target="_blank" rel="noopener" hidden>· Map</a></span></div>
+        </div>
+        <div class="ep-fact">
+          <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <div><b>Check-in <span id="checkInTime">14:00</span></b><span>Check-out <span id="checkOutTime">10:00</span></span></div>
+        </div>
+        <div class="ep-fact" id="hostFact" hidden>
+          <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <div><b id="hostLine"></b><span>Host</span></div>
+        </div>
+      </div>
+
+      <form id="bookingForm" novalidate>
+        <input type="hidden" id="bkAccId"/><input type="hidden" id="bkAccName"/><input type="hidden" id="bkSpaceType"/>
+
+        <h2 class="ep-h">Choose your room</h2>
+        <div class="tt-list" id="roomCards" role="radiogroup" aria-label="Rooms"><div class="sk" style="height:64px"></div></div>
+
+        <div class="bk-step" id="stepWhen">
+          <h2 class="ep-h">When are you coming?</h2>
+          <div class="bk-dates">
+            <label><span>Check-in</span><input type="date" id="bkCheckIn" required/></label>
+            <label><span>Check-out</span><input type="date" id="bkCheckOut" required/></label>
+          </div>
+          <div class="bk-guests">
+            <span>Guests</span>
+            <div class="stepper"><button type="button" id="gMinus" aria-label="One less guest">−</button><output id="gOut">2</output><button type="button" id="gPlus" aria-label="One more guest">+</button></div>
+            <input type="hidden" id="bkGuests" value="2"/>
+          </div>
+          <div class="bk-total" id="bkCalc" hidden><span id="bkCalcLine"></span><b id="bkCalcTotal"></b></div>
+        </div>
+
+        <div class="bk-step" id="stepWho">
+          <h2 class="ep-h">Your details</h2>
+          <div class="co co--inline">
+            <div class="co-fields">
+              <div class="co-two">
+                <div class="form-group"><label class="form-label" for="bkFirstName">First name</label><input class="form-input" id="bkFirstName" autocomplete="given-name" placeholder="Thabo"/></div>
+                <div class="form-group"><label class="form-label" for="bkLastName">Last name</label><input class="form-input" id="bkLastName" autocomplete="family-name" placeholder="Nkosi"/></div>
+              </div>
+              <div class="form-group"><label class="form-label" for="bkEmail">Email</label><input class="form-input" type="email" id="bkEmail" autocomplete="email" inputmode="email" placeholder="you@email.com"/></div>
+              <div class="form-group"><label class="form-label" for="bkPhone">Phone <small>(optional)</small></label><input class="form-input" type="tel" id="bkPhone" autocomplete="tel" inputmode="tel" placeholder="082 123 4567"/></div>
+              <div class="form-group"><label class="form-label" for="bkRequests">Note to the host <small>(optional)</small></label><input class="form-input" id="bkRequests" placeholder="e.g. arriving late"/></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="bk-err" id="bkError" role="alert"></p>
+        <div class="ep-buy" style="display:block">
+          <button type="submit" class="btn btn-primary" id="bkSubmitBtn">Request to book</button>
+        </div>
+        <p class="co-terms" id="payHow"></p>
+      </form>
+    </div>
+
+    <!-- After sending -->
+    <div class="bk-done" id="bkSuccess" hidden>
+      <div class="bk-done__icon">✓</div>
+      <h2>Request sent</h2>
+      <p>The host will confirm your dates by email. We sent you a copy.</p>
+      <div class="bk-pay" id="bkPayInfo" hidden></div>
+      <button class="btn btn-secondary" id="bkSuccessShareBtn" type="button">Share this stay</button>
+    </div>
+  </section>
+
+  <!-- About -->
+  <div class="ep-about">
+    <section class="ep-block">
+      <h2 class="ep-h">About this stay</h2>
+      <div class="ep-desc" id="detailDesc"></div>
+      <button class="ep-more" id="descMore" type="button" hidden>Read more</button>
+      <div class="ep-tags" id="amenitiesGrid"></div>
+    </section>
+    <section class="ep-block" id="contactSection" hidden>
+      <h2 class="ep-h">Contact the host</h2>
+      <div class="bk-contact" id="contactList"></div>
+    </section>
+    <section class="ep-block" id="refundSection" hidden>
+      <h2 class="ep-h">Cancellations &amp; refunds</h2>
+      <div class="ep-desc" id="detailRefund"></div>
+      <p class="ep-small">Set by the host. TicketsSA does not take payment. <a href="refunds.html">How refunds work</a></p>
+    </section>
+  </div>
+</main>
+
+<div class="buybar" id="buybar">
+  <div class="buybar__info"><b id="barPrice">&nbsp;</b><span id="barSub">per night</span></div>
+  <button class="btn btn-primary" id="barBtn" type="button">Choose a room</button>
 </div>
-
-<!-- ═══════════ PAGE BODY ═══════════ -->
-<div id="pageBody">
-
-  <!-- Loading skeleton -->
-  <div id="loadingState" style="padding:48px 0 80px;">
-    <div class="container">
-      <div class="acc-loading">
-        <div class="spinner"></div>
-        <span>Loading accommodation…</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Error state (hidden by default) -->
-  <div id="errorState" style="display:none;">
-    <div class="container">
-      <div class="acc-detail-error">
-        <div class="acc-detail-error__icon">🏨</div>
-        <h2>Accommodation Not Found</h2>
-        <p id="errorMsg">This accommodation listing could not be found or is no longer available.</p>
-        <a href="accommodations.html" class="btn btn-secondary" style="margin-top:16px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Back to Accommodations
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main detail content (hidden until data loaded) -->
-  <div id="detailContent" style="display:none;">
-
-    <!-- Gallery -->
-    <div class="acc-detail__gallery">
-      <div class="acc-detail__main-img-wrap">
-        <img class="acc-detail__main-img" id="mainImg" src="" alt=""/>
-        <div class="acc-detail__main-img-overlay"></div>
-        <div class="acc-hero-info" id="heroInfo"></div>
-        <div class="acc-detail__img-placeholder" id="imgPlaceholder" style="display:none;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          No image available
-        </div>
-      </div>
-      <div class="container">
-        <div class="acc-detail__thumb-strip" id="thumbStrip"></div>
-      </div>
-    </div>
-
-    <!-- Two-column detail layout -->
-    <div class="acc-detail">
-      <div class="container">
-        <div class="acc-detail__cols">
-
-          <!-- LEFT: Info -->
-          <div class="acc-detail__info">
-            <h1 class="acc-detail__name" id="detailName">—</h1>
-            <div class="acc-detail__loc" id="detailLoc">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span id="detailLocText"></span>
-            </div>
-            <div class="acc-detail__stars" id="detailStars"></div>
-            <p class="acc-detail__desc" id="detailDesc"></p>
-
-            <div class="acc-facts acc-rv" id="factsRow"></div>
-
-            <ul class="acc-trust acc-rv" aria-label="Why book here">
-              <li><span class="acc-trust__ic">🤝</span><span><strong>Direct from the host</strong>You deal with the owner, no middleman.</span></li>
-              <li><span class="acc-trust__ic">✅</span><span><strong>Checked by TicketsSA</strong>Every listing is reviewed before it goes live.</span></li>
-              <li><span class="acc-trust__ic">🔒</span><span><strong>No booking fees</strong>We never take payment or add charges.</span></li>
-            </ul>
-
-            <!-- How payment works -->
-            <div class="acc-sec acc-rv" id="paySection" style="display:none;">
-              <div class="acc-info-heading">How booking and payment work</div>
-              <ol class="acc-flow">
-                <li><span class="acc-flow__n">1</span><div><strong>Send an enquiry</strong><p>Pick your dates and room. It costs nothing.</p></div></li>
-                <li><span class="acc-flow__n">2</span><div><strong>The host confirms</strong><p>They check availability and reply to you directly.</p></div></li>
-                <li><span class="acc-flow__n">3</span><div><strong>Pay the host</strong><p id="payHow">Payment is arranged directly with the host.</p></div></li>
-              </ol>
-            </div>
-
-            <!-- Cancellation & refunds -->
-            <div class="acc-sec acc-rv" id="refundSection" style="display:none;">
-              <div class="acc-info-heading">Cancellations &amp; refunds</div>
-              <p class="acc-detail__desc" id="detailRefund" style="margin-bottom:6px"></p>
-              <p style="font-size:.8125rem;color:var(--text-3)">Set by the owner. TicketsSA does not take payment or issue refunds. <a href="refunds.html" style="color:var(--green)">How refunds work</a></p>
-            </div>
-
-            <!-- Amenities -->
-            <div class="acc-sec acc-rv" id="amenitiesSection" style="display:none;">
-              <div class="acc-info-heading">Amenities &amp; Features</div>
-              <div class="acc-amenities-grid" id="amenitiesGrid"></div>
-            </div>
-
-            <!-- Space types -->
-            <div class="acc-sec acc-rv" id="spacesSection" style="display:none;">
-              <div class="acc-info-heading">Room &amp; Space Types</div>
-              <div class="acc-rooms" id="roomCards"></div>
-              <table class="acc-spaces-table" style="display:none">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Capacity</th>
-                    <th>Price / Night</th>
-                  </tr>
-                </thead>
-                <tbody id="spacesTableBody"></tbody>
-              </table>
-            </div>
-
-            <!-- Check-in / out times -->
-            <div class="acc-sec acc-rv" id="timesSection">
-              <div class="acc-info-heading">Check-in &amp; Check-out</div>
-              <div class="acc-times-row">
-                <div class="acc-time-block">
-                  <div class="acc-time-block__label">Check-in from</div>
-                  <div class="acc-time-block__value" id="checkInTime">—</div>
-                </div>
-                <div class="acc-time-block">
-                  <div class="acc-time-block__label">Check-out by</div>
-                  <div class="acc-time-block__value" id="checkOutTime">—</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact -->
-            <div class="acc-sec acc-rv" id="contactSection" style="display:none;">
-              <div class="acc-info-heading">Contact &amp; Info</div>
-              <div class="acc-contact-list" id="contactList"></div>
-            </div>
-          </div>
-
-          <!-- RIGHT: Booking card -->
-          <div>
-            <div id="externalBookingWrap" style="display:none;"></div>
-            <div class="acc-booking-card" id="bookingCard">
-              <div class="acc-booking-card__price">
-                <div class="acc-booking-card__from">From</div>
-                <div class="acc-booking-card__amount" id="bkCardPrice">R 0</div>
-                <div class="acc-booking-card__per">/night</div>
-              </div>
-
-              <div class="acc-bk-error" id="bkError"></div>
-
-              <form id="bookingForm" novalidate>
-                <input type="hidden" id="bkAccId"/>
-                <input type="hidden" id="bkAccName"/>
-
-                <!-- Space type -->
-                <div class="form-group" style="margin-bottom:14px;">
-                  <label class="form-label" for="bkSpaceType">Room / Space Type <span style="color:var(--green);">*</span></label>
-                  <select id="bkSpaceType" class="form-select" required onchange="calcPrice()">
-                    <option value="">Select a room type…</option>
-                  </select>
-                </div>
-
-                <!-- Dates -->
-                <div class="acc-booking-dates" style="margin-bottom:14px;">
-                  <div class="form-group">
-                    <label class="form-label" for="bkCheckIn">Check-in <span style="color:var(--green);">*</span></label>
-                    <input type="date" id="bkCheckIn" class="form-input" required onchange="calcPrice()"/>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="bkCheckOut">Check-out <span style="color:var(--green);">*</span></label>
-                    <input type="date" id="bkCheckOut" class="form-input" required onchange="calcPrice()"/>
-                  </div>
-                </div>
-
-                <!-- Guests -->
-                <div class="form-group" style="margin-bottom:14px;">
-                  <label class="form-label" for="bkGuests">Guests</label>
-                  <select id="bkGuests" class="form-select">
-                    <option value="1">1 Guest</option>
-                    <option value="2">2 Guests</option>
-                    <option value="3">3 Guests</option>
-                    <option value="4">4 Guests</option>
-                    <option value="5">5 Guests</option>
-                    <option value="6">6 Guests</option>
-                    <option value="7">7 Guests</option>
-                    <option value="8">8 Guests</option>
-                    <option value="9">9 Guests</option>
-                    <option value="10">10+ Guests</option>
-                  </select>
-                </div>
-
-                <!-- Price calc -->
-                <div class="acc-booking-calc" id="bkCalc">
-                  <div class="acc-booking-calc__line" id="bkCalcLine"></div>
-                  <div class="acc-booking-calc__total">
-                    <span class="acc-booking-calc__total-label">Total estimate</span>
-                    <span class="acc-booking-calc__total-amount" id="bkCalcTotal">R 0</span>
-                  </div>
-                </div>
-
-                <hr style="border:none;border-top:1px solid var(--b1);margin:16px 0;"/>
-
-                <!-- Personal details -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-                  <div class="form-group">
-                    <label class="form-label" for="bkFirstName">First Name <span style="color:var(--green);">*</span></label>
-                    <input type="text" id="bkFirstName" class="form-input" placeholder="Thabo" required/>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="bkLastName">Last Name <span style="color:var(--green);">*</span></label>
-                    <input type="text" id="bkLastName" class="form-input" placeholder="Nkosi" required/>
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom:14px;">
-                  <label class="form-label" for="bkEmail">Email <span style="color:var(--green);">*</span></label>
-                  <input type="email" id="bkEmail" class="form-input" placeholder="you@example.co.za" required/>
-                </div>
-
-                <div class="form-group" style="margin-bottom:14px;">
-                  <label class="form-label" for="bkPhone">Phone Number</label>
-                  <input type="tel" id="bkPhone" class="form-input" placeholder="+27 80 000 0000"/>
-                </div>
-
-                <div class="form-group" style="margin-bottom:16px;">
-                  <label class="form-label" for="bkRequests">Special Requests</label>
-                  <textarea id="bkRequests" class="form-textarea" rows="3"
-                    placeholder="Early check-in, dietary requirements, accessibility needs…"
-                    style="min-height:72px;"></textarea>
-                </div>
-
-                <button type="submit" class="acc-booking-submit" id="bkSubmitBtn">
-                  Send Booking Enquiry
-                </button>
-                <p class="acc-booking-fine">
-                  <strong>You won't be charged now.</strong> This sends your dates to the host, who confirms
-                  availability and arranges payment with you directly — usually within 24 hours.
-                </p>
-              </form>
-
-              <!-- Success state (shown after submit) -->
-              <div class="acc-booking-success" id="bkSuccess">
-                <div class="acc-booking-success__icon">✅</div>
-                <div class="acc-booking-success__title">Enquiry Sent!</div>
-                <p class="acc-booking-success__body">Your booking enquiry has been received. The host will contact you at your email address within 24 hours to confirm and arrange payment.</p>
-                <div class="acc-pay-info" id="bkPayInfo" style="display:none"></div>
-                <a id="bkSuccessShareBtn" href="#" class="acc-booking-success__ext" style="background:var(--blue);">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                  Share this property
-                </a>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div><!-- /detailContent -->
-
-</div><!-- /pageBody -->
 
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   accommodation.html TicketsSA
-   Detail + booking page for a single accommodation.
-   Reads ?id= from URL, fetches via SupabaseAPI.getAccommodation().
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   accommodation.html: one stay, booked in one card.
+   Photos → facts → room → dates & guests → details → request.
+   ═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const escH = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const money = v => 'R ' + Math.round(Number(v) || 0).toLocaleString('en-ZA');
+let acc = null, room = null, guests = 2;
 
-function escH(str) {
-  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-let currentAcc = null;
-let currentSpacePrice = 0;
-
-/* ── Bootstrap ──────────────────────────────────────────────── */
 (async function init() {
-  // Init navbar
-  if (typeof Auth !== 'undefined') Auth.updateNavbar();
-  if (typeof Utils !== 'undefined') Utils.initMobileNav();
-
+  Auth.updateNavbar(); Utils.initMobileNav();
   const id = new URLSearchParams(location.search).get('id');
-  if (!id) {
-    showError('No accommodation ID specified in the URL.');
-    return;
-  }
-
-  try {
-    currentAcc = await SupabaseAPI.getAccommodation(id);
-  } catch (err) {
-    showError(err.message || 'Failed to load accommodation data.');
-    return;
-  }
-
-  if (!currentAcc) {
-    showError('This accommodation listing could not be found or is no longer available.');
-    return;
-  }
-
-  renderPage(currentAcc);
+  if (!id) return showError('This link is missing the stay. Please check it and try again.');
+  try { acc = await SupabaseAPI.getAccommodation(id); } catch (e) { return showError('Could not load this stay. Please check your connection.'); }
+  if (!acc) return showError('We could not find this stay. It may have been removed.');
+  render(acc);
 })();
 
-/* ── Page renderer ──────────────────────────────────────────── */
-function renderPage(a) {
-  document.title = `${a.name} TicketsSA`;
+function render(a) {
+  document.title = `${a.name} · TicketsSA`;
+  if (a.province) $('backLink').href = `accommodations.html?province=${encodeURIComponent(a.province)}`;
 
-  // Topbar
-  document.getElementById('topbarProvince').textContent = a.province || 'South Africa';
-  const backLink = document.getElementById('backLink');
-  if (a.province) {
-    backLink.href = `accommodations.html?province=${encodeURIComponent(a.province)}`;
+  renderPhotos(a.images || [], a.name);
+  $('detailStars').textContent = a.starRating ? '★'.repeat(Math.min(5, Math.round(a.starRating))) + ' Stay' : 'Stay';
+  $('detailName').textContent = a.name;
+  $('detailLocText').textContent = a.city || a.province || 'South Africa';
+  $('detailArea').textContent = [a.city ? a.province : '', a.address].filter(Boolean).join(' · ');
+  const where = [a.address, a.city, a.province].filter(Boolean).join(', ');
+  if (where) { $('mapLink').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(a.name + ', ' + where); $('mapLink').hidden = false; }
+  $('checkInTime').textContent = a.checkInTime || '14:00';
+  $('checkOutTime').textContent = a.checkOutTime || '10:00';
+  const sleeps = Math.max(0, ...(a.spaceTypes || []).map(r => parseInt(r.capacity) || 0));
+
+  const d = $('detailDesc'); d.textContent = a.description || 'More details coming soon.';
+  if ((a.description || '').length > 420) {
+    d.classList.add('is-clamped'); $('descMore').hidden = false;
+    $('descMore').onclick = () => { const c = d.classList.toggle('is-clamped'); $('descMore').textContent = c ? 'Read more' : 'Show less'; };
   }
-  if (a.priceFrom > 0) {
-    document.getElementById('topbarPrice').innerHTML =
-      `From <strong>R ${Math.round(a.priceFrom).toLocaleString('en-ZA')}</strong><small>/night</small>`;
-    document.getElementById('topbarPrice').style.display = '';
-  }
-  document.getElementById('topbarBookBtn').style.display = '';
-  document.getElementById('topbarShareBtn').style.display = '';
-
-  // Share button copy page URL to clipboard
-  document.getElementById('topbarShareBtn').addEventListener('click', () => {
-    const url = window.location.href;
-    navigator.clipboard?.writeText(url).then(() => {
-      if (typeof Utils !== 'undefined') Utils.showToast('Link copied to clipboard!', 'success');
-    }).catch(() => {
-      prompt('Copy this link:', url);
-    });
-  });
-
-  // Gallery
-  renderGallery(a);
-
-  // Name + location
-  document.getElementById('detailName').textContent = a.name;
-  const locParts = [a.city, a.province, a.address].filter(Boolean);
-  document.getElementById('detailLocText').textContent = locParts.join(', ');
-
-  // Stars
-  renderStars(a.starRating || 0);
-
-  // Description
-  document.getElementById('detailDesc').textContent = a.description || '';
-  if (a.refundPolicy) {
-    document.getElementById('detailRefund').textContent = a.refundPolicy;
-    document.getElementById('refundSection').style.display = '';
-  }
-
-  // Amenities
-  renderAmenities(a.amenities || []);
-
-  // Space types
-  renderSpaces(a.spaceTypes || [], a.priceFrom);
-
-  // Times
-  document.getElementById('checkInTime').textContent  = a.checkInTime  || '14:00';
-  document.getElementById('checkOutTime').textContent = a.checkOutTime || '10:00';
-
-  // Contact
+  (a.amenities || []).forEach(x => { const s = document.createElement('span'); s.textContent = x; $('amenitiesGrid').appendChild(s); });
+  if (a.refundPolicy) { $('detailRefund').textContent = a.refundPolicy; $('refundSection').hidden = false; }
   renderContact(a);
 
-  // External booking URL show above booking form if set
-  if (a.bookingUrl) {
-    const extWrap = document.getElementById('externalBookingWrap');
-    if (extWrap) {
-      extWrap.innerHTML = `
-        <div style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:12px;padding:16px 18px;margin-bottom:16px;text-align:center;">
-          <div style="font-size:.8rem;color:var(--text-3);margin-bottom:8px;">This property has a direct booking link</div>
-          <a href="${escH(a.bookingUrl)}" target="_blank" rel="noopener noreferrer" class="acc-booking-success__ext">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Book Directly →
-          </a>
-        </div>`;
-      extWrap.style.display = 'block';
-    }
+  $('bkAccId').value = a.id; $('bkAccName').value = a.name;
+  const rooms = (a.spaceTypes && a.spaceTypes.length) ? a.spaceTypes : [{ name: 'Standard room', price: a.priceFrom, capacity: sleeps || 2 }];
+  renderRooms(rooms);
+  if (rooms.length === 1) pick(rooms[0], document.querySelector('.acc-room'));
+
+  const today = new Date().toISOString().slice(0, 10);
+  $('bkCheckIn').min = today; $('bkCheckOut').min = today;
+  $('bkCheckIn').addEventListener('change', () => {
+    const ci = $('bkCheckIn').value;
+    if (ci) { const n = new Date(ci); n.setDate(n.getDate() + 1); const next = n.toISOString().slice(0, 10); $('bkCheckOut').min = next; if (!$('bkCheckOut').value || $('bkCheckOut').value <= ci) $('bkCheckOut').value = next; }
+    calc();
+  });
+  $('bkCheckOut').addEventListener('change', calc);
+  $('gMinus').onclick = () => setGuests(guests - 1);
+  $('gPlus').onclick = () => setGuests(guests + 1);
+  setGuests(2);
+
+  $('payHow').textContent = a.paymentType === 'link' ? 'Nothing to pay yet. Once the host confirms, you pay by card on their payment link.'
+    : a.paymentType === 'bank' ? 'Nothing to pay yet. Once the host confirms, you pay by bank transfer. The details are sent to you.'
+    : 'Nothing to pay yet. The host confirms your dates and tells you how to pay.';
+
+  // Signed in? Fill what we know.
+  const u = Auth.getUser && Auth.getUser();
+  if (u) { if (u.firstName) $('bkFirstName').value = u.firstName; if (u.lastName) $('bkLastName').value = u.lastName; if (u.email) $('bkEmail').value = u.email; }
+  updateBar();
+}
+
+function renderPhotos(images, name) {
+  const poster = $('epPoster'), track = $('sgTrack');
+  if (!images.length) {
+    poster.classList.add('is-ready');
+    track.innerHTML = '<div class="sg__empty">🏡</div>';
+    return;
   }
-
-  // Booking card
-  renderBookingCard(a);
-
-  // Hero chips, quick facts, payment explainer
-  renderHero(a);
-  renderFacts(a);
-  renderPay(a);
-
-  // Show content, hide loader
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('detailContent').style.display = '';
-  initReveal();
+  track.innerHTML = images.slice(0, 10).map((src, i) => `<img src="${escH(Utils.imgUrl(src, 1200))}" alt="${escH(name)} photo ${i + 1}" ${i ? 'loading="lazy"' : ''}/>`).join('');
+  const first = track.querySelector('img');
+  first.onload = first.onerror = () => poster.classList.add('is-ready');
+  if (images.length > 1) {
+    const c = $('sgCount'); c.hidden = false; c.textContent = `1 / ${Math.min(images.length, 10)}`;
+    track.addEventListener('scroll', () => { c.textContent = `${Math.round(track.scrollLeft / track.clientWidth) + 1} / ${Math.min(images.length, 10)}`; }, { passive: true });
+  }
 }
 
-/* ── Hero overlay chips ─────────────────────────────────────── */
-function renderHero(a) {
-  const chips = [];
-  const place = [a.city, a.province].filter(Boolean).join(', ');
-  if (place) chips.push(`<span class="acc-chip"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${escH(place)}</span>`);
-  if (a.starRating) chips.push(`<span class="acc-chip acc-chip--gold">★ ${escH(String(a.starRating))}-star</span>`);
-  if (a.priceFrom > 0) chips.push(`<span class="acc-chip acc-chip--green">From R ${Math.round(a.priceFrom).toLocaleString('en-ZA')} / night</span>`);
-  document.getElementById('heroInfo').innerHTML = chips.join('');
+function renderRooms(rooms) {
+  $('roomCards').innerHTML = rooms.map((r, i) => `
+    <div class="tt acc-room" role="radio" aria-checked="false" tabindex="0" data-i="${i}">
+      <div class="tt__row">
+        <span class="tt__radio" aria-hidden="true"></span>
+        <span class="tt__main">
+          <span class="tt__name">${escH(r.name)}</span>
+          <span class="tt__desc">${[r.capacity ? `Up to ${escH(r.capacity)} guests` : '', r.bedrooms != null ? `${escH(r.bedrooms)} bedroom${r.bedrooms == 1 ? '' : 's'}` : '', r.description ? escH(r.description) : ''].filter(Boolean).join(' · ')}</span>
+        </span>
+        <span class="tt__price">${Number(r.price) > 0 ? money(r.price) + '<small style="font-weight:600;color:var(--text-3);font-size:.75rem"> /night</small>' : 'Ask'}</span>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.acc-room').forEach(el => {
+    const r = rooms[+el.dataset.i];
+    el.addEventListener('click', () => pick(r, el));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(r, el); } });
+  });
 }
 
-/* ── Quick facts ────────────────────────────────────────────── */
-function renderFacts(a) {
-  const rooms  = (a.spaceTypes || []).length;
-  const sleeps = Math.max(0, ...(a.spaceTypes || []).map(r => parseInt(r.capacity) || 0));
-  const f = [];
-  if (sleeps) f.push(['👥', `Sleeps up to ${sleeps}`]);
-  if (rooms)  f.push(['🛏️', `${rooms} room type${rooms > 1 ? 's' : ''}`]);
-  f.push(['🕑', `Check-in ${a.checkInTime || '14:00'}`]);
-  f.push(['🚪', `Check-out ${a.checkOutTime || '10:00'}`]);
-  document.getElementById('factsRow').innerHTML = f.map(x => `<span class="acc-fact"><i>${x[0]}</i>${escH(x[1])}</span>`).join('');
+function pick(r, el) {
+  room = r; $('bkSpaceType').value = r.name;
+  document.querySelectorAll('.acc-room').forEach(x => { x.classList.toggle('is-on', x === el); x.setAttribute('aria-checked', x === el); });
+  setGuests(guests); calc();
 }
 
-/* ── How payment works (no account numbers shown before the host confirms) ── */
-function payMethodText(a) {
-  if (a.paymentType === 'link') return 'Once they confirm, you pay the host directly using their secure payment link.';
-  if (a.paymentType === 'bank') return 'Once they confirm, you pay the host directly by bank transfer. The details are sent to you by email.';
-  return 'Once they confirm, the host tells you how to pay. TicketsSA never handles your money.';
+function setGuests(n) {
+  const max = Math.max(1, parseInt(room && room.capacity) || 20);
+  guests = Math.max(1, Math.min(max, n));
+  $('gOut').textContent = guests; $('bkGuests').value = guests;
+  $('gMinus').disabled = guests <= 1; $('gPlus').disabled = guests >= max;
 }
-function renderPay(a) {
-  document.getElementById('payHow').textContent = payMethodText(a);
-  document.getElementById('paySection').style.display = '';
+
+function nights() {
+  const ci = $('bkCheckIn').value, co = $('bkCheckOut').value;
+  return ci && co ? Math.round((new Date(co) - new Date(ci)) / 864e5) : 0;
 }
+
+function calc() {
+  const n = nights(), price = Number(room && room.price) || 0;
+  const show = n > 0 && price > 0;
+  $('bkCalc').hidden = !show;
+  if (show) { $('bkCalcLine').textContent = `${n} night${n > 1 ? 's' : ''} × ${money(price)}`; $('bkCalcTotal').textContent = money(n * price); }
+  updateBar();
+}
+
+function updateBar() {
+  const n = nights(), price = Number(room && room.price) || 0;
+  if (room && n > 0) {
+    $('barPrice').textContent = price ? money(n * price) : 'Price on request';
+    $('barSub').textContent = `${n} night${n > 1 ? 's' : ''} · ${room.name}`;
+    $('barBtn').textContent = 'Request to book';
+  } else if (room) {
+    $('barPrice').textContent = price ? money(price) : 'Price on request';
+    $('barSub').textContent = `per night · ${room.name}`;
+    $('barBtn').textContent = 'Pick dates';
+  } else {
+    const from = Number(acc && acc.priceFrom) || Math.min(...((acc && acc.spaceTypes) || []).map(r => Number(r.price) || Infinity));
+    $('barPrice').textContent = isFinite(from) && from > 0 ? 'From ' + money(from) : 'Price on request';
+    $('barSub').textContent = 'per night';
+    $('barBtn').textContent = 'Choose a room';
+  }
+}
+
+// The phone bar always takes you to the next thing to do.
+$('barBtn').addEventListener('click', () => {
+  if (!room) return $('roomCards').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (nights() <= 0) { $('stepWhen').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  if (!$('bkFirstName').value.trim() || !$('bkEmail').value.trim()) { $('stepWho').scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => (!$('bkFirstName').value.trim() ? $('bkFirstName') : $('bkEmail')).focus(), 400); return; }
+  $('bookingForm').requestSubmit();
+});
+
+$('shareBtn').addEventListener('click', () => Utils.shareLink(location.href.split('#')[0], (acc ? acc.name : 'Stay') + ' | TicketsSA'));
+
+function renderContact(a) {
+  const items = [];
+  if (a.contactPhone) items.push(`<a href="tel:${escH(a.contactPhone)}">📞 ${escH(a.contactPhone)}</a>`);
+  if (a.contactEmail) items.push(`<a href="mailto:${escH(a.contactEmail)}">✉️ ${escH(a.contactEmail)}</a>`);
+  if (a.website && /^https?:\/\//i.test(a.website)) items.push(`<a href="${escH(a.website)}" target="_blank" rel="noopener">🌐 ${escH(a.website.replace(/^https?:\/\//, ''))}</a>`);
+  if (a.bookingUrl && /^https?:\/\//i.test(a.bookingUrl)) items.push(`<a href="${escH(a.bookingUrl)}" target="_blank" rel="noopener">🔗 Book on the host's own site</a>`);
+  if (!items.length) return;
+  $('contactList').innerHTML = items.join('');
+  $('contactSection').hidden = false;
+}
+
 function payInfoHtml(a) {
-  if (a.paymentType === 'link' && a.paymentLink)
-    return `<div class="acc-pay-info__t">When the host confirms your dates, pay here:</div><a class="acc-pay-info__btn" href="${escH(a.paymentLink)}" target="_blank" rel="noopener noreferrer">Open the host's payment link →</a>`;
-  if (a.paymentType === 'bank')
-    return `<div class="acc-pay-info__t">When the host confirms your dates, pay by EFT:</div>
-      <dl class="acc-pay-info__dl"><dt>Bank</dt><dd>${escH(a.bankName)}</dd><dt>Account holder</dt><dd>${escH(a.accountHolder)}</dd><dt>Account no.</dt><dd>${escH(a.accountNumber)}</dd>${a.branchCode ? `<dt>Branch code</dt><dd>${escH(a.branchCode)}</dd>` : ''}</dl>
-      <div class="acc-pay-info__n">Wait for the host to confirm before you pay. Use your enquiry reference. These details are also in your email.</div>`;
+  if (a.paymentType === 'link' && /^https?:\/\//i.test(a.paymentLink || ''))
+    return `<p>When the host confirms, pay here:</p><a class="tk-paylink" href="${escH(a.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay by card →</a>`;
+  if (a.paymentType === 'bank' && a.bankName)
+    return `<p>When the host confirms, pay by bank transfer:</p><dl><dt>Bank</dt><dd>${escH(a.bankName)}</dd><dt>Account holder</dt><dd>${escH(a.accountHolder)}</dd><dt>Account number</dt><dd>${escH(a.accountNumber)}</dd>${a.branchCode ? `<dt>Branch code</dt><dd>${escH(a.branchCode)}</dd>` : ''}</dl><p class="ep-small">Wait for the host to confirm before you pay. These details are also in your email.</p>`;
   return '';
 }
 
-/* ── Reveal on scroll + animated counters ───────────────────── */
-function initReveal() {
-  const els = document.querySelectorAll('.acc-rv, .acc-booking-card');
-  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    els.forEach(e => e.classList.add('in')); return;
-  }
-  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .1 });
-  els.forEach((e, i) => { e.style.setProperty('--d', (i % 4) * 70 + 'ms'); io.observe(e); });
-}
-
-/* ── Gallery ────────────────────────────────────────────────── */
-function renderGallery(a) {
-  const images = a.images || [];
-  const mainImg = document.getElementById('mainImg');
-  const placeholder = document.getElementById('imgPlaceholder');
-  const thumbStrip = document.getElementById('thumbStrip');
-
-  if (!images.length) {
-    mainImg.style.display = 'none';
-    placeholder.style.display = '';
-    thumbStrip.style.display = 'none';
-    return;
-  }
-
-  mainImg.src = Utils.imgUrl(images[0], 1200);
-  mainImg.alt = a.name;
-  mainImg.onerror = function() {
-    this.style.display = 'none';
-    placeholder.style.display = '';
-  };
-
-  // Thumbnails only if more than 1 image, max 6
-  const thumbImages = images.slice(0, 6);
-  if (thumbImages.length > 1) {
-    thumbStrip.innerHTML = thumbImages.map((src, i) => {
-      const thumbSrc = Utils.imgUrl(src, 200);
-      const fullSrc  = Utils.imgUrl(src, 1200);
-      return `
-        <img class="acc-detail__thumb${i === 0 ? ' active' : ''}"
-             src="${escH(thumbSrc)}"
-             data-full="${escH(fullSrc)}"
-             alt="Photo ${i + 1} of ${escH(a.name)}"
-             loading="lazy"
-             onclick="setMainImage('${escH(fullSrc)}', this)"
-             onerror="this.style.display='none'"/>`;
-    }).join('');
-  } else {
-    thumbStrip.style.display = 'none';
-  }
-}
-
-function setMainImage(src, thumbEl) {
-  const mainImg = document.getElementById('mainImg');
-  mainImg.style.opacity = '0';
-  const fullSrc = thumbEl?.dataset?.full || src;
-  setTimeout(() => {
-    mainImg.src = fullSrc;
-    mainImg.style.opacity = '1';
-  }, 150);
-  document.querySelectorAll('.acc-detail__thumb').forEach(t => t.classList.remove('active'));
-  thumbEl.classList.add('active');
-}
-
-/* ── Stars ──────────────────────────────────────────────────── */
-function renderStars(rating) {
-  const container = document.getElementById('detailStars');
-  const r = Math.round(Math.min(5, Math.max(0, rating || 0)));
-  if (!r) { container.style.display = 'none'; return; }
-  const starSvg = (filled) => `
-    <svg viewBox="0 0 24 24" width="16" height="16">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-            fill="${filled ? '#F59E0B' : 'none'}"
-            stroke="#F59E0B"
-            stroke-width="${filled ? '0' : '1.5'}"/>
-    </svg>`;
-  let html = '';
-  for (let i = 1; i <= 5; i++) html += starSvg(i <= r);
-  html += `<span>${r}-star rated</span>`;
-  container.innerHTML = html;
-}
-
-/* ── Amenities ──────────────────────────────────────────────── */
-const AMENITY_ICONS = {
-  'wifi':        '<path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
-  'pool':        '<path d="M2 12h20"/><path d="M2 12c0-2.5 3-2.5 3-5s-3-2.5-3-5"/><path d="M22 12c0-2.5-3-2.5-3-5s3-2.5 3-5"/>',
-  'parking':     '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 17V7h4a3 3 0 010 6H9"/>',
-  'gym':         '<path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 12h18"/>',
-  'restaurant':  '<path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
-  'bar':         '<path d="M8 22V19a4 4 0 018 0v3"/><path d="M3 22h18"/><path d="M5 3l2 10h10L19 3"/>',
-  'spa':         '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-  'laundry':     '<circle cx="12" cy="12" r="10"/><path d="M8 12a4 4 0 008 0"/>',
-  'kitchen':     '<path d="M3 2h18v6H3z"/><path d="M6 2v6"/><path d="M12 2v6"/><path d="M18 2v6"/><path d="M3 8v14"/><path d="M21 8v14"/>',
-  'air conditioning': '<path d="M8 6H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-3"/><path d="M12 2v4"/><path d="M9.5 4.5L12 2l2.5 2.5"/>',
-  'tv':          '<rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/>',
-  'pet friendly':'<path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5"/><path d="M14.267 5.172c0-1.39 1.577-2.493 3.5-2.172 2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/><path d="M8 14v.5"/><path d="M16 14v.5"/><path d="M11.25 16.25h1.5L12 17z"/>',
-};
-const AMENITY_DEFAULT_ICON = '<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>';
-
-function renderAmenities(amenities) {
-  if (!amenities.length) return;
-  const section = document.getElementById('amenitiesSection');
-  const grid    = document.getElementById('amenitiesGrid');
-  section.style.display = '';
-  grid.innerHTML = amenities.map(am => {
-    const key = am.toLowerCase();
-    let pathData = AMENITY_DEFAULT_ICON;
-    for (const [k, v] of Object.entries(AMENITY_ICONS)) {
-      if (key.includes(k)) { pathData = v; break; }
-    }
-    return `
-      <div class="acc-amenity-item">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">${pathData}</svg>
-        ${escH(am)}
-      </div>`;
-  }).join('');
-}
-
-/* ── Space types ────────────────────────────────────────────── */
-function renderSpaces(spaces, priceFrom) {
-  if (!spaces.length) return;
-  const section = document.getElementById('spacesSection');
-  section.style.display = '';
-  const money = v => 'R ' + parseFloat(v || priceFrom || 0).toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  document.getElementById('roomCards').innerHTML = spaces.map((r, i) => `
-    <button type="button" class="acc-room" data-room="${escH(r.name)}" style="--i:${i}">
-      <span class="acc-room__top">
-        <span class="acc-room__name">${escH(r.name)}</span>
-        <span class="acc-room__price">${money(r.price)}<small>/night</small></span>
-      </span>
-      <span class="acc-room__meta">
-        ${r.capacity ? `<span>👥 Up to ${escH(String(r.capacity))} guests</span>` : ''}
-        ${r.bedrooms != null ? `<span>🛏️ ${escH(String(r.bedrooms))} bedroom${r.bedrooms == 1 ? '' : 's'}</span>` : ''}
-      </span>
-      <span class="acc-room__go">Choose this room →</span>
-    </button>`).join('');
-  document.querySelectorAll('.acc-room').forEach(btn => btn.addEventListener('click', () => {
-    const sel = document.getElementById('bkSpaceType');
-    sel.value = btn.dataset.room; if (typeof calcPrice === 'function') calcPrice();
-    document.querySelectorAll('.acc-room').forEach(x => x.classList.toggle('is-picked', x === btn));
-    document.getElementById('bookingCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }));
-}
-
-/* ── Contact ────────────────────────────────────────────────── */
-function renderContact(a) {
-  const items = [];
-  if (a.contactPhone) items.push(`
-    <div class="acc-contact-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"/></svg>
-      <a href="tel:${escH(a.contactPhone)}">${escH(a.contactPhone)}</a>
-    </div>`);
-  if (a.contactEmail) items.push(`
-    <div class="acc-contact-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-      <a href="mailto:${escH(a.contactEmail)}">${escH(a.contactEmail)}</a>
-    </div>`);
-  if (a.website) items.push(`
-    <div class="acc-contact-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-      <a href="${escH(a.website)}" target="_blank" rel="noopener">${escH(a.website.replace(/^https?:\/\//, ''))}</a>
-    </div>`);
-  if (a.address) items.push(`
-    <div class="acc-contact-item">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      ${escH(a.address)}
-    </div>`);
-
-  if (!items.length) return;
-  document.getElementById('contactSection').style.display = '';
-  document.getElementById('contactList').innerHTML = items.join('');
-}
-
-/* ── Booking card ───────────────────────────────────────────── */
-function renderBookingCard(a) {
-  document.getElementById('bkAccId').value   = a.id;
-  document.getElementById('bkAccName').value = a.name;
-
-  // Price display
-  if (a.priceFrom > 0) {
-    document.getElementById('bkCardPrice').textContent =
-      `R ${Math.round(a.priceFrom).toLocaleString('en-ZA')}`;
-  } else {
-    document.getElementById('bkCardPrice').textContent = 'On request';
-  }
-
-  // Populate space types selector
-  const sel = document.getElementById('bkSpaceType');
-  sel.innerHTML = '<option value="">Select a room type…</option>';
-  const spaces = a.spaceTypes || [];
-  if (spaces.length) {
-    spaces.forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st.name;
-      const price = parseFloat(st.price || a.priceFrom || 0);
-      opt.textContent = `${st.name}${st.capacity ? ` (up to ${st.capacity} guests)` : ''} R ${price.toLocaleString('en-ZA', {minimumFractionDigits:0,maximumFractionDigits:0})}/night`;
-      opt.dataset.price = price;
-      sel.appendChild(opt);
-    });
-  } else {
-    // Fallback: generic option from priceFrom
-    const opt = document.createElement('option');
-    opt.value = 'Standard Room';
-    opt.textContent = 'Standard Room';
-    opt.dataset.price = a.priceFrom || 0;
-    sel.appendChild(opt);
-  }
-
-  // Set min check-in date to today
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('bkCheckIn').min  = today;
-  document.getElementById('bkCheckOut').min = today;
-}
-
-/* ── Price calculation ──────────────────────────────────────── */
-function calcPrice() {
-  const sel      = document.getElementById('bkSpaceType');
-  const checkIn  = document.getElementById('bkCheckIn').value;
-  const checkOut = document.getElementById('bkCheckOut').value;
-  const calcEl   = document.getElementById('bkCalc');
-  const selOpt   = sel.options[sel.selectedIndex];
-  const price    = parseFloat(selOpt?.dataset?.price || 0);
-
-  currentSpacePrice = price;
-
-  if (!checkIn || !checkOut || !price) {
-    calcEl.classList.remove('visible');
-    return;
-  }
-
-  const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
-  if (nights <= 0) {
-    calcEl.classList.remove('visible');
-    return;
-  }
-
-  const total = price * nights;
-  document.getElementById('bkCalcLine').textContent =
-    `${nights} night${nights !== 1 ? 's' : ''} × R ${price.toLocaleString('en-ZA', {minimumFractionDigits:0})}`;
-  document.getElementById('bkCalcTotal').textContent =
-    `R ${total.toLocaleString('en-ZA', {minimumFractionDigits:0})}`;
-  calcEl.classList.add('visible');
-}
-
-/* ── Form submission ────────────────────────────────────────── */
-document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+$('bookingForm').addEventListener('submit', async e => {
   e.preventDefault();
-  clearBkError();
-
-  const sel       = document.getElementById('bkSpaceType');
-  const checkIn   = document.getElementById('bkCheckIn').value;
-  const checkOut  = document.getElementById('bkCheckOut').value;
-  const firstName = document.getElementById('bkFirstName').value.trim();
-  const lastName  = document.getElementById('bkLastName').value.trim();
-  const email     = document.getElementById('bkEmail').value.trim();
-  const phone     = document.getElementById('bkPhone').value.trim();
-  const requests  = document.getElementById('bkRequests').value.trim();
-  const guests    = parseInt(document.getElementById('bkGuests').value) || 1;
-  const btn       = document.getElementById('bkSubmitBtn');
-
-  if (!sel.value)   { showBkError('Please select a room type.'); return; }
-  if (!checkIn)     { showBkError('Please select a check-in date.'); return; }
-  if (!checkOut)    { showBkError('Please select a check-out date.'); return; }
-  if (new Date(checkOut) <= new Date(checkIn)) {
-    showBkError('Check-out must be after check-in.'); return;
-  }
-  if (!firstName)   { showBkError('Please enter your first name.'); return; }
-  if (!lastName)    { showBkError('Please enter your last name.'); return; }
-  if (!email)       { showBkError('Please enter your email address.'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showBkError('Please enter a valid email address.'); return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = 'Sending enquiry…';
-
-  const selOpt   = sel.options[sel.selectedIndex];
-  const price    = parseFloat(selOpt?.dataset?.price || 0);
-
+  const err = m => { $('bkError').textContent = m; $('bkError').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  $('bkError').textContent = '';
+  const first = $('bkFirstName').value.trim(), last = $('bkLastName').value.trim(), email = $('bkEmail').value.trim();
+  if (!room) return err('Choose a room first.');
+  if (nights() <= 0) return err('Pick your check-in and check-out dates.');
+  if (!first) return err('Add your first name.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err('Add a valid email so the host can reply.');
+  const btn = $('bkSubmitBtn'); btn.disabled = true; btn.textContent = 'Sending…';
   try {
     const booking = await SupabaseAPI.submitAccommodationBooking({
-      accommodationId:   document.getElementById('bkAccId').value,
-      accommodationName: document.getElementById('bkAccName').value,
-      spaceTypeName:     sel.value,
-      pricePerNight:     price,
-      checkInDate:       checkIn,
-      checkOutDate:      checkOut,
-      guests,
-      customerName:      `${firstName} ${lastName}`,
-      customerEmail:     email,
-      customerPhone:     phone || null,
-      specialRequests:   requests || null,
+      accommodationId: acc.id, accommodationName: acc.name, spaceTypeName: room.name,
+      pricePerNight: Number(room.price) || 0, checkInDate: $('bkCheckIn').value, checkOutDate: $('bkCheckOut').value,
+      guests, customerName: `${first} ${last}`.trim(), customerEmail: email,
+      customerPhone: $('bkPhone').value.trim() || null, specialRequests: $('bkRequests').value.trim() || null,
     });
-    if (booking && booking.id) SupabaseAPI.notifyBooking('accommodation', booking.id);   // emails the owner, the guest and support
-
-    // Show inline success state no redirect, user can share or explore further
-    document.getElementById('bookingForm').style.display = 'none';
-    document.getElementById('bkSuccess').classList.add('visible');
-    const pay = payInfoHtml(currentAcc || {});
-    const payBox = document.getElementById('bkPayInfo');
-    if (pay && payBox) { payBox.innerHTML = pay; payBox.style.display = ''; }
-    document.getElementById('bkCardPrice').closest('.acc-booking-card__price')?.remove?.();
-    document.getElementById('bkSuccessShareBtn').addEventListener('click', e => {
-      e.preventDefault();
-      navigator.clipboard?.writeText(window.location.href).then(() => {
-        if (typeof Utils !== 'undefined') Utils.showToast('Link copied!', 'success');
-      }).catch(() => { prompt('Copy this link:', window.location.href); });
-    });
-    if (typeof Utils !== 'undefined') {
-      Utils.showToast('Booking enquiry sent! The host will be in touch.', 'success', 5000);
-    }
-
-  } catch (err) {
-    showBkError(err.message || 'Failed to send booking. Please try again.');
-    btn.disabled    = false;
-    btn.textContent = 'Send Booking Enquiry';
+    if (booking && booking.id) SupabaseAPI.notifyBooking('accommodation', booking.id);
+    $('bkFormWrap').hidden = true; $('bkSuccess').hidden = false; $('buybar').remove();
+    const pay = payInfoHtml(acc);
+    if (pay) { $('bkPayInfo').innerHTML = pay; $('bkPayInfo').hidden = false; }
+    $('bkSuccessShareBtn').onclick = () => Utils.shareLink(location.href.split('#')[0], acc.name + ' | TicketsSA');
+    $('bookingCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (x) {
+    err((x && x.message) || 'Could not send your request. Please try again.');
+    btn.disabled = false; btn.textContent = 'Request to book';
   }
 });
 
-function showBkError(msg) {
-  const el = document.getElementById('bkError');
-  el.textContent = msg;
-  el.classList.add('visible');
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-function clearBkError() {
-  const el = document.getElementById('bkError');
-  el.textContent = '';
-  el.classList.remove('visible');
-}
-
-/* ── Error state ────────────────────────────────────────────── */
 function showError(msg) {
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('errorMsg').textContent = msg;
-  document.getElementById('errorState').style.display = '';
-  document.getElementById('topbarProvince').textContent = 'Not Found';
+  $('buybar')?.remove();
+  const m = $('epMain'); m.style.display = 'block';
+  m.innerHTML = `<div style="text-align:center;padding:80px 16px;max-width:460px;margin:0 auto"><div style="font-size:3rem;margin-bottom:12px">🏡</div><h2 style="margin-bottom:10px">Stay not found</h2><p style="margin-bottom:24px;color:var(--text-2)">${escH(msg)}</p><a href="accommodations.html" class="btn btn-primary">See all stays</a></div>`;
 }
 </script>
 </body>

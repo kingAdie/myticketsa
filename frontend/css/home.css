@@ -457,15 +457,15 @@
 /* ── Event Cards Grid ────────────────────────────── */
 .ev-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+  gap: 18px;
   margin-bottom: var(--s4);
 }
 
 /* Single featured card  avoid stretching it full-bleed or leaving an empty column */
 .ev-grid--single {
-  grid-template-columns: minmax(0, 560px);
-  justify-content: center;
+  grid-template-columns: minmax(0, 300px);
+  justify-content: start;
 }
 
 /* CTA card always spans the full row, however many event cards precede it */

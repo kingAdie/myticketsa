@@ -218,11 +218,11 @@
   .mk-what{grid-template-columns:repeat(2,1fr)}
   .mk-steps-grid{grid-template-columns:repeat(2,1fr)}
   .mk-hero__cta{flex-direction:row}
-  .mk-grid{grid-template-columns:repeat(2,1fr)}
+  .mk-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
   .mk-empty__actions{flex-direction:row;justify-content:center;max-width:none}
 }
 @media(min-width:1024px){
-  .mk-grid{grid-template-columns:repeat(3,1fr)}
+  .mk-grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
   .mk-what{grid-template-columns:repeat(3,1fr)}
   .mk-steps-grid{grid-template-columns:repeat(4,1fr)}
 }
