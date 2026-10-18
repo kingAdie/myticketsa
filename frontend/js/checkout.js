@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>`;
 
     if (sel.paymentType === 'link' && /^https?:\/\//i.test(String(sel.paymentLink || '').trim())) {
-      box.innerHTML = opt(ICON.card, 'Card payment', `After you reserve, you pay ${who} on their secure payment page.`);
+      box.innerHTML = opt(ICON.card, 'Card payment', `After you tap Reserve, you go straight to ${who}'s secure payment page.`);
       if (btn) btn.textContent = 'Reserve';
     } else if (sel.paymentType === 'bank' && sel.bankName) {
       box.innerHTML = opt(ICON.bank, 'Bank transfer (EFT)', `Pay ${who} from your banking app. Then upload your proof of payment.`, `
@@ -233,6 +233,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       Utils.removeStorage('mt_selection');
+      // Card payments: straight to the organiser's payment page. The ticket link is in their email.
+      const link = String(sel.paymentLink || '').trim();
+      if (result.status === 'reserved' && sel.paymentType === 'link' && /^https?:\/\//i.test(link)) {
+        if (btn) btn.textContent = 'Opening the payment page…';
+        window.location.href = link;
+        return;
+      }
       window.location.href = `ticket.html?id=${encodeURIComponent(result.id)}`;
 
     } catch (err) {

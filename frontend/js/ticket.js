@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   function render() {
-    const t = ticket, st = (t.state === 'reserved' && (t.proofUrl || t.paidClaimedAt)) ? STATES.sent : (STATES[t.state] || STATES.reserved);
+    const t = ticket, st = (t.state === 'reserved' && t.proofUrl) ? STATES.sent : (STATES[t.state] || STATES.reserved);
     const dateLine = [t.event.date ? Utils.formatDate(t.event.date) : '', t.event.time ? Utils.formatTime(t.event.time) : ''].filter(Boolean).join(' · ');
     const place = [t.event.location, t.event.city].filter(Boolean).join(', ');
 
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const body = document.getElementById('tkBody');
-    if (t.state === 'reserved')        (t.proofUrl || t.paidClaimedAt ? renderSent(body) : renderReserved(body));
+    if (t.state === 'reserved')        (t.proofUrl ? renderSent(body) : renderReserved(body));
     else if (t.state === 'confirmed')  renderQR(body, false);
     else if (t.state === 'checked_in') renderQR(body, true);
     else if (t.state === 'expired')    body.innerHTML = `<div class="tk-end"><h2>This reservation has expired</h2><p>It was not paid in time, so the seat was released. If you already paid, contact the organiser with your reference <strong>${esc(t.id)}</strong>.</p><a class="btn btn-secondary" href="event.html?id=${encodeURIComponent(t.event.id)}">Book again</a></div>`;
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function payDetails() {
     const ev = event || {}, t = ticket;
     if (ev.paymentType === 'link' && /^https?:\/\//i.test(ev.paymentLink || '')) {
-      return `<a class="pay-btn" href="${esc(ev.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay ${money(t.pricing.total)} now</a>
+      return `<a class="pay-btn" href="${esc(ev.paymentLink)}" rel="noopener noreferrer">Pay ${money(t.pricing.total)} now</a>
         ${row('Reference', t.id, true)}`;
     }
     if (ev.paymentType === 'bank' && ev.bankName) {
@@ -150,17 +150,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${payDetails()}
       </section>
 
+      ${isLink ? `<p class="pay-next">✓ After you pay, ${esc((event && event.organiser) || 'the organiser')} confirms it and your QR ticket arrives by email (${esc(t.buyer.email)}).</p>` : `
       <section class="pay-step">
         <h2><i>2</i>Upload your proof of payment</h2>
         ${t.proofUrl
           ? `<div class="pay-done"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/><div><b>Proof sent ✓</b><span>The organiser has it.</span></div><button type="button" class="tk-linkbtn" id="tkReproof">Change</button></div>`
-          : `<label class="pay-upload" for="tkProofFile"><span>⬆</span>Upload screenshot or slip</label>
-             <button type="button" class="pay-claim" id="tkClaim">I've paid, but have no slip</button>`}
+          : `<label class="pay-upload" for="tkProofFile"><span>⬆</span>Upload screenshot or slip</label>`}
         <input type="file" id="tkProofFile" accept="image/jpeg,image/png,image/webp" hidden/>
         <div class="tk-progress" id="tkProg" hidden><i></i></div>
       </section>
 
-      <p class="pay-next">✓ Your QR ticket appears here and in your email once the organiser confirms your payment.</p>`;
+      <p class="pay-next">✓ Your QR ticket appears here and in your email once the organiser confirms your payment.</p>`}`;
 
     body.querySelectorAll('[data-copy]').forEach(b => {
       const go = () => navigator.clipboard?.writeText(b.dataset.copy).then(() => {
@@ -168,12 +168,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }).catch(() => {});
       b.addEventListener('click', go);
       b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-    });
-    document.getElementById('tkClaim')?.addEventListener('click', async e => {
-      if (!confirm('Tell the organiser you have paid?\n\nOnly do this once the money has left your account.')) return;
-      e.target.disabled = true;
-      try { await SupabaseAPI.markTicketPaidByBuyer(ticket.id); ticket.paidClaimedAt = new Date().toISOString(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-      catch (err) { e.target.disabled = false; Utils.showToast(err.message || 'That did not work. Please try again.', 'error'); }
     });
     const input = document.getElementById('tkProofFile');
     document.getElementById('tkReproof')?.addEventListener('click', () => input.click());

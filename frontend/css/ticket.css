@@ -185,6 +185,4 @@
 .done-mail small{display:block;color:var(--text-2);font-size:.78rem;margin-top:4px}
 .done-acts{text-align:center;margin-top:14px}
 .done-acts .tk-linkbtn{color:var(--text-2);text-decoration:underline;cursor:pointer;font-size:.85rem}
-.pay-claim{display:block;width:100%;margin-top:10px;min-height:46px;border-radius:14px;border:1px solid var(--b2);background:none;color:var(--text-2);font:inherit;font-size:.88rem;font-weight:600;cursor:pointer}
-.pay-claim:hover{color:var(--text);border-color:var(--b3)}
 .done--in{padding-top:0}
