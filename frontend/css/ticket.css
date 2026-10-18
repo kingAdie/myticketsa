@@ -155,3 +155,36 @@
 .tk-top__text{flex:1;min-width:0}
 .tk-top__text h1{margin:8px 0 4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:800;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
 .tk-top__text p{margin:0;color:var(--text-2);font-size:.84rem;line-height:1.5}
+
+/* ── Done for now (proof sent) ── */
+.done{text-align:center;padding:6px 0 18px}
+.done__check{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 10px rgba(22,163,74,.15);animation:donePop .5s cubic-bezier(.34,1.56,.64,1) both}
+.done__check svg{width:34px;height:34px}
+@keyframes donePop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.done h2{margin:0 0 6px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text)}
+.done p{margin:0 auto;max-width:340px;color:var(--text-2);font-size:.92rem;line-height:1.55}
+.done-steps{list-style:none;margin:0 0 16px;padding:0;position:relative}
+.done-steps li{position:relative;display:flex;gap:14px;padding:0 0 16px}
+.done-steps li:not(:last-child)::before{content:'';position:absolute;left:13px;top:28px;bottom:2px;width:2px;background:var(--b2)}
+.done-steps li.is-done:not(:last-child)::before{background:var(--green)}
+.done-steps i{flex:0 0 28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:.8rem;
+  background:var(--bg-4);color:var(--text-2);border:2px solid var(--b2);position:relative;z-index:1}
+.done-steps .is-done i{background:var(--green);border-color:var(--green);color:#fff}
+.done-steps .is-now i{border-color:#F59E0B;color:#FBBF24;background:rgba(245,158,11,.12);animation:nowPulse 1.6s ease-in-out infinite}
+@keyframes nowPulse{50%{box-shadow:0 0 0 6px rgba(245,158,11,.15)}}
+.done-steps div{min-width:0;padding-top:3px}
+.done-steps b{display:block;color:var(--text);font-size:.95rem}
+.done-steps span{display:block;color:var(--text-2);font-size:.82rem;margin-top:2px;overflow-wrap:anywhere}
+.done-steps li:not(.is-done):not(.is-now) b{color:var(--text-2)}
+.done-mail{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;background:var(--green-tint);border:1px solid var(--green-border)}
+.done-mail > span{font-size:1.4rem;line-height:1}
+.done-mail div{min-width:0}
+.done-mail b{display:block;color:var(--text)}
+.done-mail div > span{display:block;color:var(--green-hi);font-weight:700;font-size:.9rem;overflow-wrap:anywhere;margin-top:2px}
+.done-mail small{display:block;color:var(--text-2);font-size:.78rem;margin-top:4px}
+.done-acts{text-align:center;margin-top:14px}
+.done-acts .tk-linkbtn{color:var(--text-2);text-decoration:underline;cursor:pointer;font-size:.85rem}
+.pay-claim{display:block;width:100%;margin-top:10px;min-height:46px;border-radius:14px;border:1px solid var(--b2);background:none;color:var(--text-2);font:inherit;font-size:.88rem;font-weight:600;cursor:pointer}
+.pay-claim:hover{color:var(--text);border-color:var(--b3)}
+.done--in{padding-top:0}

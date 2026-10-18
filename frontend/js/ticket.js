@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ── Status banner per state ─────────────────────────────── */
   const STATES = {
     reserved:   { cls: 'amber', label: 'Seat reserved' },
+    sent:       { cls: 'amber', label: 'Waiting for the organiser' },
     confirmed:  { cls: 'green', label: 'Valid ticket' },
     checked_in: { cls: 'grey',  label: 'Used, checked in' },
     expired:    { cls: 'red',   label: 'Reservation expired' },
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   function render() {
-    const t = ticket, st = STATES[t.state] || STATES.reserved;
+    const t = ticket, st = (t.state === 'reserved' && (t.proofUrl || t.paidClaimedAt)) ? STATES.sent : (STATES[t.state] || STATES.reserved);
     const dateLine = [t.event.date ? Utils.formatDate(t.event.date) : '', t.event.time ? Utils.formatTime(t.event.time) : ''].filter(Boolean).join(' · ');
     const place = [t.event.location, t.event.city].filter(Boolean).join(', ');
 
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const body = document.getElementById('tkBody');
-    if (t.state === 'reserved')        renderReserved(body);
+    if (t.state === 'reserved')        (t.proofUrl || t.paidClaimedAt ? renderSent(body) : renderReserved(body));
     else if (t.state === 'confirmed')  renderQR(body, false);
     else if (t.state === 'checked_in') renderQR(body, true);
     else if (t.state === 'expired')    body.innerHTML = `<div class="tk-end"><h2>This reservation has expired</h2><p>It was not paid in time, so the seat was released. If you already paid, contact the organiser with your reference <strong>${esc(t.id)}</strong>.</p><a class="btn btn-secondary" href="event.html?id=${encodeURIComponent(t.event.id)}">Book again</a></div>`;
@@ -153,7 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         <h2><i>2</i>Upload your proof of payment</h2>
         ${t.proofUrl
           ? `<div class="pay-done"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/><div><b>Proof sent ✓</b><span>The organiser has it.</span></div><button type="button" class="tk-linkbtn" id="tkReproof">Change</button></div>`
-          : `<label class="pay-upload" for="tkProofFile"><span>⬆</span>Upload screenshot or slip</label>`}
+          : `<label class="pay-upload" for="tkProofFile"><span>⬆</span>Upload screenshot or slip</label>
+             <button type="button" class="pay-claim" id="tkClaim">I've paid, but have no slip</button>`}
         <input type="file" id="tkProofFile" accept="image/jpeg,image/png,image/webp" hidden/>
         <div class="tk-progress" id="tkProg" hidden><i></i></div>
       </section>
@@ -167,6 +169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       b.addEventListener('click', go);
       b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
+    document.getElementById('tkClaim')?.addEventListener('click', async e => {
+      if (!confirm('Tell the organiser you have paid?\n\nOnly do this once the money has left your account.')) return;
+      e.target.disabled = true;
+      try { await SupabaseAPI.markTicketPaidByBuyer(ticket.id); ticket.paidClaimedAt = new Date().toISOString(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+      catch (err) { e.target.disabled = false; Utils.showToast(err.message || 'That did not work. Please try again.', 'error'); }
+    });
     const input = document.getElementById('tkProofFile');
     document.getElementById('tkReproof')?.addEventListener('click', () => input.click());
     input.addEventListener('change', async () => {
@@ -177,12 +185,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const url = await SupabaseAPI.uploadTicketProof(ticket.id, file);
         ticket.proofUrl = url; ticket.proofUploadedAt = new Date().toISOString();
-        Utils.showToast('Proof sent to the organiser.', 'success');
         render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (err) {
         prog.hidden = true;
         Utils.showToast(err.message || 'Upload failed. Please try again.', 'error', 6000);
       }
+    });
+  }
+
+  /* ── Proof sent (or "I've paid"): you're done, here's what happens next ── */
+  function renderSent(body) {
+    const t = ticket, slip = !!t.proofUrl;
+    const who = esc((event && event.organiser) || 'The organiser');
+    body.innerHTML = `
+      <div class="done">
+        <div class="done__check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <h2>${slip ? 'Proof of payment sent' : 'Payment noted'}</h2>
+        <p>You're done for now. ${who} will check that your payment arrived.</p>
+      </div>
+
+      <ol class="done-steps">
+        <li class="is-done"><i>✓</i><div><b>Seat reserved</b><span>${esc(t.ticket.typeName)} × ${esc(t.ticket.quantity)} · ${money(t.pricing.total)}</span></div></li>
+        <li class="is-done"><i>✓</i><div><b>${slip ? 'Proof of payment sent' : 'You told the organiser you paid'}</b><span>Reference ${esc(t.id)}</span></div></li>
+        <li class="is-now"><i>3</i><div><b>The organiser confirms your payment</b><span>This is done by hand, usually within a day.</span></div></li>
+        <li><i>4</i><div><b>Your QR ticket arrives by email</b><span>It also appears on this page. Show it at the entrance.</span></div></li>
+      </ol>
+
+      <div class="done-mail">
+        <span aria-hidden="true">✉️</span>
+        <div><b>Watch your email</b><span>${esc(t.buyer.email)}</span><small>Not there? Check your spam or promotions folder.</small></div>
+      </div>
+
+      <div class="done-acts">
+        ${slip ? `<button type="button" class="tk-linkbtn" id="tkReproof">Change the proof</button>` : `<label class="tk-linkbtn" for="tkProofFile">Add a proof of payment</label>`}
+        <input type="file" id="tkProofFile" accept="image/jpeg,image/png,image/webp" hidden/>
+        <div class="tk-progress" id="tkProg" hidden><i></i></div>
+      </div>`;
+
+    const input = document.getElementById('tkProofFile');
+    document.getElementById('tkReproof')?.addEventListener('click', () => input.click());
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      document.getElementById('tkProg').hidden = false;
+      try { ticket.proofUrl = await SupabaseAPI.uploadTicketProof(ticket.id, file); ticket.proofUploadedAt = new Date().toISOString(); render(); }
+      catch (err) { document.getElementById('tkProg').hidden = true; Utils.showToast(err.message || 'Upload failed. Please try again.', 'error', 6000); }
     });
   }
 
@@ -198,12 +246,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       svg = `<div class="tk-qr__fallback">${esc(ticket.id)}</div>`;
     }
     body.innerHTML = `
+      ${used ? '' : `<div class="done done--in"><h2>You're in 🎉</h2><p>This is your ticket. Show the QR code at the entrance. A copy is in your email (${esc(ticket.buyer.email)}).</p></div>`}
       <div class="tk-qr ${used ? 'is-used' : ''}">
         <div class="tk-qr__code" role="img" aria-label="Ticket QR code">${svg}</div>
         <div class="tk-qr__id tk-mono">${esc(ticket.id)}</div>
         <p>${used
           ? `Checked in ${ticket.checkedInAt ? esc(when(ticket.checkedInAt)) : ''}. This ticket cannot be used again.`
-          : `Show this QR code at the entrance. Admits <strong>${esc(ticket.ticket.quantity)}</strong>. Keep it private: whoever scans it first gets in.`}</p>
+          : `Admits <strong>${esc(ticket.ticket.quantity)} ${Number(ticket.ticket.quantity) === 1 ? 'person' : 'people'}</strong>. Don't share it: it works once.`}</p>
         ${used ? '' : `<div class="tk-actions"><button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">Save / print</button></div>`}
       </div>`;
   }

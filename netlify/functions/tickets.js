@@ -10,6 +10,7 @@
  *        -> { ok, id, ticket }      anyone (guest checkout)
  *   POST { action: 'proof', id, url }
  *        -> { ok }                  whoever holds the ticket id (it is unguessable)
+ *   POST { action: 'paid', id }  -> { ok }   buyer says they paid (no slip)
  *   POST { action: 'status', id, status }   + Authorization: Bearer <Firebase ID token>
  *        -> { ok, ticket }          the event's organiser, or an admin
  *
@@ -38,6 +39,7 @@ exports.handler = async (event) => {
   try {
     if (body.action === 'create') return await create(db, body);
     if (body.action === 'proof')  return await proof(db, body);
+    if (body.action === 'paid')   return await paid(db, body);
     if (body.action === 'status') return await status(db, body, event.headers || {});
     return json(400, { error: 'Unknown action' });
   } catch (err) {
@@ -139,6 +141,19 @@ async function proof(db, b) {
   const proofUploadedAt = new Date().toISOString();
   await ref.update({ proofUrl: url, proofUploadedAt });
   return json(200, { ok: true, proofUrl: url, proofUploadedAt });
+}
+
+/* ── Buyer says "I've paid" (no slip to upload) ─────────── */
+async function paid(db, b) {
+  const id = str(b.id, 60).toUpperCase();
+  if (!/^TKT-[A-Z0-9]+$/.test(id)) return json(400, { error: 'Booking not found.' });
+  const ref  = db.collection('tickets').doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return json(404, { error: 'Booking not found.' });
+  if (snap.data().status !== 'reserved') return json(409, { error: 'This booking is already confirmed or closed.' });
+  const paidClaimedAt = new Date().toISOString();
+  await ref.update({ paidClaimedAt });
+  return json(200, { ok: true, paidClaimedAt });
 }
 
 /* ── Organiser: mark as paid, cancel, check in, undo ─────── */

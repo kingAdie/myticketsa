@@ -129,3 +129,4 @@
   .hub-acts .btn{flex:1}
   .acct__grid{grid-template-columns:1fr}
 }
+.hub-says{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(245,158,11,.12);color:#FBBF24;font-size:.78rem;font-weight:700}

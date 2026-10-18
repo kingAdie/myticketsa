@@ -135,9 +135,9 @@ service cloud.firestore {
       // The buyer (who holds the unguessable ticket id) may attach proof of
       // payment to a reservation. Nothing else on the ticket can change.
       allow update: if resource.data.status == 'reserved'
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['proofUrl', 'proofUploadedAt'])
-                    && request.resource.data.proofUrl is string
-                    && request.resource.data.proofUrl.matches('https://res[.]cloudinary[.]com/.*');
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['proofUrl', 'proofUploadedAt', 'paidClaimedAt'])
+                    && (request.resource.data.get('proofUrl', null) == null
+                        || request.resource.data.proofUrl.matches('https://res[.]cloudinary[.]com/.*'));
 
       // The event's organiser confirms payment, cancels, and checks people in
       // at the door. Only these moves are allowed:
