@@ -7,7 +7,9 @@
  * the record from Supabase itself (service-role key, server side only) and works
  * out who to email. That way nobody can use it to email arbitrary addresses.
  *
- *   ticket         -> the event owner, the buyer, and the TicketsSA support inbox
+ *   ticket           -> the event owner, the buyer, and the TicketsSA support inbox
+ *   ticket_proof     -> the event owner (the buyer uploaded proof of payment)
+ *   ticket_confirmed -> the buyer (the organiser confirmed payment: here is your ticket)
  *   accommodation  -> the property owner, the guest, and the TicketsSA support inbox
  *
  * TicketsSA does not take payment. The buyer's email carries the owner's own
@@ -24,6 +26,9 @@ const REPLY_TO      = 'support@ticketssa.co.za';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@ticketssa.co.za';
 const EXTRA_EMAILS  = (process.env.ADMIN_EXTRA_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 const MAX_AGE_MS    = 60 * 60 * 1000;   // only notify for bookings made in the last hour
+const SITE_URL      = 'https://ticketssa.co.za';
+const ticketLink    = id => `${SITE_URL}/ticket.html?id=${encodeURIComponent(id)}`;
+const fresh         = iso => iso && Date.now() - new Date(iso).getTime() <= MAX_AGE_MS;
 
 const json = (statusCode, obj) => ({ statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
 
@@ -44,7 +49,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
   const kind = String(body.kind || '');
   const id   = String(body.id   || '');
-  if (!['ticket', 'accommodation'].includes(kind) || !/^[A-Za-z0-9-]{4,60}$/.test(id)) {
+  if (!['ticket', 'ticket_proof', 'ticket_confirmed', 'accommodation'].includes(kind) || !/^[A-Za-z0-9-]{4,60}$/.test(id)) {
     return json(400, { error: 'Bad request' });
   }
 
@@ -54,7 +59,10 @@ exports.handler = async (event) => {
   };
 
   try {
-    const mails = kind === 'ticket' ? await ticketMails(id, one) : await accommodationMails(id, one);
+    const mails = kind === 'ticket'           ? await ticketMails(id, one)
+                : kind === 'ticket_proof'     ? await ticketProofMails(id, one)
+                : kind === 'ticket_confirmed' ? await ticketConfirmedMails(id, one)
+                :                               await accommodationMails(id, one);
     if (!mails) return json(404, { error: 'Booking not found or too old' });
 
     const results = await Promise.all(mails.map(m => send(RESEND_API_KEY, m)));
@@ -108,15 +116,21 @@ async function ticketMails(id, one) {
     mails.push({
       to: [ownerEmail], replyTo: t.buyerEmail,
       subject: `New booking: ${t.eventTitle} (${id})`,
-      html: shell('New ticket booking', `Someone just booked <strong>${esc(t.eventTitle)}</strong>. Contact them to arrange payment and confirm.`,
+      html: shell(t.status === 'reserved' ? 'New reservation' : 'New ticket booking',
+        t.status === 'reserved'
+          ? `Someone reserved <strong>${esc(t.eventTitle)}</strong>. When their payment reaches you, open your Seller Hub → Bookings and click <strong>Mark as paid</strong>. That sends them their ticket.`
+          : `Someone booked <strong>${esc(t.eventTitle)}</strong> (free event). Their ticket is already valid.`,
         [['Booking', rows], ['Customer', buyerRows]]),
     });
   }
   mails.push({
     to: [t.buyerEmail],
-    subject: `Your booking: ${t.eventTitle} (${id})`,
-    html: shell('Booking received', `Thanks ${esc(t.buyerFirstName || '')}! The organiser has been notified.${payment ? ' ' + payment : ''}`,
-      [['Your booking', rows]]),
+    subject: t.status === 'reserved' ? `Reserved: ${t.eventTitle} (${id}). Pay to get your ticket` : `Your ticket: ${t.eventTitle} (${id})`,
+    html: t.status === 'reserved'
+      ? shell('Your seat is reserved', `Thanks ${esc(t.buyerFirstName || '')}! Your seat is held${t.expiresAt ? ` until <strong>${esc(new Date(t.expiresAt).toLocaleString('en-ZA', { timeZone: 'Africa/Johannesburg', dateStyle: 'medium', timeStyle: 'short' }))}</strong>` : ''}. ${payment || 'The organiser will contact you about payment.'} Use <strong>${esc(id)}</strong> as your payment reference. After paying you can upload your proof of payment here: <a href="${ticketLink(id)}">${ticketLink(id)}</a>. Your QR ticket arrives once the organiser confirms your payment.`,
+          [['Your booking', rows]])
+      : shell('Your ticket is ready', `Thanks ${esc(t.buyerFirstName || '')}! Show this ticket at the entrance: <a href="${ticketLink(id)}">${ticketLink(id)}</a>`,
+          [['Your booking', rows]]),
   });
   mails.push({
     to: [SUPPORT_EMAIL, ...EXTRA_EMAILS], replyTo: t.buyerEmail,
@@ -134,6 +148,34 @@ function paymentInstructions(ev) {
     return `To pay, make an EFT to ${esc(ev.accountHolder || '')} (${esc(ev.bankName || '')}), account ${esc(ev.accountNumber || '')}, branch ${esc(ev.branchCode || '')}, using your booking reference.`;
   }
   return '';
+}
+
+/* ── Buyer uploaded proof of payment: tell the organiser ── */
+async function ticketProofMails(id, one) {
+  const t = await one('tickets', id);
+  if (!t || t.status !== 'reserved' || !fresh(t.proofUploadedAt)) return null;
+  const ev    = t.eventId ? await one('events', t.eventId) : null;
+  const owner = ev && ev.organiserId ? await one('users', ev.organiserId) : null;
+  if (!owner || !owner.email) return null;
+  return [{
+    to: [owner.email], replyTo: t.buyerEmail,
+    subject: `Proof of payment uploaded: ${t.eventTitle} (${id})`,
+    html: shell('Proof of payment received', `${esc(`${t.buyerFirstName || ''} ${t.buyerLastName || ''}`.trim())} uploaded proof of payment for <strong>${esc(t.eventTitle)}</strong>. Check the money is in your account, then open your Seller Hub → Bookings and click <strong>Mark as paid</strong>: <a href="${SITE_URL}/dashboard.html?tab=orders">${SITE_URL}/dashboard.html?tab=orders</a>. Proof: <a href="${esc(t.proofUrl)}">view the upload</a>.`,
+      [['Booking', [['Reference', id], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`], ['Total', `R${Number(t.total).toFixed(2)}`], ['Buyer email', t.buyerEmail]]]]),
+  }];
+}
+
+/* ── Organiser confirmed payment: send the buyer their ticket ── */
+async function ticketConfirmedMails(id, one) {
+  const t = await one('tickets', id);
+  if (!t || t.status !== 'confirmed' || !fresh(t.confirmedAt)) return null;
+  const when  = [t.eventDate, t.eventTime && String(t.eventTime).slice(0, 5)].filter(Boolean).join(' · ');
+  return [{
+    to: [t.buyerEmail],
+    subject: `Payment confirmed. Your ticket for ${t.eventTitle}`,
+    html: shell('Your ticket is ready 🎉', `The organiser confirmed your payment. Open your ticket and show the QR code at the entrance: <a href="${ticketLink(id)}">${ticketLink(id)}</a>`,
+      [['Your ticket', [['Reference', id], ['Event', t.eventTitle], ['When', when], ['Where', [t.eventLocation, t.eventCity].filter(Boolean).join(', ')], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`]]]]),
+  }];
 }
 
 /* ── Accommodation booking enquiry ──────────────────────── */

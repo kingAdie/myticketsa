@@ -377,7 +377,7 @@ const Utils = (() => {
      Cloudinary settings, so nothing secret lives in this file. */
   const CLOUDINARY = { cloudName: 'drfj200vu', uploadPreset: 'ticketssa_unsigned' };
 
-  async function uploadImage(file, folder = 'uploads') {
+  async function uploadImage(file, folder = 'uploads', opts = {}) {
     if (!UPLOAD_ALLOWED.includes(file.type)) {
       throw new Error('Only JPG, PNG, WebP images are allowed.');
     }
@@ -385,7 +385,7 @@ const Utils = (() => {
       throw new Error(`Image must be under ${UPLOAD_MAX_MB} MB. This file is ${(file.size / 1024 / 1024).toFixed(1)} MB.`);
     }
     const user = (typeof Auth !== 'undefined' && Auth.getUser) ? Auth.getUser() : null;
-    if (!user) throw new Error('Please sign in first.');
+    if (!user && !opts.allowGuest) throw new Error('Please sign in first.');
 
     // 1600px at 78% quality looks sharp on every screen and keeps each photo small.
     const compressed = await compressImage(file, { type: 'image/jpeg', maxWidth: 1600, maxHeight: 1600, quality: 0.78 });

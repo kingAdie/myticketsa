@@ -128,6 +128,8 @@
     }
     .ticket-card__status.confirmed { background: rgba(22,163,74,.1); color: var(--green); border: 1px solid rgba(22,163,74,.2); }
     .ticket-card__status.pending   { background: rgba(245,158,11,.1); color: #F59E0B; border: 1px solid rgba(245,158,11,.2); }
+    .ticket-card__status.ended     { background: rgba(255,255,255,.05); color: var(--text-3); border: 1px solid var(--b1); }
+    a.ticket-card { display: block; color: inherit; text-decoration: none; }
 
     /* ── Accommodation bookings ──────────────────────────────────────── */
     .acc-booking-card {
@@ -434,9 +436,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const date = t.event?.date
         ? new Date(t.event.date).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' })
         : '—';
-      const statusCls = t.status === 'confirmed' ? 'confirmed' : 'pending';
+      const LABEL = { reserved: 'Awaiting payment', confirmed: 'Ticket ready', checked_in: 'Used', expired: 'Expired', cancelled: 'Cancelled' };
+      const state = t.state || t.status;
+      const statusCls = state === 'confirmed' ? 'confirmed' : (state === 'reserved' ? 'pending' : 'ended');
       return `
-        <div class="ticket-card">
+        <a class="ticket-card" href="ticket.html?id=${encodeURIComponent(t.id)}">
           <div class="ticket-card__stripe"></div>
           <div class="ticket-card__body">
             <div class="ticket-card__event">${escH(t.event?.title || '—')}</div>
@@ -449,7 +453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 ${escH(t.event?.location || '')}${t.event?.city ? ', ' + escH(t.event.city) : ''}
               </span>
-              <span class="ticket-card__status ${statusCls}">${t.status || 'pending'}</span>
+              <span class="ticket-card__status ${statusCls}">${LABEL[state] || escH(state)}</span>
             </div>
             <div class="ticket-card__fields">
               <div class="ticket-card__field">
@@ -461,16 +465,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <strong>${escH(t.ticket?.typeName || '—')} × ${t.ticket?.quantity || 1}</strong>
               </div>
               <div class="ticket-card__field">
-                <label>Total Paid</label>
+                <label>Total</label>
                 <strong style="color:var(--green);">R ${parseFloat(t.pricing?.total || 0).toFixed(2)}</strong>
               </div>
               <div class="ticket-card__field">
-                <label>Payment Ref</label>
-                <strong style="font-size:.75rem;">${escH(t.payment?.reference || '—')}</strong>
+                <label>Next step</label>
+                <strong style="font-size:.8rem;color:var(--green);">${state === 'reserved' ? 'Pay &amp; upload proof →' : state === 'confirmed' ? 'Show QR at the door →' : 'View →'}</strong>
               </div>
             </div>
           </div>
-        </div>`;
+        </a>`;
     }).join('');
   } catch {
     document.getElementById('ticketsLoader').style.display = 'none';

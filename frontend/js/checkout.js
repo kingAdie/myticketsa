@@ -4,9 +4,10 @@
 
    TicketsSA doesn't process payment. The organiser collects
    it directly (their own payment link or bank details, shown
-   here and on the confirmation page). The booking is saved to
-   Firestore and confirmed immediately, then the organiser, the
-   buyer and support are emailed (notify-booking.js).
+   here and on the ticket page). A paid booking is saved as a
+   RESERVATION; the organiser confirms payment from their Seller
+   Hub, and only then does the QR ticket appear. Free events are
+   valid straight away. Everyone is emailed (notify-booking.js).
    ================================================ */
 
 /* global Utils, Auth, SupabaseAPI */
@@ -78,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </a>
           </div>
         </div>`;
-      if (btn) btn.textContent = 'Reserve My Ticket';
+      if (btn) btn.textContent = 'Reserve My Seat';
 
     } else if (sel.paymentType === 'bank' && sel.bankName) {
       box.innerHTML = `
@@ -97,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         </div>`;
-      if (btn) btn.textContent = 'Reserve My Ticket';
+      if (btn) btn.textContent = 'Reserve My Seat';
 
     } else {
       box.innerHTML = `
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       Utils.removeStorage('mt_selection');
-      window.location.href = `success.html?ticket=${encodeURIComponent(result.id)}`;
+      window.location.href = `ticket.html?id=${encodeURIComponent(result.id)}`;
 
     } catch (err) {
       console.error('[Checkout] Booking error:', err?.message || err);

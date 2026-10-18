@@ -31,6 +31,16 @@
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
+  for = "/ticket.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/scan.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
   for = "/success.html"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
@@ -186,6 +196,16 @@
 [[redirects]]
   from = "/sell-merchandise"
   to   = "/sell-merchandise.html"
+  status = 200
+
+[[redirects]]
+  from = "/ticket"
+  to   = "/ticket.html"
+  status = 200
+
+[[redirects]]
+  from = "/scan"
+  to   = "/scan.html"
   status = 200
 
 [[redirects]]

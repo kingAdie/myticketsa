@@ -77,7 +77,7 @@
           ],
         },
         { name: '_ticketNote', type: 'info',
-          html: 'Buyers pay you directly using the payment details you add on the next step. TicketsSA issues the ticket and QR code once they book.' },
+          html: 'Buyers pay you directly using the payment details you add on the next step. Each booking is held as a reservation; once you mark it as paid in your Seller Hub, TicketsSA sends the buyer their QR ticket.' },
       ],
       validate(state) {
         const rows = Array.isArray(state.ticketTypes) ? state.ticketTypes : [];
@@ -112,6 +112,19 @@
         { name: 'accountHolder', label: 'Account holder',  type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'Name on the account' },
         { name: 'accountNumber', label: 'Account number',  type: 'text', required: true, showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 62012345678' },
         { name: 'branchCode',    label: 'Branch code',     type: 'text', showIf: s => s.paymentType === 'bank', placeholder: 'e.g. 250655' },
+
+        { name: 'reservationHours', label: 'How long do you hold an unpaid booking?', type: 'select', required: true,
+          showIf: s => s.paymentType === 'link' || s.paymentType === 'bank',
+          options: [
+            { value: '12',    label: '12 hours' },
+            { value: '24',    label: '24 hours' },
+            { value: '48',    label: '48 hours (recommended)' },
+            { value: '72',    label: '3 days' },
+            { value: '168',   label: '7 days' },
+            { value: 'event', label: 'Until the event starts' },
+          ],
+          placeholder: 'Choose a hold time…',
+          help: 'Bookings start as reservations. When the money reaches you, mark them as paid in your Seller Hub and the buyer gets their QR ticket. Unpaid reservations expire after this time.' },
 
         { name: '_freeNote', type: 'info', showIf: s => s.paymentType === 'free',
           html: 'Buyers will be able to claim a ticket without paying. You can still limit how many are available on the tickets step.' },
@@ -153,6 +166,7 @@
       tags: String(s.tags || '').split(',').map(t => t.trim()).filter(Boolean),
       refundPolicy:  Utils.refundPolicyText(s.refundPolicy, s.refundNote),
       paymentType:   s.paymentType || null,
+      reservationHours: (s.paymentType === 'link' || s.paymentType === 'bank') ? (s.reservationHours || '48') : null,
       paymentLink:   s.paymentType === 'link' ? (s.paymentLink || null) : null,
       bankName:      s.paymentType === 'bank' ? (s.bankName || null) : null,
       accountHolder: s.paymentType === 'bank' ? (s.accountHolder || null) : null,
@@ -216,7 +230,7 @@
           name: t.name, price: t.price, available: t.available, description: t.description,
         })),
         refundPolicy: ev.refundPolicy ? 'custom' : '', refundNote: ev.refundPolicy || '',
-        paymentType: ev.paymentType || '', paymentLink: ev.paymentLink || '',
+        paymentType: ev.paymentType || '', paymentLink: ev.paymentLink || '', reservationHours: ev.reservationHours || '48',
         bankName: ev.bankName || '', accountHolder: ev.accountHolder || '',
         accountNumber: ev.accountNumber || '', branchCode: ev.branchCode || '',
         tags: (ev.tags || []).join(', '),

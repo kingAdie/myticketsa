@@ -81,6 +81,7 @@ const SupabaseAPI = (() => {
       address:        doc.address        || null,
       refundPolicy:   doc.refundPolicy   || null,
       reviewNote:     doc.reviewNote     || null,
+      reservationHours: doc.reservationHours || null,
       paymentType:    doc.paymentType    || null,
       paymentLink:    doc.paymentLink    || null,
       bankName:       doc.bankName       || null,
@@ -110,7 +111,29 @@ const SupabaseAPI = (() => {
       payment: { reference: doc.paymentReference, method: doc.paymentMethod, paidAt: doc.paidAt },
       qrCodeUrl: doc.qrCodeUrl || null,
       bookedAt:  doc.bookedAt,
+      organiserId:     doc.organiserId     || null,
+      expiresAt:       doc.expiresAt       || null,
+      proofUrl:        doc.proofUrl        || null,
+      proofUploadedAt: doc.proofUploadedAt || null,
+      confirmedAt:     doc.confirmedAt     || null,
+      cancelledAt:     doc.cancelledAt     || null,
+      checkedInAt:     doc.checkedInAt     || null,
+      // What the ticket means right now. An unpaid reservation past its hold
+      // time counts as expired even though nobody has written that yet.
+      state: ticketState(doc),
     };
+  }
+
+  function ticketState(doc) {
+    if (doc.status === 'reserved' && doc.expiresAt && Date.now() > new Date(doc.expiresAt).getTime()) return 'expired';
+    return doc.status || 'reserved';
+  }
+
+  /** Pull a ticket id out of whatever the scanner read: a ticket link, or the bare code. */
+  function parseTicketCode(raw) {
+    const s = String(raw || '').trim();
+    const m = s.match(/[?&]id=([A-Za-z0-9-]+)/) || s.match(/\b(TKT-[A-Za-z0-9]+)\b/i);
+    return m ? m[1].toUpperCase() : s.toUpperCase();
   }
 
   // ════════════════════════════════════════
@@ -191,6 +214,7 @@ const SupabaseAPI = (() => {
       organiserId:    user.id,
       address:        eventData.address        || null,
       paymentType:    eventData.paymentType    || null,
+      reservationHours: eventData.reservationHours || null,
       paymentLink:    eventData.paymentLink    || null,
       bankName:       eventData.bankName       || null,
       accountHolder:  eventData.accountHolder  || null,
@@ -227,6 +251,7 @@ const SupabaseAPI = (() => {
       price:          parseFloat(eventData.price) || 0,
       address:        eventData.address        || null,
       paymentType:    eventData.paymentType    || null,
+      reservationHours: eventData.reservationHours || null,
       paymentLink:    eventData.paymentLink    || null,
       bankName:       eventData.bankName       || null,
       accountHolder:  eventData.accountHolder  || null,
@@ -280,6 +305,7 @@ const SupabaseAPI = (() => {
       organiserId:   user.id,
       address:       eventData.address        || null,
       paymentType:   eventData.paymentType    || null,
+      reservationHours: eventData.reservationHours || null,
       paymentLink:   eventData.paymentLink    || null,
       bankName:      eventData.bankName       || null,
       accountHolder: eventData.accountHolder  || null,
@@ -297,7 +323,10 @@ const SupabaseAPI = (() => {
   async function adminUpdateEvent(id, eventData, options = {}) {
     const db = await firestoreClient();
 
-    const fields = {
+    // Quick actions (feature, publish) pass an empty eventData: only touch the
+    // fields they set, never blank out the rest of the event.
+    const quick  = !eventData || Object.keys(eventData).length === 0;
+    const fields = quick ? { updatedAt: new Date().toISOString() } : {
       title:         eventData.title,
       category:      eventData.category,
       eventDate:     eventData.date,
@@ -310,6 +339,7 @@ const SupabaseAPI = (() => {
       price:         parseFloat(eventData.price) || 0,
       address:       eventData.address        || null,
       paymentType:   eventData.paymentType    || null,
+      reservationHours: eventData.reservationHours || undefined,
       paymentLink:   eventData.paymentLink    || null,
       bankName:      eventData.bankName       || null,
       accountHolder: eventData.accountHolder  || null,
@@ -439,6 +469,59 @@ const SupabaseAPI = (() => {
     return doc.exists ? normaliseTicket(doc.id, doc.data()) : null;
   }
 
+  /** Buyer attaches proof of payment (a photo or screenshot) to their reservation. */
+  async function uploadTicketProof(id, file) {
+    const url = await Utils.uploadImage(file, 'proofs', { allowGuest: true });
+    const db  = await firestoreClient();
+    await db.collection('tickets').doc(id).update({ proofUrl: url, proofUploadedAt: new Date().toISOString() });
+    notifyBooking('ticket_proof', id);          // lets the organiser know
+    return url;
+  }
+
+  /** Organiser moves a booking along: confirmed (paid), cancelled, checked_in, or back to confirmed. */
+  async function setTicketStatus(id, status) {
+    const db   = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) throw new Error('Please sign in.');
+    const now  = new Date().toISOString();
+    const snap = await db.collection('tickets').doc(id).get();
+    if (!snap.exists) throw new Error('Booking not found.');
+    const from = snap.data().status;
+
+    let fields;
+    if (status === 'confirmed' && from === 'checked_in') fields = { status, checkedInAt: null, checkedInBy: null };
+    else if (status === 'confirmed')  fields = { status, confirmedAt: now, confirmedBy: user.id };
+    else if (status === 'cancelled')  fields = { status, cancelledAt: now, cancelledBy: user.id };
+    else if (status === 'checked_in') fields = { status, checkedInAt: now, checkedInBy: user.id };
+    else throw new Error('Unknown status.');
+
+    await db.collection('tickets').doc(id).update(fields);
+    if (status === 'confirmed' && from === 'reserved') notifyBooking('ticket_confirmed', id);   // buyer gets their ticket
+    return { ...snap.data(), ...fields };
+  }
+
+  /**
+   * Door check-in. Reads the code, checks it belongs to the chosen event, and
+   * admits it once. Returns { result, ticket } where result is one of:
+   * admitted | already | unpaid | expired | cancelled | wrong_event | not_found
+   */
+  async function checkInTicket(code, eventId) {
+    const id = parseTicketCode(code);
+    if (!/^[A-Z0-9-]{4,60}$/.test(id)) return { result: 'not_found', id };
+    const db   = await firestoreClient();
+    const snap = await db.collection('tickets').doc(id).get();
+    if (!snap.exists) return { result: 'not_found', id };
+    const doc = snap.data();
+    const t   = normaliseTicket(id, doc);
+    if (eventId && doc.eventId !== eventId) return { result: 'wrong_event', ticket: t };
+    if (t.state === 'checked_in') return { result: 'already', ticket: t };
+    if (t.state === 'cancelled')  return { result: 'cancelled', ticket: t };
+    if (t.state === 'expired')    return { result: 'expired', ticket: t };
+    if (t.state === 'reserved')   return { result: 'unpaid', ticket: t };
+    const done = await setTicketStatus(id, 'checked_in');
+    return { result: 'admitted', ticket: normaliseTicket(id, done) };
+  }
+
   async function getMyTickets() {
     const db   = await firestoreClient();
     const user = Auth?.getUser();
@@ -490,8 +573,24 @@ const SupabaseAPI = (() => {
     const total       = subtotal;
     const now         = new Date().toISOString();
 
+    // How long the organiser holds an unpaid reservation (set on their event).
+    const evSnap = await db.collection('events').doc(payload.eventId).get();
+    const ev     = evSnap.exists ? evSnap.data() : {};
+    const free   = ev.paymentType === 'free' && total === 0;
+    let expiresAt = null;
+    if (!free) {
+      const start = ev.eventDate ? new Date(`${ev.eventDate}T${(ev.eventTime || '00:00').slice(0, 5)}:00`) : null;
+      const hold  = ev.reservationHours;
+      let exp = hold === 'event' ? start : new Date(Date.now() + (Number(hold) || 48) * 3600 * 1000);
+      if (start && !isNaN(start) && exp && exp > start) exp = start;
+      expiresAt = exp && !isNaN(exp) ? exp.toISOString() : null;
+    }
+
     const row = {
-      status:            'confirmed',
+      status:            free ? 'confirmed' : 'reserved',
+      organiserId:       ev.organiserId || null,
+      expiresAt,
+      confirmedAt:       free ? now : null,
       buyerFirstName:    payload.firstName,
       buyerLastName:     payload.lastName,
       buyerEmail:        payload.email.toLowerCase(),
@@ -1102,6 +1201,7 @@ const SupabaseAPI = (() => {
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
     getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
+    uploadTicketProof, setTicketStatus, checkInTicket, parseTicketCode,
     createSellerListing, getMySellerListings, adminGetSellerListings, adminDeleteSellerListing,
     adminGetPendingSubmissions, adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
   };
