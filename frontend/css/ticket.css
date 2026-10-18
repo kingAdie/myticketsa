@@ -147,3 +147,11 @@
 .pay-done div{min-width:0}
 .pay-done b{white-space:nowrap}
 .pay-done .tk-linkbtn{margin-left:auto;font-size:.84rem;font-weight:700}
+
+/* Compact header: small poster, clear title */
+.tk-top{display:flex;gap:14px;align-items:flex-start;padding:20px 20px 4px}
+.tk-top__img{flex:0 0 72px;height:90px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#14532D,#0B0B0B);display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+.tk-top__img img{width:100%;height:100%;object-fit:cover}
+.tk-top__text{flex:1;min-width:0}
+.tk-top__text h1{margin:8px 0 4px;font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:800;line-height:1.25;color:var(--text);overflow-wrap:anywhere}
+.tk-top__text p{margin:0;color:var(--text-2);font-size:.84rem;line-height:1.5}

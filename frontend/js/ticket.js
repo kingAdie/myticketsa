@@ -57,13 +57,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     root.innerHTML = `
       <article class="tk-card tk-card--${st.cls}">
-        <header class="tk-head">
-          ${t.event.image ? `<img class="tk-head__img" src="${esc(Utils.imgUrl(t.event.image, 900))}" alt="" onerror="this.remove()"/>` : ''}
-          <div class="tk-head__shade"></div>
-          <div class="tk-head__text">
+        <header class="tk-top">
+          <div class="tk-top__img">${t.event.image ? `<img src="${esc(Utils.imgUrl(t.event.image, 240))}" alt="" onerror="this.remove()"/>` : '🎟'}</div>
+          <div class="tk-top__text">
             <span class="tk-pill tk-pill--${st.cls}"><i></i>${esc(st.label)}</span>
             <h1>${esc(t.event.title)}</h1>
-            <p>${esc(dateLine)}${place ? ' · ' + esc(place) : ''}</p>
+            <p>${esc(dateLine)}</p>
+            ${place ? `<p>${esc(place)}</p>` : ''}
           </div>
         </header>
 

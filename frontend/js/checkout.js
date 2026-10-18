@@ -97,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const box = document.getElementById('paymentMethodBox');
     const btn = document.getElementById('confirmBtn');
     if (!box) return;
-    const total = Utils.formatCurrency(sel.total);
     const who = escHtml(sel.organiser || sel.accountHolder || 'the organiser');
     const opt = (icon, title, text, extra = '') => `
       <div class="co-opt is-on">
@@ -110,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (sel.paymentType === 'link' && /^https?:\/\//i.test(String(sel.paymentLink || '').trim())) {
       box.innerHTML = opt(ICON.card, 'Card payment', `After you reserve, you pay ${who} on their secure payment page.`);
-      if (btn) btn.textContent = `Reserve & pay · ${total}`;
+      if (btn) btn.textContent = 'Reserve';
     } else if (sel.paymentType === 'bank' && sel.bankName) {
       box.innerHTML = opt(ICON.bank, 'Bank transfer (EFT)', `Pay ${who} from your banking app. Then upload your proof of payment.`, `
         <button type="button" class="co-opt__more" id="bankToggle" aria-expanded="false">See bank details</button>
@@ -126,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const d = document.getElementById('bankDetails'); d.hidden = !d.hidden;
         t.setAttribute('aria-expanded', String(!d.hidden)); t.textContent = d.hidden ? 'See bank details' : 'Hide bank details';
       });
-      if (btn) btn.textContent = `Reserve & pay · ${total}`;
+      if (btn) btn.textContent = 'Reserve';
     } else {
       box.innerHTML = opt(ICON.free, 'Free event', 'Nothing to pay. Your ticket is ready straight away.');
       if (btn) btn.textContent = 'Get my free ticket';
@@ -178,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const busyLabel = sel.paymentType && sel.paymentType !== 'free' ? 'Reserving…' : 'Booking…';
-    const idleLabel = btn?.textContent || 'Reserve my ticket';
+    const idleLabel = btn?.textContent || 'Reserve';
     if (btn) { btn.disabled = true; btn.textContent = busyLabel; }
 
     const payload = {
