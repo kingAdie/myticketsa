@@ -434,7 +434,7 @@ const Utils = (() => {
     const e = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const fallback = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80';
     const img  = imgUrl(ev.image || fallback, 800);
-    const href = 'event.html?id=' + encodeURIComponent(ev.id);
+    const href = ev.slug ? 'e/' + encodeURIComponent(ev.slug) : 'event.html?id=' + encodeURIComponent(ev.id);
     const d    = ev.date ? new Date(ev.date + 'T00:00:00') : null;
     const day  = d && !isNaN(d) ? d.getDate() : '';
     const mon  = d && !isNaN(d) ? d.toLocaleDateString('en-ZA', { month: 'short' }).toUpperCase() : '';
@@ -456,7 +456,7 @@ const Utils = (() => {
           (where ? '<div class="event-card__meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>' + e(where) + '</span></div>' : '') +
         '</div>' +
         '<div class="event-card__foot">' +
-          '<div class="event-card__price">' + e(price) + '<span class="event-card__price-note">' + (price !== 'Free' ? 'from, per ticket' : 'no payment needed') + '</span>' + '</div>' +
+          '<div class="event-card__price">' + e(price) + '<span class="event-card__price-note">' + (price !== 'Free' ? 'per ticket' : 'no payment needed') + '</span>' + '</div>' +
           '<div class="event-card__actions">' +
             '<a class="btn btn-secondary btn-sm" href="' + e(href) + '">Details</a>' +
             '<a class="btn btn-primary btn-sm" href="' + e(href) + '#tickets">Buy tickets</a>' +
