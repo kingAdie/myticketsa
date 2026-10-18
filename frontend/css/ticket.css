@@ -144,3 +144,6 @@
 .pay-done b{display:block;color:var(--text)}
 .pay-done span{display:block;color:var(--text-2);font-size:.82rem}
 .pay-next{margin:4px 0 0;color:var(--text-2);font-size:.85rem;line-height:1.55;text-align:center}
+.pay-done div{min-width:0}
+.pay-done b{white-space:nowrap}
+.pay-done .tk-linkbtn{margin-left:auto;font-size:.84rem;font-weight:700}
