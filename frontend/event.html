@@ -13,100 +13,9 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
-  <link rel="stylesheet" href="css/marketplace.css"/>
-  <style>
-    /* Event detail — built on the current design tokens.
-       (css/event.css belongs to an older token set and is not loaded.) */
-    .ed-banner{position:relative;height:240px;overflow:hidden;background:var(--bg-2)}
-    .ed-banner__img{width:100%;height:100%;object-fit:cover;opacity:.6}
-    .ed-banner__overlay{position:absolute;inset:0;
-      background:linear-gradient(to top,var(--bg) 0%,rgba(8,8,8,.65) 45%,rgba(8,8,8,.15) 100%)}
-
-    .ed-layout{display:grid;grid-template-columns:1fr;gap:var(--s4);
-      align-items:start;padding:var(--s4) 0 var(--s5)}
-
-    .ed-back{display:inline-flex;align-items:center;gap:7px;min-height:44px;
-      color:var(--text-3);font-size:.875rem;font-weight:600;transition:color .2s}
-    .ed-back:hover{color:var(--green)}
-    .ed-back svg{width:15px;height:15px}
-
-    .ed-cat{font-size:.6875rem;font-weight:800;letter-spacing:.1em;
-      text-transform:uppercase;color:var(--green);margin-bottom:10px}
-    .ed-title{font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:clamp(1.75rem,5vw,2.75rem);font-weight:800;
-      letter-spacing:-.03em;line-height:1.12;color:var(--text)}
-
-    .ed-meta{display:grid;grid-template-columns:1fr;gap:16px;
-      padding:var(--s3) 0;margin:var(--s3) 0;
-      border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)}
-    .ed-meta-item{display:flex;align-items:flex-start;gap:12px}
-    .ed-meta-icon{width:38px;height:38px;flex-shrink:0;border-radius:var(--r2);
-      background:var(--green-tint);border:1px solid var(--green-border);
-      display:flex;align-items:center;justify-content:center}
-    .ed-meta-icon svg{width:17px;height:17px;color:var(--green)}
-    .ed-meta-item strong{display:block;font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:.9375rem;font-weight:700;color:var(--text);line-height:1.35}
-    .ed-meta-item span{display:block;font-size:.8125rem;color:var(--text-2);margin-top:3px}
-
-    .ed-section{margin-bottom:var(--s4)}
-    .ed-section h2{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.125rem;
-      font-weight:700;color:var(--text);margin-bottom:14px}
-    .ed-desc{font-size:.9375rem;color:var(--text-2);line-height:1.85;white-space:pre-line}
-
-    .ed-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--s3)}
-
-    /* Ticket panel */
-    .ed-panel{background:var(--bg-2);border:1px solid var(--b1);
-      border-radius:var(--r4);overflow:hidden;box-shadow:var(--sh-md)}
-    .ed-panel__head{padding:18px 20px;border-bottom:1px solid var(--b1);background:var(--bg-3)}
-    .ed-panel__head h2{font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:1.0625rem;font-weight:700;color:var(--text)}
-    .ed-panel__head p{font-size:.8125rem;color:var(--text-3);margin-top:3px}
-    .ed-types{padding:16px;display:flex;flex-direction:column;gap:10px}
-
-    /* Rendered by js/event.js — class names must match what it emits. */
-    .ticket-type{display:flex;align-items:flex-start;justify-content:space-between;
-      gap:12px;width:100%;padding:14px 16px;text-align:left;cursor:pointer;
-      background:var(--bg-3);border:1.5px solid var(--b1);border-radius:var(--r3);
-      transition:border-color .2s,background .2s}
-    .ticket-type:hover{border-color:var(--b3);background:var(--bg-4)}
-    .ticket-type:focus-visible{outline:none;border-color:var(--green);
-      box-shadow:0 0 0 3px rgba(22,163,74,.18)}
-    .ticket-type.selected{border-color:var(--green);background:var(--green-tint)}
-    .ticket-type__info{flex:1;min-width:0}
-    .ticket-type__info h4{font-family:'Plus Jakarta Sans',sans-serif;
-      font-weight:700;font-size:.9375rem;color:var(--text);line-height:1.35}
-    .ticket-type__info p{margin-top:4px;font-size:.8125rem;
-      color:var(--text-2);line-height:1.55}
-    .ticket-type__price{flex-shrink:0;font-family:'Plus Jakarta Sans',sans-serif;
-      font-weight:800;font-size:1.0625rem;color:var(--green);white-space:nowrap}
-
-    .event-tag{display:inline-flex;align-items:center;padding:6px 14px;
-      background:var(--bg-3);border:1px solid var(--b1);border-radius:var(--rx);
-      font-size:.8125rem;font-weight:500;color:var(--text-2)}
-
-    .ed-qty{padding:0 16px 16px;display:flex;align-items:center;
-      justify-content:space-between;gap:14px;flex-wrap:wrap}
-    .ed-sub{text-align:right}
-    .ed-sub__label{display:block;font-size:.6875rem;font-weight:800;
-      text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:3px}
-    .ed-sub__value{font-family:'Plus Jakarta Sans',sans-serif;
-      font-size:1.5rem;font-weight:800;color:var(--green)}
-    .ed-cta{padding:0 16px 16px}
-    .ed-note{display:flex;align-items:center;justify-content:center;gap:7px;
-      padding:13px 16px;background:var(--bg-3);border-top:1px solid var(--b1);
-      font-size:.8125rem;color:var(--text-3);text-align:center}
-    .ed-note svg{color:var(--green);flex-shrink:0}
-
-    @media(min-width:900px){
-      .ed-banner{height:380px}
-      .ed-layout{grid-template-columns:1fr 380px;gap:var(--s5)}
-      .ed-meta{grid-template-columns:repeat(2,1fr);gap:20px}
-      .ed-panel{position:sticky;top:92px}
-    }
-  </style>
+  <link rel="stylesheet" href="css/buy.css"/>
 </head>
-<body>
+<body class="buy">
 
 <!-- ═══════════ NAVBAR ═══════════ -->
 <nav class="navbar" id="navbar">
@@ -137,100 +46,74 @@
   </div>
 </nav>
 
-<!-- ═══════════ BANNER ═══════════ -->
-<div class="ed-banner">
-  <img id="bannerImage" class="ed-banner__img" src="" alt=""
-       onerror="this.src='https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=1600&q=80'"/>
-  <div class="ed-banner__overlay"></div>
-</div>
+<main class="ep" id="epMain">
 
-<main class="container">
-  <div class="ed-layout">
+  <!-- Poster: the whole picture, never cropped -->
+  <div class="ep-poster" id="epPoster">
+    <div class="sk"></div>
+    <img class="ep-poster__bg" id="posterBg" alt="" aria-hidden="true"/>
+    <img class="ep-poster__img" id="bannerImage" alt=""/>
+    <a class="ep-back" href="browse.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>Events</a>
+    <button class="ep-share" id="shareEventBtn" type="button" aria-label="Share this event">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
+  </div>
 
-    <!-- ── Main column ── -->
-    <div>
-      <a href="browse.html" class="ed-back">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Back to all events
-      </a>
+  <!-- Title, the facts, and the tickets -->
+  <section class="ep-card" id="tickets">
+    <span class="ep-chip" id="eventCategory">Event</span>
+    <h1 class="ep-title" id="eventTitle"><span class="sk"></span></h1>
+    <span class="sr-only" id="breadcrumbTitle"></span>
 
-      <div class="ed-cat" id="eventCategory"></div>
-      <h1 class="ed-title" id="eventTitle">Loading…</h1>
-      <span class="sr-only" id="breadcrumbTitle"></span>
-
-      <div class="ed-meta">
-        <div class="ed-meta-item">
-          <span class="ed-meta-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </span>
-          <div><strong id="eventDate">—</strong><span id="eventTime">—</span></div>
-        </div>
-
-        <div class="ed-meta-item">
-          <span class="ed-meta-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </span>
-          <div><strong id="eventLocation">—</strong><span id="eventCity"></span></div>
-        </div>
-
-        <div class="ed-meta-item">
-          <span class="ed-meta-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </span>
-          <div><strong>Organised by</strong><span id="eventOrganiser">—</span></div>
-        </div>
+    <div class="ep-facts">
+      <div class="ep-fact">
+        <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        <div><b id="eventDate"><span class="sk"></span></b><span id="eventTime"></span></div>
       </div>
-
-      <section class="ed-section">
-        <h2>About this event</h2>
-        <div class="ed-desc" id="eventDescription"></div>
-        <div class="ed-tags" id="eventTags"></div>
-      </section>
-
-      <section class="ed-section" id="refundSection" style="display:none">
-        <h2>Cancellations &amp; refunds</h2>
-        <div class="ed-desc" id="eventRefund"></div>
-        <p style="font-size:.8125rem;color:var(--text-3);margin-top:10px">Set by the organiser. TicketsSA does not take payment or issue refunds. <a href="refunds.html" style="color:var(--green)">How refunds work</a></p>
-      </section>
+      <div class="ep-fact">
+        <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <div><b id="eventLocation"><span class="sk"></span></b><span><span id="eventCity"></span> <a id="eventMap" href="#" target="_blank" rel="noopener" hidden>· Map</a></span></div>
+      </div>
+      <div class="ep-fact">
+        <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <div><b id="eventOrganiser"><span class="sk"></span></b><span>Organiser</span></div>
+      </div>
     </div>
 
-    <!-- ── Ticket panel ── -->
-    <aside class="ed-panel" id="tickets">
-      <div class="ed-panel__head">
-        <h2>Get your tickets</h2>
-        <p>Choose a ticket type to continue</p>
-      </div>
+    <h2 class="ep-h">Choose your tickets</h2>
+    <div class="tt-list" id="ticketTypes" role="radiogroup" aria-label="Ticket types">
+      <div class="sk" style="height:64px"></div>
+    </div>
 
-      <div class="ed-types" id="ticketTypes"></div>
+    <div class="ep-buy">
+      <button class="btn btn-primary" id="buyTicketBtn" disabled>Choose a ticket</button>
+    </div>
+    <div class="ep-steps" aria-label="How it works">
+      <span><i>1</i>Reserve</span><span><i>2</i>Pay the organiser</span><span><i>3</i>Get your QR ticket</span>
+    </div>
+  </section>
 
-      <div class="ed-qty hidden" id="ticketQtySection">
-        <div class="qty-selector">
-          <button class="qty-btn" id="qtyDecrease" aria-label="Decrease quantity">−</button>
-          <span id="qtyValue" aria-live="polite">1</span>
-          <button class="qty-btn" id="qtyIncrease" aria-label="Increase quantity">+</button>
-        </div>
-        <div class="ed-sub">
-          <span class="ed-sub__label">Subtotal</span>
-          <span class="ed-sub__value" id="subtotalValue">R0</span>
-        </div>
-      </div>
-
-      <div class="ed-cta">
-        <button class="btn btn-primary btn-full btn-lg" id="buyTicketBtn" disabled>Select a Ticket Type</button>
-        <button class="btn btn-ghost btn-full" id="shareEventBtn" type="button" style="margin-top:10px">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share this event
-        </button>
-      </div>
-
-      <div class="ed-note">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        <span>Reserve, pay the organiser, get your QR ticket</span>
-      </div>
-    </aside>
-
+  <!-- About -->
+  <div class="ep-about">
+    <section class="ep-block">
+      <h2 class="ep-h">About this event</h2>
+      <div class="ep-desc" id="eventDescription"></div>
+      <button class="ep-more" id="descMore" type="button" hidden>Read more</button>
+      <div class="ep-tags" id="eventTags"></div>
+    </section>
+    <section class="ep-block" id="refundSection" hidden>
+      <h2 class="ep-h">Cancellations &amp; refunds</h2>
+      <div class="ep-desc" id="eventRefund"></div>
+      <p class="ep-small">Set by the organiser. TicketsSA does not take payment. <a href="refunds.html">How refunds work</a></p>
+    </section>
   </div>
 </main>
+
+<!-- Phones: always one tap from buying -->
+<div class="buybar" id="buybar">
+  <div class="buybar__info"><b id="barPrice">&nbsp;</b><span id="barSub">Tickets</span></div>
+  <button class="btn btn-primary" id="barBtn" type="button">Get tickets</button>
+</div>
 
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>

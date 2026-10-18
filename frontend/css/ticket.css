@@ -48,7 +48,7 @@
 .tk-steps li>div{flex:1;min-width:0}
 .tk-steps strong{display:block;color:var(--text);margin:4px 0 8px}
 .tk-small{margin:6px 0 0;color:var(--text-2);font-size:.85rem;line-height:1.55}
-.tk-paylink{display:block;text-align:center;padding:13px;border-radius:12px;background:var(--green);color:#fff;font-weight:700}
+.tk-paylink{display:block;text-align:center;padding:16px;border-radius:14px;font-size:1rem;background:var(--green);color:#fff;font-weight:700}
 .tk-paylink:hover{background:var(--green-hi)}
 .tk-bank{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;padding:14px 16px;border-radius:14px;background:var(--bg-3);border:1px solid var(--b1);font-size:.9rem}
 .tk-bank dt{color:var(--text-3)}

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const selection = Utils.getStorage('mt_selection');
   if (!selection) {
-    showPageError('No booking found. Please go back and select tickets.');
+    showPageError('Choose an event and a ticket, then come back here.');
     return;
   }
 
@@ -26,28 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPaymentMethodBox(selection);
   setupBackLink(selection);
   initForm(selection);
-  initExtras(selection);
+  initExtras();
 
-  // ── Proof of payment, updates opt-in, log-in hint ─────────────────────
-  let popFile = null;
-  function initExtras(sel) {
-    const paid = sel.paymentType === 'link' || sel.paymentType === 'bank';
-    const box = document.getElementById('popBox'), input = document.getElementById('popFile');
-    if (box && paid) box.hidden = false;
-    input?.addEventListener('change', () => {
-      popFile = input.files && input.files[0] || null;
-      if (!popFile) return;
-      box.classList.add('is-set');
-      Utils.setText('#popTitle', 'Proof attached: ' + popFile.name);
-      Utils.setText('#popSub', 'It is sent with your booking. Tap to choose a different file.');
-    });
+  // ── Log-in hint, and prefill for signed-in buyers ─────────────────────
+  function initExtras() {
     if (typeof Auth !== 'undefined' && !Auth.isLoggedIn()) {
       const hint = document.getElementById('loginHint');
       if (hint) hint.hidden = false;
       document.getElementById('loginHintBtn')?.addEventListener('click', () => Auth.requireAuth(() => location.reload(), 'Log in to save this ticket to your account', 'login'));
     }
     const u = typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser();
-    if (u) {   // signed in: fill what we already know
+    if (u) {
       const f = (id, v) => { const el = document.getElementById(id); if (el && !el.value && v) el.value = v; };
       f('firstName', u.firstName); f('lastName', u.lastName); f('email', u.email);
     }
@@ -56,30 +45,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Order summary ─────────────────────────────────────────────────────
   function renderSummary(sel) {
     Utils.setText('#summaryEventTitle', sel.eventTitle);
-
     const img = document.getElementById('summaryImage');
-    if (img) { img.src = sel.eventImage || ''; img.alt = sel.eventTitle; }
-
-    Utils.setText('#summaryDate',       Utils.formatDate(sel.eventDate));
-    Utils.setText('#summaryLocation',   `${sel.eventLocation}, ${sel.eventCity}`);
-    Utils.setText('#summaryTicketType', sel.ticketTypeName);
-    Utils.setText('#summaryQty',        `${sel.quantity} × ticket${sel.quantity !== 1 ? 's' : ''}`);
-    Utils.setText('#summaryUnitPrice',  Utils.formatCurrency(sel.ticketPrice));
+    if (img) { if (sel.eventImage) { img.src = Utils.imgUrl(sel.eventImage, 200); img.alt = sel.eventTitle; } else img.remove(); }
+    Utils.setText('#summaryDate',       sel.eventDate ? Utils.formatDate(sel.eventDate) : '');
+    Utils.setText('#summaryLocation',   [sel.eventLocation, sel.eventCity].filter(Boolean).join(', '));
+    Utils.setText('#summaryTicketType', `${sel.quantity} × ${sel.ticketTypeName}`);
 
     // TicketsSA adds no fee: the buyer pays the organiser exactly the ticket price.
-    const fee   = 0;
     const total = Math.round(sel.total * 100) / 100;
-    document.getElementById('summaryFeeRow')?.setAttribute('hidden', '');
-    Utils.setText('#summaryTotal', Utils.formatCurrency(total));
-
-    sel.fee        = fee;
-    sel.grandTotal = total;
+    Utils.setText('#summaryTotal', total > 0 ? Utils.formatCurrency(total) : 'Free');
+    sel.fee = 0; sel.grandTotal = total;
     Utils.setStorage('mt_selection', sel);
   }
 
   function setupBackLink(sel) {
     const link = document.getElementById('backToEventLink');
-    if (link) link.href = `event.html?id=${sel.eventId}`;
+    if (link) link.href = sel.eventLink || `event.html?id=${encodeURIComponent(sel.eventId)}`;
   }
 
   // ── Payment method (organiser-provided; TicketsSA doesn't process payment) ──
@@ -87,57 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const box = document.getElementById('paymentMethodBox');
     const btn = document.getElementById('confirmBtn');
     if (!box) return;
+    const total = Utils.formatCurrency(sel.total);
+    const who = escHtml(sel.organiser || sel.accountHolder || 'the organiser');
+    const row = (icon, title, text) => `<span class="co-pay__icon">${icon}</span><div><b>${title}</b><span>${text}</span></div>`;
 
-    const isSafeUrl = (url) => /^https?:\/\//i.test(String(url || '').trim());
-
-    if (sel.paymentType === 'link' && sel.paymentLink && isSafeUrl(sel.paymentLink)) {
-      box.innerHTML = `
-        <div class="pay-method-box pay-method-box--link">
-          <div class="pay-method-box__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10 13a5 5 0 007.07 0l1.93-1.93a5 5 0 00-7.07-7.07L10.5 5.5"/><path d="M14 11a5 5 0 00-7.07 0L5 12.93a5 5 0 007.07 7.07L13.5 18.5"/></svg>
-          </div>
-          <div>
-            <p class="pay-method-box__title">Pay the Organiser Directly</p>
-            <p class="pay-method-box__sub">This event's organiser collects payment themselves. Reserve your ticket below, then complete payment via their secure link.</p>
-            <a href="${escHtml(sel.paymentLink)}" target="_blank" rel="noopener" class="pay-link-btn">
-              Open Payment Link
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><path d="M7 17L17 7M7 7h10v10"/></svg>
-            </a>
-          </div>
-        </div>`;
-      if (btn) btn.textContent = 'Reserve My Seat';
-
+    if (sel.paymentType === 'link' && /^https?:\/\//i.test(String(sel.paymentLink || '').trim())) {
+      box.innerHTML = row('💳', 'Pay by card', `Next you pay ${who} on their secure payment page. Your seat is held while you pay.`);
+      if (btn) btn.textContent = `Reserve & pay · ${total}`;
     } else if (sel.paymentType === 'bank' && sel.bankName) {
-      box.innerHTML = `
-        <div class="pay-method-box pay-method-box--bank">
-          <div class="pay-method-box__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="11" width="18" height="10" rx="1"/><path d="M3 11l9-7 9 7M7 11v10M11 11v10M13 11v10M17 11v10"/></svg>
-          </div>
-          <div>
-            <p class="pay-method-box__title">Pay the Organiser via EFT</p>
-            <p class="pay-method-box__sub">This event's organiser collects payment directly. Reserve your ticket below, then pay using these bank details.</p>
-            <div class="pay-bank-table">
-              <div class="pay-bank-row"><span class="pay-bank-row__label">Bank</span><span class="pay-bank-row__value">${escHtml(sel.bankName)}</span></div>
-              <div class="pay-bank-row"><span class="pay-bank-row__label">Account Holder</span><span class="pay-bank-row__value">${escHtml(sel.accountHolder || '—')}</span></div>
-              <div class="pay-bank-row"><span class="pay-bank-row__label">Account Number</span><span class="pay-bank-row__value">${escHtml(sel.accountNumber || '—')}</span></div>
-              <div class="pay-bank-row"><span class="pay-bank-row__label">Branch Code</span><span class="pay-bank-row__value">${escHtml(sel.branchCode || '—')}</span></div>
-            </div>
-          </div>
-        </div>`;
-      if (btn) btn.textContent = 'Reserve My Seat';
-
+      box.innerHTML = row('🏦', 'Pay by bank transfer (EFT)', `Next you get ${who}'s bank details and your reference. Upload your proof of payment there too.`);
+      if (btn) btn.textContent = `Reserve & pay · ${total}`;
     } else {
-      box.innerHTML = `
-        <div class="pay-method-box">
-          <div class="pay-method-box__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <p class="pay-method-box__title">Free Event</p>
-            <p class="pay-method-box__sub">No payment is required for this event. Just confirm your details below to get your eTicket.</p>
-          </div>
-        </div>`;
-      if (btn) btn.textContent = 'Get My Free Ticket';
+      box.innerHTML = row('🎉', 'Free event', 'Nothing to pay. Your ticket is ready straight away.');
+      if (btn) btn.textContent = 'Get my free ticket';
     }
   }
 
@@ -172,20 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!Utils.validateField(input)) valid = false;
     });
 
-    const terms      = document.getElementById('termsCheck');
-    const termsError = document.getElementById('termsError');
-    if (!terms?.checked) {
-      valid = false;
-      if (termsError) {
-        termsError.textContent = 'You must agree to the Terms of Service.';
-        termsError.classList.add('visible');
-      }
-    } else {
-      termsError?.classList.remove('visible');
-    }
-
     if (!valid) {
-      Utils.showToast('Please fill in all required fields.', 'error');
+      Utils.showToast('Please add your name and email.', 'error');
       form.querySelector('.form-input.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -198,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const busyLabel = sel.paymentType && sel.paymentType !== 'free' ? 'Reserving…' : 'Booking…';
-    const idleLabel = btn?.textContent || 'Confirm Purchase';
+    const idleLabel = btn?.textContent || 'Reserve my ticket';
     if (btn) { btn.disabled = true; btn.textContent = busyLabel; }
 
     const payload = {
@@ -223,11 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // bank details, shown above and on the receipt.
       const result = await SupabaseAPI.submitTicket(payload);
       SupabaseAPI.notifyBooking('ticket', result.id);   // emails the owner, the buyer and support
-      if (popFile && result.status === 'reserved') {
-        if (btn) btn.textContent = 'Sending your proof…';
-        try { await SupabaseAPI.uploadTicketProof(result.id, popFile); }
-        catch (e) { Utils.showToast('Booked, but the proof did not upload. You can add it on the next page.', 'error', 6000); }
-      }
 
       Utils.setStorage('mt_booking', {
         ticketId: result.id,
@@ -274,8 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!main) return;
     main.innerHTML = `
       <div class="container" style="text-align:center;padding:80px 0;">
-        <div style="font-size:3rem;margin-bottom:1.5rem;">🛒</div>
-        <h2 style="margin-bottom:1rem;">Nothing to check out</h2>
+        <div style="font-size:3rem;margin-bottom:1.5rem;">🎟</div>
+        <h2 style="margin-bottom:1rem;">Pick your tickets first</h2>
         <p style="margin-bottom:2rem;color:var(--text-2);">${msg}</p>
         <a href="index.html" class="btn btn-primary btn-lg">Browse Events</a>
       </div>`;
