@@ -420,6 +420,45 @@ const Utils = (() => {
     catch (_) { window.prompt('Copy this link:', url); return 'prompted'; }
   }
 
+  /* ---------- Event card (home + browse share one design) ---------- */
+  /** The whole poster always shows: it sits on a blurred copy of itself, so
+   *  portrait, square and wide images all fit without being cropped. */
+  function eventCardHTML(ev) {
+    const e = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const fallback = 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80';
+    const img  = imgUrl(ev.image || fallback, 800);
+    const href = 'event.html?id=' + encodeURIComponent(ev.id);
+    const d    = ev.date ? new Date(ev.date + 'T00:00:00') : null;
+    const day  = d && !isNaN(d) ? d.getDate() : '';
+    const mon  = d && !isNaN(d) ? d.toLocaleDateString('en-ZA', { month: 'short' }).toUpperCase() : '';
+    const when = [ev.date ? formatDate(ev.date) : '', ev.time ? formatTime(ev.time) : ''].filter(Boolean).join(' · ');
+    const where = [ev.location, ev.city].filter(Boolean).join(', ');
+    const price = Number(ev.price) > 0 ? formatCurrency(ev.price) : 'Free';
+    return '<article class="event-card" role="listitem" data-href="' + e(href) + '">' +
+      '<a class="event-card__img-wrap" href="' + e(href) + '" aria-label="' + e(ev.title) + '" tabindex="-1">' +
+        '<img class="event-card__bg" src="' + e(img) + '" alt="" aria-hidden="true" loading="lazy"/>' +
+        '<img class="event-card__img" src="' + e(img) + '" alt="' + e(ev.title) + '" loading="lazy" onerror="this.src=\'' + fallback + '\';this.previousSibling.src=\'' + fallback + '\'"/>' +
+        (day ? '<span class="event-card__date"><b>' + day + '</b>' + e(mon) + '</span>' : '') +
+        (ev.featured ? '<span class="event-card__badge badge badge-green">Featured</span>' : '') +
+      '</a>' +
+      '<div class="event-card__body">' +
+        '<div class="event-card__cat">' + e(ev.category) + '</div>' +
+        '<h3 class="event-card__title"><a href="' + e(href) + '">' + e(ev.title) + '</a></h3>' +
+        '<div class="event-card__meta">' +
+          (when ? '<div class="event-card__meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>' + e(when) + '</span></div>' : '') +
+          (where ? '<div class="event-card__meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>' + e(where) + '</span></div>' : '') +
+        '</div>' +
+        '<div class="event-card__foot">' +
+          '<div class="event-card__price">' + e(price) + '<span class="event-card__price-note">' + (price !== 'Free' ? 'from, per ticket' : 'no payment needed') + '</span>' + '</div>' +
+          '<div class="event-card__actions">' +
+            '<a class="btn btn-secondary btn-sm" href="' + e(href) + '">Details</a>' +
+            '<a class="btn btn-primary btn-sm" href="' + e(href) + '#tickets">Buy tickets</a>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
   /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */
 
   const REFUND_OPTIONS = [
@@ -476,6 +515,7 @@ const Utils = (() => {
     compressImage,
     uploadImage,
     shareLink,
+    eventCardHTML,
     refundPolicyText,
     refundFields,
   };
