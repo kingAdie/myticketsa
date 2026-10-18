@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* ── Status banner per state ─────────────────────────────── */
   const STATES = {
-    reserved:   { cls: 'amber', label: 'Reserved, waiting for payment' },
+    reserved:   { cls: 'amber', label: 'Seat reserved' },
     confirmed:  { cls: 'green', label: 'Valid ticket' },
     checked_in: { cls: 'grey',  label: 'Used, checked in' },
     expired:    { cls: 'red',   label: 'Reservation expired' },
@@ -69,23 +69,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <div class="tk-body" id="tkBody"></div>
 
-        <div class="tk-perf" aria-hidden="true"><span></span><span></span></div>
+        ${t.state === 'reserved' ? '' : `<div class="tk-perf" aria-hidden="true"><span></span><span></span></div>
 
         <dl class="tk-facts">
           <div><dt>Ticket</dt><dd>${esc(t.ticket.typeName)} × ${esc(t.ticket.quantity)}</dd></div>
           <div><dt>Total</dt><dd>${t.pricing.total > 0 ? money(t.pricing.total) : 'Free'}</dd></div>
           <div><dt>Reference</dt><dd class="tk-mono">${esc(t.id)}</dd></div>
           <div><dt>Name</dt><dd>${esc([t.buyer.firstName, t.buyer.lastName].filter(Boolean).join(' '))}</dd></div>
-        </dl>
+        </dl>`}
       </article>
-      ${event && event.refundPolicy ? `<p class="tk-note"><strong>Cancellations &amp; refunds:</strong> ${esc(event.refundPolicy)} Set by the organiser. <a href="refunds.html">How refunds work</a></p>` : ''}
       ${(typeof Auth !== 'undefined' && !Auth.isLoggedIn()) ? `
       <div class="tk-acct">
-        <div><strong>Keep all your tickets in one place</strong>
-          <p>Create a free account with <b>${esc(t.buyer.email)}</b>. This booking and future ones appear under My Tickets, and you get updates about your events.</p></div>
-        <button class="btn btn-primary btn-sm" type="button" id="tkSignup">Create free account</button>
+        <div><strong>Keep your tickets in one place</strong><p>Free account with ${esc(t.buyer.email)}</p></div>
+        <button class="btn btn-secondary btn-sm" type="button" id="tkSignup">Create account</button>
       </div>` : ''}
-      <p class="tk-note">TicketsSA does not take payment. Questions about this booking? Contact the organiser${event && event.organiser ? ' (' + esc(event.organiser) + ')' : ''}, or email <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</p>`;
+      <p class="tk-note">Questions? Contact ${event && event.organiser ? esc(event.organiser) : 'the organiser'} or <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.${event && event.refundPolicy ? ` Refunds: ${esc(event.refundPolicy)}` : ''}</p>`;
 
     document.getElementById('tkSignup')?.addEventListener('click', () => {
       Auth.openModal('signup', 'Create your free account to keep your tickets');
@@ -111,51 +109,64 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* ── Reserved: pay, then upload proof ────────────────────── */
-  function payBox() {
-    const ev = event || {};
+  const row = (label, value, copy) => `
+    <div class="pay-row${copy ? ' pay-row--copy' : ''}"${copy ? ` data-copy="${esc(value)}" role="button" tabindex="0"` : ''}>
+      <span>${label}</span><b class="${copy ? 'tk-mono' : ''}">${esc(value)}</b>${copy ? '<i>Copy</i>' : ''}
+    </div>`;
+
+  function payDetails() {
+    const ev = event || {}, t = ticket;
     if (ev.paymentType === 'link' && /^https?:\/\//i.test(ev.paymentLink || '')) {
-      return `<a class="tk-paylink" href="${esc(ev.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay ${ticket.pricing && ticket.pricing.total ? Utils.formatCurrency(ticket.pricing.total) : ''} by card →</a>
-        <p class="tk-small">Use <strong class="tk-mono">${esc(ticket.id)}</strong> as the payment reference.</p>`;
+      return `<a class="pay-btn" href="${esc(ev.paymentLink)}" target="_blank" rel="noopener noreferrer">Pay ${money(t.pricing.total)} now</a>
+        ${row('Reference', t.id, true)}`;
     }
     if (ev.paymentType === 'bank' && ev.bankName) {
-      return `<dl class="tk-bank">
-          <dt>Bank</dt><dd>${esc(ev.bankName)}</dd>
-          <dt>Account holder</dt><dd>${esc(ev.accountHolder || '')}</dd>
-          <dt>Account number</dt><dd class="tk-mono">${esc(ev.accountNumber || '')} <button type="button" class="tk-copy" data-copy="${esc(ev.accountNumber || '')}">Copy</button></dd>
-          ${ev.branchCode ? `<dt>Branch code</dt><dd class="tk-mono">${esc(ev.branchCode)}</dd>` : ''}
-          <dt>Reference</dt><dd class="tk-mono">${esc(ticket.id)} <button type="button" class="tk-copy" data-copy="${esc(ticket.id)}">Copy</button></dd>
-        </dl>`;
+      return `<div class="pay-rows">
+          ${row('Bank', ev.bankName)}
+          ${row('Account name', ev.accountHolder || '')}
+          ${row('Account number', ev.accountNumber || '', true)}
+          ${ev.branchCode ? row('Branch code', ev.branchCode, true) : ''}
+          ${row('Reference', t.id, true)}
+        </div>`;
     }
-    return `<p class="tk-small">The organiser will contact you at <strong>${esc(ticket.buyer.email)}</strong> about payment. Quote <strong class="tk-mono">${esc(ticket.id)}</strong>.</p>`;
+    return `<p class="pay-say">${esc(ev.organiser || 'The organiser')} will contact you at ${esc(t.buyer.email)} about payment.</p>`;
   }
 
   function renderReserved(body) {
     const t = ticket;
-    const left = t.expiresAt ? new Date(t.expiresAt).getTime() - Date.now() : null;
-    const hrs = left != null ? Math.max(0, Math.floor(left / 3600000)) : null;
-    const hold = t.expiresAt
-      ? `<div class="tk-hold"><span>Seat held until</span><strong>${esc(when(t.expiresAt))}</strong><em>${hrs >= 1 ? `about ${hrs} hour${hrs === 1 ? '' : 's'} left` : 'less than an hour left'}</em></div>`
-      : '';
-    const proof = t.proofUrl
-      ? `<div class="tk-proof tk-proof--done"><img src="${esc(Utils.imgUrl(t.proofUrl, 200))}" alt="Your proof of payment"/><div><strong>Proof of payment sent</strong><p>The organiser has been notified. Your QR ticket appears here as soon as they confirm. <button type="button" class="tk-linkbtn" id="tkReproof">Replace</button></p></div></div>`
-      : `<label class="tk-proof" for="tkProofFile">
-           <span class="tk-proof__icon">⬆</span>
-           <span><strong>Upload proof of payment</strong><small>Optional. A photo or screenshot of your payment slip helps the organiser confirm faster.</small></span>
-         </label>`;
+    const isLink = event && event.paymentType === 'link';
+    const by = t.expiresAt ? `Pay by ${esc(when(t.expiresAt))} to keep your seat` : 'Pay to get your ticket';
 
     body.innerHTML = `
-      ${hold}
-      <ol class="tk-steps">
-        <li class="is-on"><span>1</span><div><strong>Pay the organiser</strong>${payBox()}</div></li>
-        <li class="${t.proofUrl ? 'is-on' : ''}"><span>2</span><div><strong>Send proof (optional)</strong>${proof}
-          <input type="file" id="tkProofFile" accept="image/jpeg,image/png,image/webp" hidden/>
-          <div class="tk-progress" id="tkProg" hidden><i></i></div></div></li>
-        <li><span>3</span><div><strong>Get your QR ticket</strong><p class="tk-small">When the organiser confirms your payment, your ticket appears on this page and in your email.</p></div></li>
-      </ol>`;
+      <div class="pay-total">
+        <span>Amount to pay</span>
+        <b>${money(t.pricing.total)}</b>
+        <small>${by}</small>
+      </div>
 
-    body.querySelectorAll('.tk-copy').forEach(b => b.addEventListener('click', () => {
-      navigator.clipboard?.writeText(b.dataset.copy).then(() => Utils.showToast('Copied', 'success', 1800)).catch(() => {});
-    }));
+      <section class="pay-step">
+        <h2><i>1</i>${isLink ? 'Pay by card' : 'Pay by bank transfer'}</h2>
+        ${payDetails()}
+      </section>
+
+      <section class="pay-step">
+        <h2><i>2</i>Upload your proof of payment</h2>
+        ${t.proofUrl
+          ? `<div class="pay-done"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/><div><b>Proof sent ✓</b><span>The organiser has it.</span></div><button type="button" class="tk-linkbtn" id="tkReproof">Change</button></div>`
+          : `<label class="pay-upload" for="tkProofFile"><span>⬆</span>Upload screenshot or slip</label>`}
+        <input type="file" id="tkProofFile" accept="image/jpeg,image/png,image/webp" hidden/>
+        <div class="tk-progress" id="tkProg" hidden><i></i></div>
+      </section>
+
+      <p class="pay-next">✓ Your QR ticket appears here and in your email once the organiser confirms your payment.</p>`;
+
+    body.querySelectorAll('[data-copy]').forEach(b => {
+      const go = () => navigator.clipboard?.writeText(b.dataset.copy).then(() => {
+        const i = b.querySelector('i'); if (i) { i.textContent = 'Copied'; setTimeout(() => { i.textContent = 'Copy'; }, 1500); }
+      }).catch(() => {});
+      b.addEventListener('click', go);
+      b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
     const input = document.getElementById('tkProofFile');
     document.getElementById('tkReproof')?.addEventListener('click', () => input.click());
     input.addEventListener('change', async () => {
@@ -166,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       try {
         const url = await SupabaseAPI.uploadTicketProof(ticket.id, file);
         ticket.proofUrl = url; ticket.proofUploadedAt = new Date().toISOString();
-        Utils.showToast('Proof of payment sent to the organiser.', 'success');
+        Utils.showToast('Proof sent to the organiser.', 'success');
         render();
       } catch (err) {
         prog.hidden = true;

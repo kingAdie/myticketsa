@@ -75,7 +75,7 @@ exports.handler = async (event) => {
     const isEvent = body.kind === 'event';
     const isStay  = body.kind === 'accommodation';
     // Events get a short link (ticketssa.co.za/e/jazz-night) once published.
-    const shareUrl = isEvent && row.slug ? `${SITE_URL}/e/${encodeURIComponent(row.slug)}`
+    const shareUrl = row.slug && (isEvent || isStay) ? `${SITE_URL}/${isEvent ? 'e' : 's'}/${encodeURIComponent(row.slug)}`
                    : (isEvent || isStay) ? kind.page(id) : null;
     const hi = `Hi ${esc(firstNameOf(owner))},`;
     const mail = approved

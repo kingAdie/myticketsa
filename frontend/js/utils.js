@@ -297,6 +297,12 @@ const Utils = (() => {
     return ev.slug ? `${location.origin}/e/${encodeURIComponent(ev.slug)}` : `${location.origin}/event.html?id=${encodeURIComponent(ev.id)}`;
   }
 
+  /** The public link for a stay: short /s/<slug> once published, else by id. */
+  function stayLink(a) {
+    if (!a) return location.origin + '/';
+    return a.slug ? `${location.origin}/s/${encodeURIComponent(a.slug)}` : `${location.origin}/accommodation.html?id=${encodeURIComponent(a.id)}`;
+  }
+
   function imgUrl(src, width = 800) {
     if (!src || typeof src !== 'string') return src || '';
     if (!src.includes('res.cloudinary.com')) return src;
@@ -520,6 +526,7 @@ const Utils = (() => {
     initMobileNav,
     imgUrl,
     eventLink,
+    stayLink,
     compressImage,
     uploadImage,
     shareLink,

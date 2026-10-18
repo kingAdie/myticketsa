@@ -186,23 +186,32 @@ const SupabaseAPI = (() => {
     return getEvent(slug).catch(() => null);
   }
 
-  // A slug no other event uses: "jazz-night", then "jazz-night-2", ...
-  async function uniqueEventSlug(db, id, title) {
-    const base = slugify(title) || 'event';
+  // A slug nothing else in the collection uses: "jazz-night", then "jazz-night-2", ...
+  async function uniqueSlug(db, coll, id, title) {
+    const base = slugify(title) || (coll === 'events' ? 'event' : 'stay');
     for (let n = 1; n <= 30; n++) {
       const cand = n === 1 ? base : `${base}-${n}`;
-      const snap = await db.collection('events').where('slug', '==', cand).limit(1).get();
+      const snap = await db.collection(coll).where('slug', '==', cand).limit(1).get();
       if (snap.empty || snap.docs[0].id === id) return cand;
     }
     return `${base}-${String(id).toLowerCase().replace(/[^a-z0-9]/g, '').slice(-6)}`;
   }
 
-  async function ensureEventSlug(db, id) {
-    const doc = await db.collection('events').doc(id).get();
+  async function ensureSlug(db, coll, id) {
+    const doc = await db.collection(coll).doc(id).get();
     if (!doc.exists || doc.data().slug) return doc.exists ? doc.data().slug : null;
-    const slug = await uniqueEventSlug(db, id, doc.data().title);
-    await db.collection('events').doc(id).update({ slug });
+    const slug = await uniqueSlug(db, coll, id, doc.data().title || doc.data().name);
+    await db.collection(coll).doc(id).update({ slug });
     return slug;
+  }
+  const ensureEventSlug = (db, id) => ensureSlug(db, 'events', id);
+
+  /* Stays: ticketssa.co.za/s/<slug>, made from the name when an admin publishes it. */
+  async function getAccommodationBySlug(slug) {
+    const db   = await firestoreClient();
+    const snap = await db.collection('accommodations').where('slug', '==', slug).where('status', '==', 'published').limit(1).get();
+    if (!snap.empty) return normaliseAccommodation(snap.docs[0].id, snap.docs[0].data());
+    return getAccommodation(slug).catch(() => null);
   }
 
   function buildTicketTypes(ticketTypes, eventId, { resetSold } = {}) {
@@ -858,6 +867,7 @@ const SupabaseAPI = (() => {
   function normaliseAccommodation(id, doc) {
     return {
       id,
+      slug:         doc.slug || null,
       name:         doc.name,
       description:  doc.description   || '',
       province:     doc.province,
@@ -1133,7 +1143,8 @@ const SupabaseAPI = (() => {
       updatedAt:  new Date().toISOString(),
     });
     // Give the event its short share link before the "you're live" email reads it.
-    if (kind === 'event' && status === 'published') await ensureEventSlug(db, id).catch(() => {});
+    if (status === 'published' && (kind === 'event' || kind === 'accommodation'))
+      await ensureSlug(db, kind === 'event' ? 'events' : 'accommodations', id).catch(() => {});
 
     let emailed = false;
     try {
@@ -1183,12 +1194,14 @@ const SupabaseAPI = (() => {
       status:        data.status        || 'published',
       updatedAt:     new Date().toISOString(),
     };
+    let accId = id;
     if (id) {
       await db.collection('accommodations').doc(id).update(row);
     } else {
-      const newId = makeId('ACC');
-      await db.collection('accommodations').doc(newId).set({ ...row, ownerId: null, createdAt: row.updatedAt });
+      accId = makeId('ACC');
+      await db.collection('accommodations').doc(accId).set({ ...row, ownerId: null, createdAt: row.updatedAt });
     }
+    if (row.status === 'published') await ensureSlug(db, 'accommodations', accId).catch(() => {});
   }
 
 
@@ -1206,13 +1219,13 @@ const SupabaseAPI = (() => {
       const e = normaliseEvent(d.id, d.data());
       spots.push({ kind: 'event', id: e.id, title: e.title, image: e.image,
         label: e.category || 'Event', where: [e.location, e.city].filter(Boolean).join(', '),
-        price: e.price > 0 ? 'From R ' + Math.round(e.price) : 'Free entry', href: 'event.html?id=' + encodeURIComponent(e.id) });
+        price: e.price > 0 ? 'From R ' + Math.round(e.price) : 'Free entry', href: e.slug ? 'e/' + encodeURIComponent(e.slug) : 'event.html?id=' + encodeURIComponent(e.id) });
     });
     ac.docs.forEach(d => {
       const a = normaliseAccommodation(d.id, d.data());
       spots.push({ kind: 'accommodation', id: a.id, title: a.name, image: (a.images || [])[0] || null,
         label: 'Stay', where: [a.city, a.province].filter(Boolean).join(', '),
-        price: a.priceFrom > 0 ? 'From R ' + Math.round(a.priceFrom) + ' / night' : 'Enquire for price', href: 'accommodation.html?id=' + encodeURIComponent(a.id) });
+        price: a.priceFrom > 0 ? 'From R ' + Math.round(a.priceFrom) + ' / night' : 'Enquire for price', href: a.slug ? 's/' + encodeURIComponent(a.slug) : 'accommodation.html?id=' + encodeURIComponent(a.id) });
     });
     return spots;
   }
@@ -1281,7 +1294,7 @@ const SupabaseAPI = (() => {
     adminGetStats,
     getMyFirestoreProfile, adminGetFirestoreUsers, adminSetUserRole,
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
-    getAccommodations, getAccommodation,
+    getAccommodations, getAccommodation, getAccommodationBySlug,
     createAccommodation, getMyAccommodations,
     getMyAccommodationBookings, getEnquiriesForMyStays,
     getTouristDestinations, submitAccommodationBooking,

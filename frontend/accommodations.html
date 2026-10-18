@@ -385,7 +385,7 @@ function renderAccCard(a) {
   const locStr = [city, prov].filter(Boolean).join(', ');
 
   return `
-    <a class="acc-card" href="accommodation.html?id=${escH(a.id)}" title="${escH(a.name)}">
+    <a class="acc-card" href="${a.slug ? 's/' + encodeURIComponent(a.slug) : 'accommodation.html?id=' + escH(a.id)}" title="${escH(a.name)}">
       <div class="acc-card__img-wrap">
         <img class="acc-card__img"
              src="${escH(img)}"
