@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Request Equipment or Merch | TicketsSA</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <meta name="theme-color" content="#080808"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
+    </nav>
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main class="container req-page" style="max-width:860px;padding:32px 16px 80px">
+    <!-- ──── REQUEST EQUIPMENT ──── -->
+    <section class="dash-section" id="tab-service">
+      <div class="dash-section-head">
+        <div class="dash-head-row">
+          <div>
+            <h1>Request Equipment</h1>
+            <p>Tell us what you need. We will confirm availability and pricing within 24 hours.</p>
+          </div>
+          <a class="btn btn-ghost btn-sm" href="javascript:history.back()">← Back</a>
+        </div>
+      </div>
+
+      <div class="dash-success hidden" id="svcSuccess">
+        <div class="dash-success-icon">✅</div>
+        <h3>Request Submitted!</h3>
+        <p>Our team will contact you within 24 hours with availability and pricing.</p>
+        <div class="dash-success-btns">
+          <button class="btn btn-secondary" id="svcReset">Submit Another Request</button>
+          <a class="btn btn-ghost" href="index.html">Back to home</a>
+        </div>
+      </div>
+
+      <div class="dash-form-error hidden" id="svcError"></div>
+
+      <div class="dash-step" id="svcPickerStep">
+        <div class="dash-step-label"><span class="dash-step-num">1</span>Select Equipment</div>
+        <div class="svc-picker-grid">
+          <button class="svc-pick-btn" data-svc="generators">⚡ Generators</button>
+          <button class="svc-pick-btn" data-svc="mobile-freezers">Mobile Freezers</button>
+          <button class="svc-pick-btn" data-svc="marquee-tents">Marquee Tents</button>
+          <button class="svc-pick-btn" data-svc="portable-toilets">Mobile Toilets</button>
+          <button class="svc-pick-btn" data-svc="tags">🏷 Tags &amp; Labels</button>
+          <button class="svc-pick-btn" data-svc="wristbands">🎗 Wristbands</button>
+          <button class="svc-pick-btn" data-svc="apparel">👕 Apparel &amp; Merch</button>
+          <button class="svc-pick-btn" data-svc="custom">Custom / Other</button>
+        </div>
+      </div>
+
+      <form id="serviceForm" class="hidden" novalidate>
+        <input type="hidden" id="svcId"/>
+
+        <div class="dash-step">
+          <div class="dash-step-label"><span class="dash-step-num">2</span>Request Details</div>
+
+          <div class="svc-selected-badge" id="svcSelectedBadge">
+            <span id="svcSelectedIcon"></span>
+            <span id="svcSelectedName"></span>
+            <button type="button" class="svc-change-btn" id="svcChangeBtn">Change</button>
+          </div>
+
+          <div class="dash-form-grid" style="margin-top:var(--s3)">
+
+            <div class="form-group">
+              <label class="form-label" for="svcEventDate">Event / Delivery Date <span class="req">*</span></label>
+              <input type="date" id="svcEventDate" class="form-input" required/>
+              <div class="field-error" id="svcEventDate-err"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="svcDuration">How Long?</label>
+              <select id="svcDuration" class="form-select">
+                <option value="1-day">1 day</option>
+                <option value="2-days">2 days</option>
+                <option value="3-days">3 days</option>
+                <option value="weekend">Full weekend</option>
+                <option value="week">1 week</option>
+                <option value="week+">More than 1 week</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="svcLocation">Event Location <span class="req">*</span></label>
+              <input type="text" id="svcLocation" class="form-input" placeholder="e.g. Cape Town, Green Point" required/>
+              <div class="field-error" id="svcLocation-err"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="svcQty">Quantity Needed</label>
+              <input type="number" id="svcQty" class="form-input" placeholder="e.g. 3" min="1" value="1"/>
+            </div>
+
+            <div class="form-group full">
+              <label class="form-label" for="svcDetails">Specific Requirements</label>
+              <textarea id="svcDetails" class="form-textarea" rows="3"
+                placeholder="Sizes, power requirements, brands, access needs or anything that will help us quote accurately…"
+                style="min-height:90px;resize:vertical"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="svcPhone">Your Contact Number <span class="req">*</span></label>
+              <input type="tel" id="svcPhone" class="form-input" placeholder="+27 82 000 0000" required/>
+              <div class="field-error" id="svcPhone-err"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="svcBudget">Approximate Budget</label>
+              <select id="svcBudget" class="form-select">
+                <option value="">Not sure yet</option>
+                <option value="u1k">Under R 1,000</option>
+                <option value="1k-5k">R 1,000 – R 5,000</option>
+                <option value="5k-15k">R 5,000 – R 15,000</option>
+                <option value="15k-50k">R 15,000 – R 50,000</option>
+                <option value="50k+">R 50,000+</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="dash-form-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="svcSubmitBtn">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Submit Equipment Request
+          </button>
+          <p class="dash-form-note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            No payment required. We will confirm availability and pricing within 24 hours.
+          </p>
+        </div>
+      </form>
+    </section>
+
+
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/seller-apply.js"></script>
+<script>
+/* Request a quote for equipment, printing or merch. Needs an account so we can reply. */
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof Auth !== 'undefined') Auth.updateNavbar();
+  Utils.initMobileNav();
+  if (!Auth.isLoggedIn()) {
+    Auth.requireAuth(function () { location.reload(); }, 'Sign in so we can reply to your request', 'signup');
+  }
+
+  function fieldOk(id, msg) {
+    var errEl = document.getElementById(id + '-err');
+    var inputEl = document.getElementById(id);
+    if (errEl)   { errEl.textContent = msg; errEl.style.display = msg ? 'block' : 'none'; }
+    if (inputEl) { inputEl.classList.toggle('error', !!msg); }
+  }
+
+  function clearFormErrors(form) {
+    form.querySelectorAll('.field-error').forEach(function(el) {
+      el.textContent = ''; el.style.display = 'none';
+    });
+    form.querySelectorAll('.error').forEach(function(el) { el.classList.remove('error'); });
+  }
+
+  function showBanner(id, msg) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function hideBanner(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  }
+
+  /* ==========================================================
+     EQUIPMENT REQUEST
+     ========================================================== */
+  function selectService(id, label) {
+    var parts = label.trim().split(' ');
+    var icon  = parts[0];
+    var name  = parts.slice(1).join(' ');
+
+    document.getElementById('svcId').value = id;
+    document.getElementById('svcSelectedIcon').textContent = icon;
+    document.getElementById('svcSelectedName').textContent = name || label;
+
+    document.querySelectorAll('.svc-pick-btn').forEach(function(b) {
+      b.classList.toggle('selected', b.getAttribute('data-svc') === id);
+    });
+
+    document.getElementById('svcPickerStep').classList.add('hidden');
+    document.getElementById('serviceForm').classList.remove('hidden');
+    document.getElementById('svcSelectedBadge').classList.remove('hidden');
+  }
+
+  document.querySelectorAll('.svc-pick-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      selectService(btn.getAttribute('data-svc'), btn.textContent.trim());
+    });
+  });
+
+  document.getElementById('svcChangeBtn').addEventListener('click', function() {
+    document.getElementById('svcPickerStep').classList.remove('hidden');
+    document.getElementById('serviceForm').classList.add('hidden');
+    document.getElementById('svcSelectedBadge').classList.add('hidden');
+    document.querySelectorAll('.svc-pick-btn').forEach(function(b) { b.classList.remove('selected'); });
+  });
+
+  document.getElementById('serviceForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearFormErrors(this);
+    hideBanner('svcError');
+
+    var valid = true;
+    if (!document.getElementById('svcEventDate').value)      { fieldOk('svcEventDate', 'Date is required.');             valid = false; }
+    if (!document.getElementById('svcLocation').value.trim()) { fieldOk('svcLocation',  'Location is required.');         valid = false; }
+    if (!document.getElementById('svcPhone').value.trim())    { fieldOk('svcPhone',     'Contact number is required.');   valid = false; }
+    if (!valid) return;
+
+    var btn = document.getElementById('svcSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+      var svcUser = Auth.getUser() || {};
+      var svcName = document.getElementById('svcSelectedName').textContent.trim();
+      await SupabaseAPI.submitServiceRequest({
+        serviceId:    document.getElementById('svcId').value,
+        serviceName:  document.getElementById('svcSelectedName').textContent.trim(),
+        eventDate:    document.getElementById('svcEventDate').value,
+        duration:     document.getElementById('svcDuration').value,
+        location:     document.getElementById('svcLocation').value,
+        quantity:     document.getElementById('svcQty').value || 1,
+        details:      document.getElementById('svcDetails').value,
+        contactPhone: document.getElementById('svcPhone').value,
+        budgetRange:  document.getElementById('svcBudget').value,
+      });
+      // Tell the support inbox (and email the customer a receipt). The request is already saved.
+      SellerApply.submit('equipment_request', {
+        title:        svcName || 'Equipment request',
+        contactName:  [svcUser.firstName, svcUser.lastName].filter(Boolean).join(' ') || svcUser.email,
+        contactEmail: svcUser.email,
+        contactPhone: document.getElementById('svcPhone').value,
+        details: SellerApply.detailsFrom([
+          ['Equipment',    svcName],
+          ['Event date',   document.getElementById('svcEventDate').value],
+          ['Duration',     document.getElementById('svcDuration').value],
+          ['Location',     document.getElementById('svcLocation').value],
+          ['Quantity',     document.getElementById('svcQty').value || 1],
+          ['Budget',       document.getElementById('svcBudget').value],
+          ['Details',      document.getElementById('svcDetails').value]
+        ])
+      }).catch(function (e) { console.warn('Equipment request email not sent:', e && e.message); });
+      document.getElementById('serviceForm').classList.add('hidden');
+      document.getElementById('svcPickerStep').classList.add('hidden');
+      document.getElementById('svcSuccess').classList.remove('hidden');
+      if (typeof Utils !== 'undefined') Utils.showToast('Equipment request sent!', 'success');
+    } catch (svcErr) {
+      showBanner('svcError', svcErr.message || 'Could not submit. Please try again.');
+    }
+
+    btn.disabled = false; btn.textContent = 'Submit Equipment Request';
+  });
+
+  document.getElementById('svcReset').addEventListener('click', function() {
+    document.getElementById('serviceForm').reset();
+    document.getElementById('serviceForm').classList.add('hidden');
+    document.getElementById('svcSuccess').classList.add('hidden');
+    document.getElementById('svcPickerStep').classList.remove('hidden');
+    document.getElementById('svcSelectedBadge').classList.add('hidden');
+    document.querySelectorAll('.svc-pick-btn').forEach(function(b) { b.classList.remove('selected'); });
+    hideBanner('svcError');
+  });
+
+
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('service')) selectService(params.get('service'), params.get('name') || params.get('service'));
+});
+</script>
+</body>
+</html>

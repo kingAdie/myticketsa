@@ -556,3 +556,15 @@ p{color:var(--text-2);line-height:1.75}
   /* .org-btn-icon fixed directly in organiser.css it loads after this
      file, so an unconditional rule there would otherwise win the cascade. */
 }
+
+/* ── "What should we call you?" prompt ───────────── */
+.name-ask{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.name-ask__card{width:100%;max-width:420px;padding:26px;border-radius:20px;background:var(--bg-2);border:1px solid var(--b2);box-shadow:0 30px 70px rgba(0,0,0,.6)}
+.name-ask__card h2{margin:0 0 6px;font-size:1.25rem;color:var(--text)}
+.name-ask__card p{margin:0 0 16px;color:var(--text-2);font-size:.9rem}
+.name-ask__row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.name-ask__row input{min-height:46px;padding:0 14px;border-radius:12px;border:1px solid var(--b2);background:var(--bg-3);color:var(--text);font:inherit}
+.name-ask__row input:focus{outline:none;border-color:var(--green)}
+.name-ask__err{color:#F87171;font-size:.82rem;min-height:18px;margin-top:8px}
+.name-ask__acts{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+@media(max-width:420px){.name-ask__row{grid-template-columns:1fr}}

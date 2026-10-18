@@ -462,6 +462,18 @@ const SupabaseAPI = (() => {
     return snap.docs.map(d => toRawBooking(d.id, d.data()));
   }
 
+  /** Booking enquiries guests sent for the signed-in seller's own stays. */
+  async function getEnquiriesForMyStays(accIds) {
+    if (!accIds || !accIds.length) return [];
+    const db = await firestoreClient();
+    const out = [];
+    for (let i = 0; i < accIds.length; i += 30) {
+      const snap = await db.collection('accommodationBookings').where('accommodationId', 'in', accIds.slice(i, i + 30)).get();
+      snap.docs.forEach(d => out.push(toRawBooking(d.id, d.data())));
+    }
+    return out.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  }
+
   /** Single ticket by id, for success.html when it lands here with no local
    *  booking state (e.g. opened on another device). */
   async function getTicket(id) {
@@ -1195,7 +1207,7 @@ const SupabaseAPI = (() => {
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,
-    getMyAccommodationBookings,
+    getMyAccommodationBookings, getEnquiriesForMyStays,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
     getHeroSpots, adminSetHero,

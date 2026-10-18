@@ -75,17 +75,21 @@ exports.handler = async (event) => {
     const isEvent = body.kind === 'event';
     const isStay  = body.kind === 'accommodation';
     const shareUrl = (isEvent || isStay) ? kind.page(id) : null;
+    const hi = `Hi ${esc(firstNameOf(owner))},`;
     const mail = approved
       ? {
           subject: `Your ${kind.label} is live: ${title}`,
           heading: 'Your listing is live 🎉',
           lines: isEvent ? [
+            hi,
             `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
             '<strong>Share this link to sell tickets.</strong> It is the page where people choose tickets, see your payment details and upload their proof of payment. Copy it and paste it on WhatsApp, Instagram, Facebook, posters, anywhere:',
           ] : isStay ? [
+            hi,
             `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
             '<strong>Share this link to get bookings.</strong> Guests see your rooms, prices and how to pay you, and send their booking enquiry from it. Copy it and paste it wherever you market your place:',
           ] : [
+            hi,
             `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
             'Customers can now find it. Enquiries go straight to the email address on your listing.',
           ],
@@ -106,7 +110,7 @@ exports.handler = async (event) => {
       : {
           subject: `Your ${kind.label} needs changes: ${title}`,
           heading: 'Your listing needs changes',
-          lines: [`We reviewed <strong>${esc(title)}</strong> and could not publish it yet.`,
+          lines: [hi, `We reviewed <strong>${esc(title)}</strong> and could not publish it yet.`,
                   note ? `<strong>Reason:</strong> ${esc(note)}` : 'Please check the details and photos, then resubmit.',
                   'Fix what is mentioned, then submit again from your Seller Hub. Reply to this email if you need help.'],
           cta: { href: `${SITE_URL}/dashboard.html?tab=listings`, label: 'Open my Seller Hub' },
@@ -127,6 +131,11 @@ exports.handler = async (event) => {
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// First name for the greeting: the profile name, else the start of the display name.
+function firstNameOf(u) {
+  return (u && (u.firstName || String(u.displayName || '').split(' ')[0])) || 'there';
 }
 
 function render({ heading, lines, cta, shareUrl, steps, more }) {

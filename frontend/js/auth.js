@@ -302,6 +302,69 @@ const Auth = (() => {
   }
 
   /* ── Navbar ───────────────────────────────────────────────────────────── */
+  /** Wait for Firebase to restore the signed-in user (it does so asynchronously). */
+  async function _currentFbUser() {
+    const fb = await getFirebase();
+    if (fb.auth().currentUser) return fb.auth().currentUser;
+    return await new Promise(resolve => {
+      const stop = fb.auth().onAuthStateChanged(u => { stop(); resolve(u); });
+      setTimeout(() => resolve(fb.auth().currentUser), 5000);
+    });
+  }
+
+  /** Change your own name (and optional seller/organisation name). */
+  async function updateMyProfile({ firstName, lastName, organisationName }) {
+    firstName = String(firstName || '').trim(); lastName = String(lastName || '').trim();
+    if (firstName.length < 2) throw new Error('Please enter your first name.');
+    const fb = await getFirebase();
+    const u  = await _currentFbUser();
+    if (!u) throw new Error('Please sign in again.');
+    const ref  = fb.firestore().collection('users').doc(u.uid);
+    const snap = await ref.get();
+    const fields = { firstName, lastName, organisationName: String(organisationName || '').trim() || null };
+    if (snap.exists) await ref.update(fields);
+    else await ref.set({ ...fields, email: u.email || '', role: 'attendee', createdAt: fb.firestore.FieldValue.serverTimestamp() });
+    try { await u.updateProfile({ displayName: `${firstName} ${lastName}`.trim() }); } catch (_) {}
+    const cur = getUser() || {};
+    saveSession(getToken(), { ...cur, ...fields });
+    updateNavbar();
+    return getUser();
+  }
+
+  /* Some accounts (older ones, or a Google profile with no name) have no
+     first name. Ask once per visit, so emails and the menu can greet them. */
+  function _askNameIfMissing() {
+    const u = getUser();
+    if (!u || (u.firstName && u.firstName.trim())) return;
+    if (sessionStorage.getItem('tsa_name_asked')) return;
+    if (/\/admin\//.test(location.pathname) || /account\.html$/.test(location.pathname)) return;
+    sessionStorage.setItem('tsa_name_asked', '1');
+    const box = document.createElement('div');
+    box.className = 'name-ask';
+    box.innerHTML = `
+      <form class="name-ask__card" role="dialog" aria-modal="true" aria-labelledby="naTitle">
+        <h2 id="naTitle">What should we call you?</h2>
+        <p>We use your name on your tickets and in the emails we send you.</p>
+        <div class="name-ask__row">
+          <input id="naFirst" placeholder="First name" autocomplete="given-name" required/>
+          <input id="naLast" placeholder="Last name" autocomplete="family-name"/>
+        </div>
+        <div class="name-ask__err" id="naErr"></div>
+        <div class="name-ask__acts"><button type="button" class="btn btn-ghost btn-sm" id="naLater">Later</button><button class="btn btn-primary btn-sm" type="submit">Save</button></div>
+      </form>`;
+    document.body.appendChild(box);
+    box.querySelector('#naFirst').focus();
+    box.querySelector('#naLater').addEventListener('click', () => box.remove());
+    box.querySelector('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        await updateMyProfile({ firstName: box.querySelector('#naFirst').value, lastName: box.querySelector('#naLast').value, organisationName: (getUser() || {}).organisationName });
+        box.remove();
+        if (typeof Utils !== 'undefined') Utils.showToast('Thanks! Your name is saved.', 'success');
+      } catch (err) { box.querySelector('#naErr').textContent = err.message; }
+    });
+  }
+
   function updateNavbar() {
     const actions = document.querySelector('.navbar__actions');
     if (!actions) return;
@@ -323,7 +386,7 @@ const Auth = (() => {
         <div class="nav-user" id="navUserMenu">
           <button class="nav-user__btn" id="navUserBtn" type="button" aria-haspopup="menu" aria-expanded="false">
             <span class="nav-user__avatar">${escHtml(initial)}</span>
-            <span class="nav-user__label">My TicketsSA</span>
+            <span class="nav-user__label">${escHtml((user.firstName || '').trim() || 'My account')}</span>
             <svg class="nav-user__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="nav-user__dropdown" id="navUserDropdown" role="menu">
@@ -334,6 +397,10 @@ const Auth = (() => {
                 <div class="nav-user__email">${escHtml(user.email)}</div>
               </div>
             </div>
+            <a href="${up}account.html" class="nav-user__link" role="menuitem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              My profile
+            </a>
             <div class="nav-user__label2">Buying</div>
             <a href="${up}my-tickets.html" class="nav-user__link" role="menuitem">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 1 0 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 1 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
@@ -378,6 +445,7 @@ const Auth = (() => {
         }
       });
       document.getElementById('navLogoutBtn')?.addEventListener('click', logout);
+      setTimeout(_askNameIfMissing, 600);
       document.addEventListener('click', e => {
         if (!e.target.closest('#navUserMenu')) {
           document.getElementById('navUserDropdown')?.classList.remove('open');
@@ -783,7 +851,7 @@ const Auth = (() => {
   return {
     getToken, getUser, isLoggedIn, isAdmin, isOrganiser,
     saveSession, logout, headers,
-    openModal, closeModal, updateNavbar,
+    openModal, closeModal, updateNavbar, updateMyProfile,
     requireAuth,
     // Lets other modules (api.js's Firestore client, utils.js's Storage
     // upload) reuse this same initialized Firebase app instead of each
