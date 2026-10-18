@@ -520,17 +520,25 @@ const SupabaseAPI = (() => {
   /** Buyer attaches proof of payment (a photo or screenshot) to their reservation. */
   async function uploadTicketProof(id, file) {
     const url = await Utils.uploadImage(file, 'proofs', { allowGuest: true });
-    const db  = await firestoreClient();
-    await db.collection('tickets').doc(id).update({ proofUrl: url, proofUploadedAt: new Date().toISOString() });
+    const srv = await callTickets({ action: 'proof', id, url });
+    if (!srv) {
+      const db = await firestoreClient();
+      await db.collection('tickets').doc(id).update({ proofUrl: url, proofUploadedAt: new Date().toISOString() });
+    }
     notifyBooking('ticket_proof', id);          // lets the organiser know
     return url;
   }
 
   /** Organiser moves a booking along: confirmed (paid), cancelled, checked_in, or back to confirmed. */
   async function setTicketStatus(id, status) {
-    const db   = await firestoreClient();
     const user = Auth?.getUser();
     if (!user) throw new Error('Please sign in.');
+    const srv = await callTickets({ action: 'status', id, status }, true);
+    if (srv) {
+      if (status === 'confirmed' && srv.from === 'reserved') notifyBooking('ticket_confirmed', id);   // buyer gets their ticket
+      return srv.ticket;
+    }
+    const db   = await firestoreClient();
     const now  = new Date().toISOString();
     const snap = await db.collection('tickets').doc(id).get();
     if (!snap.exists) throw new Error('Booking not found.');
@@ -612,7 +620,38 @@ const SupabaseAPI = (() => {
     }
   }
 
+  /* Bookings go through the server (netlify/functions/tickets.js), which checks
+     everything and writes with admin rights, so they never depend on browser-side
+     rules. Returns the server's answer, or null when the server can't be reached
+     (local preview), in which case the caller writes to Firestore directly. */
+  async function callTickets(body, withAuth) {
+    let res;
+    try {
+      const headers = withAuth && typeof Auth !== 'undefined' ? await Auth.freshHeaders() : { 'Content-Type': 'application/json' };
+      res = await fetch('/.netlify/functions/tickets', { method: 'POST', headers, body: JSON.stringify(body) });
+    } catch (_) { return null; }
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (res.ok && data && data.ok) return data;
+    if (res.status >= 400 && res.status < 500 && res.status !== 404 && data && data.error) throw Object.assign(new Error(data.error), { friendly: true });
+    return null;
+  }
+
   async function submitTicket(payload) {
+    const user = typeof Auth !== 'undefined' && Auth.getUser ? Auth.getUser() : null;
+    const srv = await callTickets({
+      action: 'create', eventId: payload.eventId, ticketTypeId: payload.ticketTypeId, quantity: payload.quantity,
+      firstName: payload.firstName, lastName: payload.lastName, email: payload.email, phone: payload.phone,
+      marketingOptIn: !!payload.marketingOptIn, uid: user && user.id,
+    });
+    if (srv) {
+      const t = srv.ticket;
+      return { ...normaliseTicket(srv.id, t), pricing: { subtotal: t.subtotal, serviceFee: 0, total: t.total } };
+    }
+    return submitTicketDirect(payload);
+  }
+
+  async function submitTicketDirect(payload) {
     const db = await firestoreClient();
 
     const ticketId   = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;

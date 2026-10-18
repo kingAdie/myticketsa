@@ -249,6 +249,15 @@ const Auth = (() => {
     window.location.href = (d > 0 ? '../'.repeat(d) : '') + 'index.html';
   }
 
+  /** Like headers(), but with a freshly minted ID token (stored ones expire after an hour). */
+  async function freshHeaders() {
+    try {
+      const u = await _currentFbUser();
+      if (u) return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${await u.getIdToken()}` };
+    } catch (_) {}
+    return headers();
+  }
+
   function headers() {
     const t = getToken();
     return t
@@ -716,6 +725,19 @@ const Auth = (() => {
     }
   }
 
+  /** Google sign-in that stays on the current page (used at checkout):
+   *  signs in, saves the session, refreshes the navbar and returns the user. */
+  async function googleSignIn() {
+    const fb   = await getFirebase();
+    const cred = await fb.auth().signInWithPopup(new fb.auth.GoogleAuthProvider());
+    await _ensureUserDoc(cred.user);
+    const tok  = await cred.user.getIdTokenResult();
+    const user = await _buildUserRecord(cred.user, tok);
+    saveSession(tok.token, user);
+    updateNavbar();
+    return user;
+  }
+
   /* ── Login ────────────────────────────────────────────────────────────── */
   async function handleLogin(e) {
     e.preventDefault();
@@ -850,8 +872,8 @@ const Auth = (() => {
 
   return {
     getToken, getUser, isLoggedIn, isAdmin, isOrganiser,
-    saveSession, logout, headers,
-    openModal, closeModal, updateNavbar, updateMyProfile,
+    saveSession, logout, headers, freshHeaders,
+    openModal, closeModal, updateNavbar, updateMyProfile, googleSignIn,
     requireAuth,
     // Lets other modules (api.js's Firestore client, utils.js's Storage
     // upload) reuse this same initialized Firebase app instead of each
