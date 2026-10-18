@@ -79,7 +79,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         </dl>
       </article>
       ${event && event.refundPolicy ? `<p class="tk-note"><strong>Cancellations &amp; refunds:</strong> ${esc(event.refundPolicy)} Set by the organiser. <a href="refunds.html">How refunds work</a></p>` : ''}
+      ${(typeof Auth !== 'undefined' && !Auth.isLoggedIn()) ? `
+      <div class="tk-acct">
+        <div><strong>Keep all your tickets in one place</strong>
+          <p>Create a free account with <b>${esc(t.buyer.email)}</b>. This booking and future ones appear under My Tickets, and you get updates about your events.</p></div>
+        <button class="btn btn-primary btn-sm" type="button" id="tkSignup">Create free account</button>
+      </div>` : ''}
       <p class="tk-note">TicketsSA does not take payment. Questions about this booking? Contact the organiser${event && event.organiser ? ' (' + esc(event.organiser) + ')' : ''}, or email <a href="mailto:support@ticketssa.co.za">support@ticketssa.co.za</a>.</p>`;
+
+    document.getElementById('tkSignup')?.addEventListener('click', () => {
+      Auth.openModal('signup', 'Create your free account to keep your tickets');
+      setTimeout(() => {
+        const f = (id, v) => { const el = document.getElementById(id); if (el && !el.value) el.value = v || ''; };
+        f('signupFirst', t.buyer.firstName); f('signupLast', t.buyer.lastName); f('signupEmail', t.buyer.email);
+      }, 60);
+    });
 
     const body = document.getElementById('tkBody');
     if (t.state === 'reserved')        renderReserved(body);

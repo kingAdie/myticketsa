@@ -26,6 +26,32 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPaymentMethodBox(selection);
   setupBackLink(selection);
   initForm(selection);
+  initExtras(selection);
+
+  // ── Proof of payment, updates opt-in, log-in hint ─────────────────────
+  let popFile = null;
+  function initExtras(sel) {
+    const paid = sel.paymentType === 'link' || sel.paymentType === 'bank';
+    const box = document.getElementById('popBox'), input = document.getElementById('popFile');
+    if (box && paid) box.hidden = false;
+    input?.addEventListener('change', () => {
+      popFile = input.files && input.files[0] || null;
+      if (!popFile) return;
+      box.classList.add('is-set');
+      Utils.setText('#popTitle', 'Proof attached: ' + popFile.name);
+      Utils.setText('#popSub', 'It is sent with your booking. Tap to choose a different file.');
+    });
+    if (typeof Auth !== 'undefined' && !Auth.isLoggedIn()) {
+      const hint = document.getElementById('loginHint');
+      if (hint) hint.hidden = false;
+      document.getElementById('loginHintBtn')?.addEventListener('click', () => Auth.requireAuth(() => location.reload(), 'Log in to save this ticket to your account', 'login'));
+    }
+    const u = typeof Auth !== 'undefined' && Auth.getUser && Auth.getUser();
+    if (u) {   // signed in: fill what we already know
+      const f = (id, v) => { const el = document.getElementById(id); if (el && !el.value && v) el.value = v; };
+      f('firstName', u.firstName); f('lastName', u.lastName); f('email', u.email);
+    }
+  }
 
   // ── Order summary ─────────────────────────────────────────────────────
   function renderSummary(sel) {
@@ -188,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ticketTypeName: sel.ticketTypeName,
       ticketPrice:    sel.ticketPrice,
       quantity:       sel.quantity,
+      marketingOptIn: !!document.getElementById('optinCheck')?.checked,
     };
 
     try {
@@ -196,6 +223,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // bank details, shown above and on the receipt.
       const result = await SupabaseAPI.submitTicket(payload);
       SupabaseAPI.notifyBooking('ticket', result.id);   // emails the owner, the buyer and support
+      if (popFile && result.status === 'reserved') {
+        if (btn) btn.textContent = 'Sending your proof…';
+        try { await SupabaseAPI.uploadTicketProof(result.id, popFile); }
+        catch (e) { Utils.showToast('Booked, but the proof did not upload. You can add it on the next page.', 'error', 6000); }
+      }
 
       Utils.setStorage('mt_booking', {
         ticketId: result.id,

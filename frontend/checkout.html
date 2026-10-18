@@ -13,6 +13,20 @@
   <link rel="stylesheet" href="css/styles.css"/>
   <link rel="stylesheet" href="css/auth.css"/>
   <link rel="stylesheet" href="css/checkout.css"/>
+  <style>
+    .pop-box{display:flex;gap:14px;align-items:center;margin-top:14px;padding:14px 16px;border-radius:14px;cursor:pointer;
+      border:1.5px dashed var(--green-border);background:rgba(22,163,74,.06);transition:background .2s,border-color .2s}
+    .pop-box:hover{background:rgba(22,163,74,.12);border-color:var(--green)}
+    .pop-box[hidden]{display:none}
+    .pop-box__icon{flex:0 0 38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--green);color:#fff;font-weight:800}
+    .pop-box__text strong{display:block;color:var(--text);font-size:.92rem}
+    .pop-box__text small{display:block;color:var(--text-2);font-size:.8rem;line-height:1.5;margin-top:2px}
+    .pop-box.is-set{border-style:solid}
+    .optin-row{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;color:var(--text-2);font-size:.85rem;line-height:1.5}
+    .optin-row input{margin-top:3px;accent-color:#16A34A;width:16px;height:16px;flex-shrink:0}
+    .login-hint{margin:12px 0 16px;padding:12px 14px;border-radius:12px;background:var(--bg-3);color:var(--text-2);font-size:.84rem;line-height:1.55}
+    .login-hint button{background:none;border:0;padding:0;color:var(--green-hi);font:inherit;font-weight:700;cursor:pointer}
+  </style>
 </head>
 <body>
 
@@ -144,6 +158,21 @@
                 </h2>
 
                 <div id="paymentMethodBox"><!-- populated by checkout.js based on the event's payment method --></div>
+
+                <label class="pop-box" id="popBox" for="popFile" hidden>
+                  <span class="pop-box__icon">⬆</span>
+                  <span class="pop-box__text"><strong id="popTitle">Already paid? Attach your proof of payment</strong>
+                    <small id="popSub">Optional. A photo or screenshot of the payment slip helps the organiser confirm your ticket faster. You can also add it later from your ticket page.</small></span>
+                </label>
+                <input type="file" id="popFile" accept="image/jpeg,image/png,image/webp" hidden/>
+              </div>
+
+              <div class="optin-row">
+                <input type="checkbox" id="optinCheck"/>
+                <label for="optinCheck">Email me about upcoming events on TicketsSA. Optional, and you can unsubscribe at any time.</label>
+              </div>
+              <div class="login-hint" id="loginHint" hidden>
+                Have a TicketsSA account? <button type="button" id="loginHintBtn">Log in</button> so this ticket is saved to it. No account? No problem, you can create one after booking.
               </div>
 
               <!-- Terms -->
@@ -223,7 +252,7 @@
             </div>
             <div class="summary-trust-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
-              Instant eTicket to your email
+              QR ticket by email once the organiser confirms payment
             </div>
             <div class="summary-trust-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>

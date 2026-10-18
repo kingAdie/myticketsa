@@ -778,6 +778,10 @@ document.addEventListener('DOMContentLoaded', function() {
         meta: [Utils.formatDate(e.date), [e.location, e.city].filter(Boolean).join(', ')].filter(Boolean).join(' · '),
         perf: qty ? '<b>' + qty + '</b> ticket' + (qty > 1 ? 's' : '') + ' sold · <b>' + hubMoney(value) + '</b> booked' : 'No sales yet',
         actions:
+          (e.status === 'published'
+            ? '<button class="btn btn-primary btn-sm" data-share="' + escHtml(location.origin + '/event.html?id=' + encodeURIComponent(e.id)) + '" data-share-title="' + escHtml(e.title) + '">Share link</button>' +
+              '<a class="btn btn-secondary btn-sm" href="scan.html?event=' + encodeURIComponent(e.id) + '">Scan</a>'
+            : '') +
           '<a class="btn btn-secondary btn-sm" href="event.html?id=' + encodeURIComponent(e.id) + '">Preview</a>' +
           '<a class="btn btn-secondary btn-sm" href="sell-event.html?edit=' + encodeURIComponent(e.id) + '">Edit</a>' +
           '<button class="btn btn-ghost btn-sm" data-del-event="' + encodeURIComponent(e.id) + '" data-del-title="' + escHtml(e.title) + '">Delete</button>'
@@ -880,6 +884,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* Only bookings the organiser marked as paid (or already scanned in) count as sales. */
   function isPaid(t) { return t.state === 'confirmed' || t.state === 'checked_in'; }
+
+  /* Share buttons anywhere in the Seller Hub */
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest && ev.target.closest('[data-share]');
+    if (b) { ev.preventDefault(); Utils.shareLink(b.getAttribute('data-share'), b.getAttribute('data-share-title')); }
+  });
 
   var ORDER_FILTER = 'reserved';
   var ORDER_LABEL  = { reserved: 'Awaiting payment', confirmed: 'Paid', checked_in: 'Checked in', expired: 'Expired', cancelled: 'Cancelled' };

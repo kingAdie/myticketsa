@@ -422,6 +422,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* ── Tickets section ───────────────────────────────────────────────── */
   let allTickets = [];
 
+  /* Contacts export: every buyer and account holder, one row per email.
+     "Updates OK" is yes only when they ticked the updates box at checkout,
+     which is the consent needed (POPIA) before sending them marketing. */
+  document.getElementById('exportContactsBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('exportContactsBtn');
+    btn.disabled = true; btn.textContent = 'Preparing…';
+    try {
+      const [tickets, users] = await Promise.all([SupabaseAPI.adminGetTickets(), SupabaseAPI.adminGetFirestoreUsers().catch(() => [])]);
+      const map = new Map();
+      const row = email => {
+        const k = String(email || '').trim().toLowerCase();
+        if (!k) return null;
+        if (!map.has(k)) map.set(k, { email: k, firstName: '', lastName: '', phone: '', account: 'no', updatesOk: 'no', bookings: 0, lastBooking: '' });
+        return map.get(k);
+      };
+      users.forEach(u => { const r = row(u.email); if (r) { r.account = 'yes'; r.firstName = r.firstName || u.firstName; r.lastName = r.lastName || u.lastName; } });
+      tickets.forEach(t => {
+        const r = row(t.buyer.email); if (!r) return;
+        r.firstName = r.firstName || t.buyer.firstName || ''; r.lastName = r.lastName || t.buyer.lastName || '';
+        r.phone = r.phone || t.buyer.phone || '';
+        r.bookings += 1;
+        if (t.marketingOptIn) r.updatesOk = 'yes';
+        if ((t.bookedAt || '') > r.lastBooking) r.lastBooking = t.bookedAt || '';
+      });
+      const cols = ['email', 'firstName', 'lastName', 'phone', 'account', 'updatesOk', 'bookings', 'lastBooking'];
+      const cell = v => { const x = String(v == null ? '' : v); return /[",\n]/.test(x) || /^[=+\-@]/.test(x) ? '"' + x.replace(/^([=+\-@])/, "'$1").replace(/"/g, '""') + '"' : x; };
+      const csv = [cols.join(',')].concat([...map.values()].map(r => cols.map(c => cell(r[c])).join(','))).join('\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = `ticketssa-contacts-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      Utils.showToast(`${map.size} contacts exported.`, 'success');
+    } catch (err) {
+      Utils.showToast(err.message || 'Could not export contacts.', 'error');
+    }
+    btn.disabled = false; btn.textContent = '⬇ Download contacts (CSV)';
+  });
+
   async function loadTickets() {
     document.getElementById('adminTicketsBody').innerHTML = `<div class="org-empty"><div class="spinner"></div></div>`;
     try {

@@ -411,6 +411,15 @@ const Utils = (() => {
     return data.secure_url;
   }
 
+  /* ---------- Share a link (phone share sheet, else copy) ---------- */
+  async function shareLink(url, title) {
+    try {
+      if (navigator.share) { await navigator.share({ title: title || 'TicketsSA', url }); return 'shared'; }
+    } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+    try { await navigator.clipboard.writeText(url); showToast('Link copied. Paste it in WhatsApp, Instagram or anywhere.', 'success'); return 'copied'; }
+    catch (_) { window.prompt('Copy this link:', url); return 'prompted'; }
+  }
+
   /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */
 
   const REFUND_OPTIONS = [
@@ -466,6 +475,7 @@ const Utils = (() => {
     imgUrl,
     compressImage,
     uploadImage,
+    shareLink,
     refundPolicyText,
     refundFields,
   };
