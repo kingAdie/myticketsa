@@ -591,22 +591,24 @@ document.addEventListener('DOMContentLoaded', function() {
       _ticketsLoaded = true;
       list.innerHTML = tickets.map(function(t) {
         var dateStr = t.event.date ? new Date(t.event.date).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' }) : '—';
-        var statusClass = t.status === 'confirmed' ? 'status-confirmed' : 'status-pending';
+        var st = t.state || t.status;
+        var statusClass = st === 'confirmed' ? 'status-confirmed' : 'status-pending';
+        var stLabel = { reserved: 'awaiting payment', confirmed: 'ticket ready', checked_in: 'used', expired: 'expired', cancelled: 'cancelled' }[st] || st;
         return [
-          '<div class="ticket-card">',
+          '<a class="ticket-card" style="display:block;color:inherit;text-decoration:none" href="ticket.html?id=' + encodeURIComponent(t.id) + '">',
             '<div class="ticket-card__head">',
               '<div>',
                 '<div class="ticket-card__title">' + escHtml(t.event.title) + '</div>',
                 '<div class="ticket-card__meta">' + escHtml(t.event.location) + ' · ' + escHtml(t.event.city) + ' · ' + dateStr + '</div>',
               '</div>',
-              '<span class="ticket-card__status ' + statusClass + '">' + t.status + '</span>',
+              '<span class="ticket-card__status ' + statusClass + '">' + escHtml(stLabel) + '</span>',
             '</div>',
             '<div class="ticket-card__body">',
               '<div class="ticket-card__field"><span>Ticket ID</span><strong>' + escHtml(t.id) + '</strong></div>',
               '<div class="ticket-card__field"><span>Type</span><strong>' + escHtml(t.ticket.typeName) + ' × ' + t.ticket.quantity + '</strong></div>',
-              '<div class="ticket-card__field"><span>Total Paid</span><strong>R ' + parseFloat(t.pricing.total).toFixed(2) + '</strong></div>',
+              '<div class="ticket-card__field"><span>Total</span><strong>R ' + parseFloat(t.pricing.total).toFixed(2) + '</strong></div>',
             '</div>',
-          '</div>',
+          '</a>',
         ].join('');
       }).join('');
 
@@ -700,15 +702,17 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    var soldTickets = HUB.sales.reduce(function (n, t) { return n + (t.ticket.quantity || 0); }, 0);
-    var revenue     = HUB.sales.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
+    var paid        = HUB.sales.filter(isPaid);
+    var soldTickets = paid.reduce(function (n, t) { return n + (t.ticket.quantity || 0); }, 0);
+    var revenue     = paid.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
     var pending     = HUB.events.filter(function (e) { return e.status === 'pending'; }).length;
 
     document.getElementById('sellerStats').innerHTML = [
       { v: listings, l: 'Listings' },
       { v: published, l: 'Published' },
-      { v: soldTickets, l: 'Tickets sold' },
-      { v: hubMoney(revenue), l: 'Booked value' }
+      { v: soldTickets, l: 'Tickets paid' },
+      { v: HUB.sales.filter(function (t) { return t.state === 'reserved'; }).length, l: 'Awaiting payment' },
+      { v: hubMoney(revenue), l: 'Paid value' }
     ].map(function (s) {
       return '<div class="sh-stat"><div class="sh-stat__value">' + escHtml(String(s.v)) +
              '</div><div class="sh-stat__label">' + escHtml(s.l) + '</div></div>';
@@ -761,7 +765,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     HUB.events.forEach(function (e) {
       var isExp = e.category === 'Travel & Tours';
-      var sold  = HUB.sales.filter(function (t) { return t.event.id === e.id; });
+      var sold  = HUB.sales.filter(function (t) { return t.event.id === e.id && isPaid(t); });
       var qty   = sold.reduce(function (n, t) { return n + (t.ticket.quantity || 0); }, 0);
       var value = sold.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
       var stKey = e.sold_out ? 'soldout' : (e.status === 'published' ? 'published' : (e.status === 'pending' ? 'pending' : 'archived'));
@@ -874,6 +878,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  /* Only bookings the organiser marked as paid (or already scanned in) count as sales. */
+  function isPaid(t) { return t.state === 'confirmed' || t.state === 'checked_in'; }
+
+  var ORDER_FILTER = 'reserved';
+  var ORDER_LABEL  = { reserved: 'Awaiting payment', confirmed: 'Paid', checked_in: 'Checked in', expired: 'Expired', cancelled: 'Cancelled' };
+
   function renderOrders() {
     document.getElementById('ordersLoading').style.display = 'none';
     var host = document.getElementById('ordersList');
@@ -897,24 +907,77 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    host.innerHTML = HUB.sales.map(function (t) {
-      return '<div class="sh-listing">' +
-        '<div class="sh-listing__thumb">🎟️</div>' +
-        '<div class="sh-listing__body">' +
-          '<div class="sh-listing__top">' +
-            '<span class="sh-listing__title">' + escHtml(t.event.title) + '</span>' +
-            '<span class="sh-badge sh-badge--' + (t.status === 'confirmed' ? 'published' : 'pending') + '">' + escHtml(t.status) + '</span>' +
-          '</div>' +
-          '<div class="sh-listing__meta">' +
-            escHtml(t.buyer.firstName + ' ' + t.buyer.lastName) + ' · ' + escHtml(t.buyer.email) +
-            (t.buyer.phone ? ' · ' + escHtml(t.buyer.phone) : '') +
-          '</div>' +
-          '<div class="sh-listing__perf">' +
-            escHtml(String(t.ticket.quantity)) + ' × ' + escHtml(t.ticket.typeName) +
-            ' · <b>' + hubMoney(t.pricing.total) + '</b> · booked ' + escHtml(hubSince(t.bookedAt)) +
-          '</div>' +
-        '</div></div>';
-    }).join('');
+    var count = function (st) { return HUB.sales.filter(function (t) { return st === 'all' || t.state === st || (st === 'ended' && (t.state === 'expired' || t.state === 'cancelled')); }).length; };
+    var chips = [['reserved', 'Awaiting payment'], ['confirmed', 'Paid'], ['checked_in', 'Checked in'], ['ended', 'Expired / cancelled'], ['all', 'All']];
+    var list = HUB.sales.filter(function (t) {
+      if (ORDER_FILTER === 'all') return true;
+      if (ORDER_FILTER === 'ended') return t.state === 'expired' || t.state === 'cancelled';
+      return t.state === ORDER_FILTER;
+    });
+
+    host.innerHTML =
+      '<div class="bk-bar">' +
+        '<div class="bk-chips">' + chips.map(function (c) {
+          return '<button type="button" class="bk-chip' + (ORDER_FILTER === c[0] ? ' is-on' : '') + '" data-f="' + c[0] + '">' + c[1] + ' <span>' + count(c[0]) + '</span></button>';
+        }).join('') + '</div>' +
+        '<a class="btn btn-primary btn-sm bk-scan" href="scan.html">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>' +
+          ' Scan tickets at the door</a>' +
+      '</div>' +
+      (list.length ? list.map(orderRow).join('') :
+        '<div class="mk-empty" style="padding:36px 16px"><div class="mk-empty__title">Nothing here</div><div class="mk-empty__body">No bookings in this group right now.</div></div>');
+
+    host.querySelectorAll('.bk-chip').forEach(function (b) {
+      b.addEventListener('click', function () { ORDER_FILTER = b.getAttribute('data-f'); renderOrders(); });
+    });
+    host.querySelectorAll('[data-act]').forEach(function (b) {
+      b.addEventListener('click', function () { orderAction(b, b.getAttribute('data-id'), b.getAttribute('data-act')); });
+    });
+  }
+
+  function orderRow(t) {
+    var st = t.state;
+    var buyer = escHtml((t.buyer.firstName || '') + ' ' + (t.buyer.lastName || ''));
+    var hold = '';
+    if (st === 'reserved' && t.expiresAt) hold = ' · held until ' + escHtml(new Date(t.expiresAt).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }));
+    var acts = [];
+    if (st === 'reserved' || st === 'expired') acts.push('<button class="btn btn-primary btn-sm" data-act="confirmed" data-id="' + escHtml(t.id) + '">✓ Mark as paid</button>');
+    if (st === 'reserved' || st === 'expired' || st === 'confirmed') acts.push('<button class="btn btn-ghost btn-sm bk-danger" data-act="cancelled" data-id="' + escHtml(t.id) + '">Cancel</button>');
+    if (st === 'checked_in') acts.push('<button class="btn btn-ghost btn-sm" data-act="confirmed" data-id="' + escHtml(t.id) + '">Undo check-in</button>');
+    return '<div class="bk-row bk-row--' + st + '">' +
+      '<div class="bk-row__main">' +
+        '<div class="bk-row__top"><strong>' + buyer + '</strong><span class="bk-state bk-state--' + st + '">' + (ORDER_LABEL[st] || st) + '</span></div>' +
+        '<div class="bk-row__meta">' + escHtml(t.event.title) + ' · ' + escHtml(String(t.ticket.quantity)) + ' × ' + escHtml(t.ticket.typeName) + ' · <b>' + hubMoney(t.pricing.total) + '</b></div>' +
+        '<div class="bk-row__meta">Ref <span class="bk-mono">' + escHtml(t.id) + '</span> · booked ' + escHtml(hubSince(t.bookedAt)) + hold + '</div>' +
+        '<div class="bk-row__meta"><a href="mailto:' + escHtml(t.buyer.email) + '">' + escHtml(t.buyer.email) + '</a>' + (t.buyer.phone ? ' · <a href="tel:' + escHtml(t.buyer.phone) + '">' + escHtml(t.buyer.phone) + '</a>' : '') + '</div>' +
+      '</div>' +
+      '<div class="bk-row__side">' +
+        (t.proofUrl ? '<a class="bk-proof" href="' + escHtml(t.proofUrl) + '" target="_blank" rel="noopener"><img src="' + escHtml(Utils.imgUrl(t.proofUrl, 160)) + '" alt=""/><span>View proof</span></a>'
+                    : (st === 'reserved' ? '<span class="bk-noproof">No proof yet</span>' : '')) +
+        '<div class="bk-acts">' + acts.join('') + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  async function orderAction(btn, id, to) {
+    var t = HUB.sales.find(function (x) { return x.id === id; });
+    if (!t) return;
+    var ask = to === 'confirmed' && t.state !== 'checked_in'
+      ? 'Mark ' + id + ' as paid? Only do this once the money is in your account. The buyer gets their QR ticket by email.'
+      : to === 'cancelled' ? 'Cancel booking ' + id + '? The ticket stops working.'
+      : 'Undo the check-in for ' + id + '?';
+    if (!confirm(ask)) return;
+    btn.disabled = true;
+    try {
+      await SupabaseAPI.setTicketStatus(id, to);
+      var fresh = await SupabaseAPI.getTicket(id);
+      HUB.sales = HUB.sales.map(function (x) { return x.id === id ? fresh : x; });
+      Utils.showToast(to === 'confirmed' && t.state !== 'checked_in' ? 'Marked as paid. The ticket was sent to the buyer.' : to === 'cancelled' ? 'Booking cancelled.' : 'Check-in undone.', 'success');
+      renderOrders();
+    } catch (err) {
+      btn.disabled = false;
+      Utils.showToast((err && err.message) || 'Could not update this booking.', 'error');
+    }
   }
 
   function renderProfile() {
@@ -938,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function renderEarnings() {
-    var revenue = HUB.sales.reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
+    var revenue = HUB.sales.filter(isPaid).reduce(function (n, t) { return n + (t.pricing.total || 0); }, 0);
     document.getElementById('earningsBody').innerHTML =
       '<div class="sh-stats">' +
         '<div class="sh-stat"><div class="sh-stat__value">' + hubMoney(revenue) + '</div><div class="sh-stat__label">Total booked</div></div>' +

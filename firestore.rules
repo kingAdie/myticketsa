@@ -105,14 +105,19 @@ service cloud.firestore {
       // phase's security work is about write integrity (below).
       allow read: if true;
 
-      // submitTicket()'s client path must look like a legitimate UNPAID
-      // honour-system booking (TicketsSA takes no payment), never a forged
-      // "already paid" record.
-      allow create: if request.resource.data.status           == 'confirmed'
+      // A new booking is RESERVED until the organiser confirms payment.
+      // Only a free event may create a ticket that is valid straight away,
+      // and the rule checks the event itself, not what the browser claims.
+      allow create: if (request.resource.data.status == 'reserved'
+                        || (request.resource.data.status == 'confirmed'
+                            && request.resource.data.total == 0
+                            && get(/databases/$(database)/documents/events/$(request.resource.data.eventId)).data.get('paymentType', '') == 'free'))
                     && request.resource.data.paymentMethod     == 'pending'
                     && request.resource.data.paymentReference  == null
                     && request.resource.data.paidAt            == null
                     && request.resource.data.qrCodeUrl          == null
+                    && request.resource.data.get('proofUrl', null)    == null
+                    && request.resource.data.get('checkedInAt', null) == null
                     && request.resource.data.quantity is int
                     && request.resource.data.quantity > 0
                     && request.resource.data.ticketPrice is number
@@ -125,7 +130,26 @@ service cloud.firestore {
                     && request.resource.data.eventId    is string
                     && request.resource.data.eventId.size() > 0;
 
-      // Nothing in the app edits a ticket after creation today.
+      // The buyer (who holds the unguessable ticket id) may attach proof of
+      // payment to a reservation. Nothing else on the ticket can change.
+      allow update: if resource.data.status == 'reserved'
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['proofUrl', 'proofUploadedAt'])
+                    && request.resource.data.proofUrl is string
+                    && request.resource.data.proofUrl.matches('https://res[.]cloudinary[.]com/.*');
+
+      // The event's organiser confirms payment, cancels, and checks people in
+      // at the door. Only these moves are allowed:
+      //   reserved  -> confirmed | cancelled
+      //   confirmed -> checked_in | cancelled
+      //   checked_in -> confirmed   (undo a mistaken check-in)
+      allow update: if isSignedIn()
+                    && request.auth.uid == get(/databases/$(database)/documents/events/$(resource.data.eventId)).data.organiserId
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+                         ['status', 'confirmedAt', 'confirmedBy', 'cancelledAt', 'cancelledBy', 'checkedInAt', 'checkedInBy'])
+                    && ((resource.data.status == 'reserved'   && request.resource.data.status in ['confirmed', 'cancelled'])
+                     || (resource.data.status == 'confirmed'  && request.resource.data.status in ['checked_in', 'cancelled'])
+                     || (resource.data.status == 'checked_in' && request.resource.data.status == 'confirmed'));
+
       allow update, delete: if isAdmin();
     }
 
