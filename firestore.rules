@@ -75,7 +75,8 @@ service cloud.firestore {
                         && request.resource.data.organiserId == request.auth.uid
                         && request.resource.data.status == 'pending'
                         && request.resource.data.featured == false
-                        && request.resource.data.get('hero', false) == false)
+                        && request.resource.data.get('hero', false) == false
+                        && request.resource.data.get('slug', null) == null)
                     || isAdmin();
 
       // An owner can edit their own event, but can't self-publish or
@@ -89,7 +90,8 @@ service cloud.firestore {
                         && (request.resource.data.status == resource.data.status
                             || (resource.data.status == 'rejected' && request.resource.data.status == 'pending'))
                         && request.resource.data.featured == resource.data.featured
-                        && request.resource.data.get('hero', false) == resource.data.get('hero', false))
+                        && request.resource.data.get('hero', false) == resource.data.get('hero', false)
+                        && request.resource.data.get('slug', null) == resource.data.get('slug', null))
                     || isAdmin();
 
       allow delete: if isOwner(resource.data.organiserId) || isAdmin();

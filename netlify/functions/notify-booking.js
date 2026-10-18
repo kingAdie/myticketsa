@@ -117,9 +117,9 @@ async function ticketMails(id, one) {
       to: [ownerEmail], replyTo: t.buyerEmail,
       subject: `New booking: ${t.eventTitle} (${id})`,
       html: shell(t.status === 'reserved' ? 'New reservation' : 'New ticket booking',
-        t.status === 'reserved'
+        hi(owner) + (t.status === 'reserved'
           ? `Someone reserved <strong>${esc(t.eventTitle)}</strong>. When their payment reaches you, open your Seller Hub → Bookings and click <strong>Mark as paid</strong>. That sends them their ticket.`
-          : `Someone booked <strong>${esc(t.eventTitle)}</strong> (free event). Their ticket is already valid.`,
+          : `Someone booked <strong>${esc(t.eventTitle)}</strong> (free event). Their ticket is already valid.`),
         [['Booking', rows], ['Customer', buyerRows]]),
     });
   }
@@ -160,7 +160,7 @@ async function ticketProofMails(id, one) {
   return [{
     to: [owner.email], replyTo: t.buyerEmail,
     subject: `Proof of payment uploaded: ${t.eventTitle} (${id})`,
-    html: shell('Proof of payment received', `${esc(`${t.buyerFirstName || ''} ${t.buyerLastName || ''}`.trim())} uploaded proof of payment for <strong>${esc(t.eventTitle)}</strong>. Check the money is in your account, then open your Seller Hub → Bookings and click <strong>Mark as paid</strong>: <a href="${SITE_URL}/dashboard.html?tab=orders">${SITE_URL}/dashboard.html?tab=orders</a>. Proof: <a href="${esc(t.proofUrl)}">view the upload</a>.`,
+    html: shell('Proof of payment received', hi(owner) + `${esc(`${t.buyerFirstName || ''} ${t.buyerLastName || ''}`.trim())} uploaded proof of payment for <strong>${esc(t.eventTitle)}</strong>. Check the money is in your account, then open your Seller Hub → Bookings and click <strong>Mark as paid</strong>: <a href="${SITE_URL}/dashboard.html?tab=orders">${SITE_URL}/dashboard.html?tab=orders</a>. Proof: <a href="${esc(t.proofUrl)}">view the upload</a>.`,
       [['Booking', [['Reference', id], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`], ['Total', `R${Number(t.total).toFixed(2)}`], ['Buyer email', t.buyerEmail]]]]),
   }];
 }
@@ -173,7 +173,7 @@ async function ticketConfirmedMails(id, one) {
   return [{
     to: [t.buyerEmail],
     subject: `Payment confirmed. Your ticket for ${t.eventTitle}`,
-    html: shell('Your ticket is ready 🎉', `The organiser confirmed your payment. Open your ticket and show the QR code at the entrance: <a href="${ticketLink(id)}">${ticketLink(id)}</a>`,
+    html: shell('Your ticket is ready 🎉', `Hi ${esc(t.buyerFirstName || 'there')}, the organiser confirmed your payment. Open your ticket and show the QR code at the entrance: <a href="${ticketLink(id)}">${ticketLink(id)}</a>`,
       [['Your ticket', [['Reference', id], ['Event', t.eventTitle], ['When', when], ['Where', [t.eventLocation, t.eventCity].filter(Boolean).join(', ')], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`]]]]),
   }];
 }
@@ -201,7 +201,7 @@ async function accommodationMails(id, one) {
     mails.push({
       to: [ownerEmail], replyTo: b.customerEmail,
       subject: `New booking enquiry: ${b.accommodationName} (${id})`,
-      html: shell('New booking enquiry', 'A guest would like to stay with you. Reply to this email or contact them directly to confirm availability and arrange payment.',
+      html: shell('New booking enquiry', hi(owner) + 'A guest would like to stay with you. Reply to this email or contact them directly to confirm availability and arrange payment.',
         [['Enquiry', rows], ['Guest', guestRows]]),
     });
   }
@@ -223,6 +223,12 @@ async function accommodationMails(id, one) {
 /* ── Email layout ───────────────────────────────────────── */
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// "Hi Thabo, " — personal greeting for account holders (falls back to "Hi there, ").
+function hi(u) {
+  const n = (u && (u.firstName || String(u.displayName || '').split(' ')[0])) || 'there';
+  return `Hi ${esc(n)}, `;
 }
 
 function shell(title, intro, sections) {

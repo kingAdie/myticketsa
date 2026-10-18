@@ -97,7 +97,8 @@ exports.handler = async (event) => {
     const sellerRes = await send({
       to:       [contactEmail],
       reply_to: REPLY_TO,
-      subject:  `We received your ${meta.label.toLowerCase()} — ${title} (${ref})`,
+      subject:  `We got it: ${title}`,
+      html:     buildReceipt({ kind, contactName, title }),
     });
     if (!sellerRes.ok) console.error('Resend error (seller receipt):', await sellerRes.text());
   } catch (e) {
@@ -116,6 +117,28 @@ function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* The seller's copy: short and friendly. The full details go to the team only. */
+function buildReceipt({ kind, contactName, title }) {
+  const first = String(contactName || '').trim().split(/\s+/)[0] || 'there';
+  const next  = kind === 'equipment_request'
+    ? 'We will find equipment for you and send a quote, usually within one working day.'
+    : kind === 'event'
+      ? 'We check it within 24 hours. Once it is live, we email you your link to share.'
+      : 'We check it within 24 hours and email you once it is live.';
+  return `<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:28px 12px;"><tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;">
+      <tr><td style="background:#0b0b0b;padding:22px 28px;"><div style="font-size:20px;font-weight:800;color:#ffffff;">tickets<span style="color:#16A34A;">sa</span></div></td></tr>
+      <tr><td style="padding:26px 28px;">
+        <h1 style="margin:0 0 12px;font-size:20px;color:#111827;">Thanks, we got it ✅</h1>
+        <p style="margin:0 0 12px;color:#374151;font-size:14px;line-height:1.7;">Hi ${esc(first)}, your ${esc(kind === 'equipment_request' ? 'request' : 'listing')} <strong>${esc(title)}</strong> is with our team.</p>
+        <p style="margin:0;color:#374151;font-size:14px;line-height:1.7;">${esc(next)}</p>
+      </td></tr>
+      <tr><td style="background:#fafafa;border-top:1px solid #e5e7eb;padding:16px 28px;text-align:center;color:#9ca3af;font-size:12px;">TicketsSA · South Africa · ticketssa.co.za</td></tr>
+    </table></td></tr></table></body></html>`;
 }
 
 function buildEmail({ meta, ref, now, contactName, contactEmail, contactPhone, title, details }) {

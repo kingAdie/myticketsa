@@ -78,6 +78,7 @@ const SupabaseAPI = (() => {
       organiserId:    doc.organiserId,
       createdAt:      doc.createdAt,
       updatedAt:      doc.updatedAt || null,
+      slug:           doc.slug || null,
       address:        doc.address        || null,
       refundPolicy:   doc.refundPolicy   || null,
       reviewNote:     doc.reviewNote     || null,
@@ -169,6 +170,39 @@ const SupabaseAPI = (() => {
     const db  = await firestoreClient();
     const doc = await db.collection('events').doc(id).get();
     return doc.exists ? normaliseEvent(doc.id, doc.data()) : null;
+  }
+
+  /* Short share links: ticketssa.co.za/e/<slug>. The slug is made from the
+     title when an admin publishes the event; old links by id still work. */
+  function slugify(text) {
+    return String(text || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/, '');
+  }
+
+  async function getEventBySlug(slug) {
+    const db   = await firestoreClient();
+    const snap = await db.collection('events').where('slug', '==', slug).where('status', '==', 'published').limit(1).get();
+    if (!snap.empty) return normaliseEvent(snap.docs[0].id, snap.docs[0].data());
+    return getEvent(slug).catch(() => null);
+  }
+
+  // A slug no other event uses: "jazz-night", then "jazz-night-2", ...
+  async function uniqueEventSlug(db, id, title) {
+    const base = slugify(title) || 'event';
+    for (let n = 1; n <= 30; n++) {
+      const cand = n === 1 ? base : `${base}-${n}`;
+      const snap = await db.collection('events').where('slug', '==', cand).limit(1).get();
+      if (snap.empty || snap.docs[0].id === id) return cand;
+    }
+    return `${base}-${String(id).toLowerCase().replace(/[^a-z0-9]/g, '').slice(-6)}`;
+  }
+
+  async function ensureEventSlug(db, id) {
+    const doc = await db.collection('events').doc(id).get();
+    if (!doc.exists || doc.data().slug) return doc.exists ? doc.data().slug : null;
+    const slug = await uniqueEventSlug(db, id, doc.data().title);
+    await db.collection('events').doc(id).update({ slug });
+    return slug;
   }
 
   function buildTicketTypes(ticketTypes, eventId, { resetSold } = {}) {
@@ -359,6 +393,7 @@ const SupabaseAPI = (() => {
     // set in firestoreClient()) — this is what lets admin.js's quick actions keep
     // calling this with an empty eventData ({}) to patch only status/featured.
     await db.collection('events').doc(id).update(fields);
+    if (options.status === 'published') await ensureEventSlug(db, id).catch(() => {});
     return eventData;
   }
 
@@ -460,6 +495,18 @@ const SupabaseAPI = (() => {
       .orderBy('createdAt', 'desc')
       .get();
     return snap.docs.map(d => toRawBooking(d.id, d.data()));
+  }
+
+  /** Booking enquiries guests sent for the signed-in seller's own stays. */
+  async function getEnquiriesForMyStays(accIds) {
+    if (!accIds || !accIds.length) return [];
+    const db = await firestoreClient();
+    const out = [];
+    for (let i = 0; i < accIds.length; i += 30) {
+      const snap = await db.collection('accommodationBookings').where('accommodationId', 'in', accIds.slice(i, i + 30)).get();
+      snap.docs.forEach(d => out.push(toRawBooking(d.id, d.data())));
+    }
+    return out.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
   }
 
   /** Single ticket by id, for success.html when it lands here with no local
@@ -1046,6 +1093,8 @@ const SupabaseAPI = (() => {
       reviewNote: status === 'rejected' ? (note || null) : null,
       updatedAt:  new Date().toISOString(),
     });
+    // Give the event its short share link before the "you're live" email reads it.
+    if (kind === 'event' && status === 'published') await ensureEventSlug(db, id).catch(() => {});
 
     let emailed = false;
     try {
@@ -1187,7 +1236,7 @@ const SupabaseAPI = (() => {
   }
 
   return {
-    getEvents, getEvent,
+    getEvents, getEvent, getEventBySlug,
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
     adminGetStats,
@@ -1195,7 +1244,7 @@ const SupabaseAPI = (() => {
     adminGetServiceRequests, adminUpdateServiceRequestStatus,
     getAccommodations, getAccommodation,
     createAccommodation, getMyAccommodations,
-    getMyAccommodationBookings,
+    getMyAccommodationBookings, getEnquiriesForMyStays,
     getTouristDestinations, submitAccommodationBooking,
     adminSaveAccommodation, adminDeleteAccommodation,
     getHeroSpots, adminSetHero,

@@ -74,41 +74,38 @@ exports.handler = async (event) => {
     const approved = status === 'published';
     const isEvent = body.kind === 'event';
     const isStay  = body.kind === 'accommodation';
-    const shareUrl = (isEvent || isStay) ? kind.page(id) : null;
+    // Events get a short link (ticketssa.co.za/e/jazz-night) once published.
+    const shareUrl = isEvent && row.slug ? `${SITE_URL}/e/${encodeURIComponent(row.slug)}`
+                   : (isEvent || isStay) ? kind.page(id) : null;
+    const hi = `Hi ${esc(firstNameOf(owner))},`;
     const mail = approved
       ? {
-          subject: `Your ${kind.label} is live: ${title}`,
-          heading: 'Your listing is live 🎉',
-          lines: isEvent ? [
-            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
-            '<strong>Share this link to sell tickets.</strong> It is the page where people choose tickets, see your payment details and upload their proof of payment. Copy it and paste it on WhatsApp, Instagram, Facebook, posters, anywhere:',
-          ] : isStay ? [
-            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
-            '<strong>Share this link to get bookings.</strong> Guests see your rooms, prices and how to pay you, and send their booking enquiry from it. Copy it and paste it wherever you market your place:',
-          ] : [
-            `Good news. <strong>${esc(title)}</strong> has been approved and is now published on TicketsSA.`,
-            'Customers can now find it. Enquiries go straight to the email address on your listing.',
-          ],
+          subject: `You're live: ${title}`,
+          heading: 'You\'re live 🎉',
+          lines: [hi, `<strong>${esc(title)}</strong> is now on TicketsSA.`],
           shareUrl,
           steps: isEvent ? [
-            ['Share your link', 'People open it, reserve tickets and pay you directly (TicketsSA never holds the money).'],
-            ['Check payments', 'Each booking and its proof of payment appears in your Seller Hub → Bookings. When the money is in your account, click <strong>Mark as paid</strong>: the buyer gets their QR ticket by email.'],
-            ['Scan at the door', 'On event day open the scanner on your phone and scan each QR. A ticket can only get in once.'],
-          ] : null,
-          cta: { href: kind.page(id), label: isEvent ? 'View your event' : 'View your listing' },
-          more: isEvent ? [
-            { href: `${SITE_URL}/dashboard.html?tab=orders`, label: 'Manage bookings & payments' },
-            { href: `${SITE_URL}/scan.html?event=${encodeURIComponent(id)}`, label: 'Open the door scanner' },
+            ['Share your link', 'People use it to get tickets from you.'],
+            ['Mark as paid', 'They pay you by card (your payment link) or bank transfer and upload proof. You mark them as paid.'],
+            ['Scan at the door', 'Open your scanner and scan each ticket.'],
           ] : isStay ? [
-            { href: `${SITE_URL}/dashboard.html?tab=listings`, label: 'Open my Seller Hub' },
-          ] : [],
+            ['Share your link', 'Guests use it to send you booking requests.'],
+            ['Confirm with the guest', 'Reply to their request and arrange payment.'],
+          ] : null,
+          cta: { href: shareUrl || kind.page(id), label: isEvent ? 'View your event' : 'View your listing' },
+          more: isEvent ? [
+            { href: `${SITE_URL}/dashboard.html?tab=orders`, label: 'Bookings' },
+            { href: `${SITE_URL}/scan.html?event=${encodeURIComponent(id)}`, label: 'Scanner' },
+          ] : [
+            { href: `${SITE_URL}/dashboard.html?tab=listings`, label: 'Seller Hub' },
+          ],
         }
       : {
           subject: `Your ${kind.label} needs changes: ${title}`,
           heading: 'Your listing needs changes',
-          lines: [`We reviewed <strong>${esc(title)}</strong> and could not publish it yet.`,
-                  note ? `<strong>Reason:</strong> ${esc(note)}` : 'Please check the details and photos, then resubmit.',
-                  'Fix what is mentioned, then submit again from your Seller Hub. Reply to this email if you need help.'],
+          lines: [hi, `We could not publish <strong>${esc(title)}</strong> yet.`,
+                  note ? `<strong>Reason:</strong> ${esc(note)}` : 'Please check the details and photos.',
+                  'Fix it and submit again from your Seller Hub.'],
           cta: { href: `${SITE_URL}/dashboard.html?tab=listings`, label: 'Open my Seller Hub' },
         };
 
@@ -129,17 +126,22 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// First name for the greeting: the profile name, else the start of the display name.
+function firstNameOf(u) {
+  return (u && (u.firstName || String(u.displayName || '').split(' ')[0])) || 'there';
+}
+
 function render({ heading, lines, cta, shareUrl, steps, more }) {
   const share = shareUrl ? `
       <tr><td style="padding:0 28px 6px;">
         <div style="border:1px dashed #16A34A;background:#f0fdf4;border-radius:10px;padding:14px 16px;">
-          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#15803d;margin-bottom:6px;">Your link to share (press and hold, or select it, to copy)</div>
-          <a href="${esc(shareUrl)}" style="font-family:Menlo,Consolas,monospace;font-size:14px;color:#111827;word-break:break-all;text-decoration:none;">${esc(shareUrl)}</a>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#15803d;margin-bottom:6px;">Your link to share</div>
+          <a href="${esc(shareUrl)}" style="font-size:16px;font-weight:700;color:#111827;word-break:break-all;text-decoration:none;">${esc(shareUrl.replace(/^https?:\/\//, ''))}</a>
         </div>
       </td></tr>` : '';
   const how = steps ? `
       <tr><td style="padding:16px 28px 0;">
-        <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #e5e7eb;padding-top:14px;margin-bottom:6px;">How it works from here</div>
+        <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;border-top:1px solid #e5e7eb;padding-top:14px;margin-bottom:6px;">How it works</div>
         ${steps.map((st, i) => `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:10px 0;"><tr>
           <td style="vertical-align:top;padding-right:12px;"><div style="width:24px;height:24px;border-radius:12px;background:#16A34A;color:#fff;font-size:12px;font-weight:700;text-align:center;line-height:24px;">${i + 1}</div></td>
           <td style="font-size:14px;color:#374151;line-height:1.6;"><strong style="color:#111827;">${esc(st[0])}</strong><br>${st[1]}</td></tr></table>`).join('')}

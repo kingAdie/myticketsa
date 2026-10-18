@@ -15,12 +15,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const MAX_QTY          = 10;
 
   /* ── Resolve event ID ─────────────────────────────────────────────── */
-  const eventId = Utils.getParam('id');
+  // Either event.html?id=EVT-... or the short share link /e/<slug>.
+  const slugMatch = location.pathname.match(/^\/e\/([^/?#]+)/);
+  const eventId = Utils.getParam('id') || (slugMatch ? decodeURIComponent(slugMatch[1]) : '');
   if (!eventId) { showError('No event specified.'); return; }
 
-  /* ── Fetch single event directly from Supabase ─────────────────────── */
   try {
-    currentEvent = await SupabaseAPI.getEvent(eventId);
+    currentEvent = slugMatch && !Utils.getParam('id')
+      ? await SupabaseAPI.getEventBySlug(eventId)
+      : await SupabaseAPI.getEvent(eventId);
     if (!currentEvent) {
       showError('Event not found. It may have been removed or the link is incorrect.');
       return;
@@ -30,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  window.__eventLink = Utils.eventLink(currentEvent);
   renderEventPage(currentEvent);
   initQuantitySelector();
 
