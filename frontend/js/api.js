@@ -117,6 +117,7 @@ const SupabaseAPI = (() => {
       expiresAt:       doc.expiresAt       || null,
       proofUrl:        doc.proofUrl        || null,
       proofUploadedAt: doc.proofUploadedAt || null,
+      paidClaimedAt:   doc.paidClaimedAt || null,
       confirmedAt:     doc.confirmedAt     || null,
       cancelledAt:     doc.cancelledAt     || null,
       checkedInAt:     doc.checkedInAt     || null,
@@ -539,6 +540,16 @@ const SupabaseAPI = (() => {
   }
 
   /** Organiser moves a booking along: confirmed (paid), cancelled, checked_in, or back to confirmed. */
+  /** Buyer taps "I've paid" without a slip: the organiser is told to check. */
+  async function markTicketPaidByBuyer(id) {
+    const srv = await callTickets({ action: 'paid', id });
+    if (!srv) {
+      const db = await firestoreClient();
+      await db.collection('tickets').doc(id).update({ paidClaimedAt: new Date().toISOString() });
+    }
+    notifyBooking('ticket_proof', id);
+  }
+
   async function setTicketStatus(id, status) {
     const user = Auth?.getUser();
     if (!user) throw new Error('Please sign in.');
@@ -1304,7 +1315,7 @@ const SupabaseAPI = (() => {
     adminSaveTouristDestination, adminDeleteTouristDestination,
     submitServiceRequest, getMyServiceRequests,
     getMyTickets, getTicket, submitTicket, getSalesForMyEvents,
-    uploadTicketProof, setTicketStatus, checkInTicket, parseTicketCode,
+    uploadTicketProof, markTicketPaidByBuyer, setTicketStatus, checkInTicket, parseTicketCode,
     createSellerListing, getMySellerListings, adminGetSellerListings, adminDeleteSellerListing,
     adminGetPendingSubmissions, adminGetTickets, adminGetOwnerProfile, adminReviewListing, notifyBooking,
   };

@@ -153,14 +153,17 @@ function paymentInstructions(ev) {
 /* ── Buyer uploaded proof of payment: tell the organiser ── */
 async function ticketProofMails(id, one) {
   const t = await one('tickets', id);
-  if (!t || t.status !== 'reserved' || !fresh(t.proofUploadedAt)) return null;
+  // Either a proof upload, or the buyer tapping "I've paid" (no slip).
+  const slip = fresh(t && t.proofUploadedAt) && t.proofUrl;
+  if (!t || t.status !== 'reserved' || !(slip || fresh(t.paidClaimedAt))) return null;
   const ev    = t.eventId ? await one('events', t.eventId) : null;
   const owner = ev && ev.organiserId ? await one('users', ev.organiserId) : null;
   if (!owner || !owner.email) return null;
+  const who = esc(`${t.buyerFirstName || ''} ${t.buyerLastName || ''}`.trim());
   return [{
     to: [owner.email], replyTo: t.buyerEmail,
-    subject: `Proof of payment uploaded: ${t.eventTitle} (${id})`,
-    html: shell('Proof of payment received', hi(owner) + `${esc(`${t.buyerFirstName || ''} ${t.buyerLastName || ''}`.trim())} uploaded proof of payment for <strong>${esc(t.eventTitle)}</strong>. Check the money is in your account, then open your Seller Hub → Bookings and click <strong>Mark as paid</strong>: <a href="${SITE_URL}/dashboard.html?tab=orders">${SITE_URL}/dashboard.html?tab=orders</a>. Proof: <a href="${esc(t.proofUrl)}">view the upload</a>.`,
+    subject: `${slip ? 'Proof of payment uploaded' : 'Buyer says they paid'}: ${t.eventTitle} (${id})`,
+    html: shell(slip ? 'Proof of payment received' : 'A buyer says they paid', hi(owner) + `${who} ${slip ? 'uploaded proof of payment' : 'says they paid'} for <strong>${esc(t.eventTitle)}</strong>. Check the money is in your account (reference <strong>${esc(id)}</strong>), then open your Seller Hub → Bookings and click <strong>Mark as paid</strong>: <a href="${SITE_URL}/dashboard.html?tab=orders">${SITE_URL}/dashboard.html?tab=orders</a>.${slip ? ` Proof: <a href="${esc(t.proofUrl)}">view the upload</a>.` : ''}`,
       [['Booking', [['Reference', id], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`], ['Total', `R${Number(t.total).toFixed(2)}`], ['Buyer email', t.buyerEmail]]]]),
   }];
 }
@@ -173,7 +176,7 @@ async function ticketConfirmedMails(id, one) {
   return [{
     to: [t.buyerEmail],
     subject: `Payment confirmed. Your ticket for ${t.eventTitle}`,
-    html: shell('Your ticket is ready 🎉', `Hi ${esc(t.buyerFirstName || 'there')}, the organiser confirmed your payment. Open your ticket and show the QR code at the entrance: <a href="${ticketLink(id)}">${ticketLink(id)}</a>`,
+    html: shell("You're in 🎉", `Hi ${esc(t.buyerFirstName || 'there')}, your payment is confirmed. Your ticket is ready: open it and show the QR code at the entrance.<br><br><a href="${ticketLink(id)}" style="display:inline-block;background:#16A34A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:10px;">Open my QR ticket</a><br><br><span style="color:#6b7280;font-size:13px;">Tip: save this email. Your ticket works once, so don't share the QR code.</span>`,
       [['Your ticket', [['Reference', id], ['Event', t.eventTitle], ['When', when], ['Where', [t.eventLocation, t.eventCity].filter(Boolean).join(', ')], ['Ticket', `${t.ticketTypeName} × ${t.quantity}`]]]]),
   }];
 }
