@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ? `<div class="hub-thumb"><img src="${esc(Utils.imgUrl(img, 200))}" alt="" loading="lazy" onerror="this.remove()"/></div>`
     : '<div class="hub-thumb hub-thumb--empty">🎟</div>';
   const STATUS = { pending: 'In review', published: 'Live', rejected: 'Needs changes' };
-  const eventUrl = id => `${location.origin}/event.html?id=${encodeURIComponent(id)}`;
   const stayUrl  = id => `${location.origin}/accommodation.html?id=${encodeURIComponent(id)}`;
 
   const hr = new Date().getHours();
@@ -81,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ══ SHARE ═══════════════════════════════════════════════ */
   function renderShare() {
     const live = [
-      ...HUB.events.filter(e => e.status === 'published').map(e => ({ title: e.title, img: e.image, url: eventUrl(e.id), meta: [e.date ? Utils.formatDate(e.date) : '', e.city].filter(Boolean).join(' · '), sold: soldFor(e.id) })),
+      ...HUB.events.filter(e => e.status === 'published').map(e => ({ title: e.title, img: e.image, url: Utils.eventLink(e), meta: [e.date ? Utils.formatDate(e.date) : '', e.city].filter(Boolean).join(' · '), sold: soldFor(e.id) })),
       ...HUB.accs.filter(a => a.status === 'published').map(a => ({ title: a.name, img: (a.images || [])[0], url: stayUrl(a.id), meta: [a.city, a.province].filter(Boolean).join(', ') })),
     ];
     const waiting = [...HUB.events, ...HUB.accs].filter(x => x.status !== 'published');

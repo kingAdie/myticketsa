@@ -2,6 +2,8 @@
 <html lang="en-ZA">
 <head>
   <meta charset="UTF-8"/>
+  <!-- Served at /event.html and at the short link /e/<slug>: resolve files from the site root. -->
+  <base href="/"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Event · TicketsSA</title>
   <meta name="description" content="Event details and tickets on TicketsSA."/>
@@ -243,7 +245,7 @@
 <script>
   document.getElementById('shareEventBtn')?.addEventListener('click', function () {
     var t = (document.getElementById('eventTitle') || {}).textContent || 'Event';
-    Utils.shareLink(location.href.split('#')[0], t.trim() + ' | TicketsSA');
+    Utils.shareLink(window.__eventLink || location.href.split('#')[0], t.trim() + ' | TicketsSA');
   });
 </script>
 </body>

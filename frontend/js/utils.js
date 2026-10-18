@@ -211,7 +211,8 @@ const Utils = (() => {
    * @param {Object} [params] - query params key/value
    */
   function navigateTo(page, params = {}) {
-    const url = new URL(page, window.location.origin + window.location.pathname.replace(/[^/]*$/, ''));
+    // baseURI honours a <base> tag (event.html is also served at /e/<slug>).
+    const url = new URL(page, document.baseURI);
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     window.location.href = url.toString();
   }
@@ -290,6 +291,12 @@ const Utils = (() => {
    * @param {number} width - Target width in pixels (default 800)
    * @returns {string}
    */
+  /** The public link for an event: short /e/<slug> once published, else by id. */
+  function eventLink(ev) {
+    if (!ev) return location.origin + '/';
+    return ev.slug ? `${location.origin}/e/${encodeURIComponent(ev.slug)}` : `${location.origin}/event.html?id=${encodeURIComponent(ev.id)}`;
+  }
+
   function imgUrl(src, width = 800) {
     if (!src || typeof src !== 'string') return src || '';
     if (!src.includes('res.cloudinary.com')) return src;
@@ -512,6 +519,7 @@ const Utils = (() => {
     setHTML,
     initMobileNav,
     imgUrl,
+    eventLink,
     compressImage,
     uploadImage,
     shareLink,
