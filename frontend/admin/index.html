@@ -220,7 +220,10 @@
     <section class="admin-section hidden" id="section-tickets">
       <div class="admin-card-header" style="margin-bottom:var(--sp-lg);">
         <h2>Tickets Sold</h2>
-        <input type="text" class="form-input" id="ticketSearchInput" placeholder="Search by name, email, event…" style="width:260px;"/>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" id="exportContactsBtn" type="button" title="Everyone who booked or has an account">⬇ Download contacts (CSV)</button>
+          <input type="text" class="form-input" id="ticketSearchInput" placeholder="Search by name, email, event…" style="width:260px;"/>
+        </div>
       </div>
       <div class="admin-card" style="padding:0;overflow:hidden;">
         <div id="adminTicketsBody"><div class="org-empty"><div class="spinner"></div></div></div>
