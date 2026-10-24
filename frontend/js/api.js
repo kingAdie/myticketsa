@@ -756,7 +756,7 @@ const SupabaseAPI = (() => {
   async function adminSetUserRole(userId, role) {
     const res = await fetch('/.netlify/functions/firebase-set-role', {
       method:  'POST',
-      headers: Auth?.headers ? Auth.headers() : { 'Content-Type': 'application/json' },
+      headers: Auth?.freshHeaders ? await Auth.freshHeaders() : { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ userId, role }),
     });
     if (!res.ok) throw new Error(await res.text());
