@@ -153,9 +153,8 @@ function paymentInstructions(ev) {
 /* ── Buyer uploaded proof of payment: tell the organiser ── */
 async function ticketProofMails(id, one) {
   const t = await one('tickets', id);
-  // Either a proof upload, or the buyer tapping "I've paid" (no slip).
   const slip = fresh(t && t.proofUploadedAt) && t.proofUrl;
-  if (!t || t.status !== 'reserved' || !(slip || fresh(t.paidClaimedAt))) return null;
+  if (!t || t.status !== 'reserved' || !slip) return null;
   const ev    = t.eventId ? await one('events', t.eventId) : null;
   const owner = ev && ev.organiserId ? await one('users', ev.organiserId) : null;
   if (!owner || !owner.email) return null;

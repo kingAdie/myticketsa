@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${t.buyer.phone ? `<span class="hub-meta"><a href="tel:${esc(t.buyer.phone)}">${esc(t.buyer.phone)}</a></span>` : ''}
       </div>
       <div class="hub-row__side">
-        ${t.proofUrl ? `<a class="hub-proof" href="${esc(t.proofUrl)}" target="_blank" rel="noopener"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/>Proof of payment</a>` : (st === 'reserved' ? (t.paidClaimedAt ? '<span class="hub-says">Buyer says paid, check your bank</span>' : '<span class="hub-meta">No proof yet</span>') : '')}
+        ${t.proofUrl ? `<a class="hub-proof" href="${esc(t.proofUrl)}" target="_blank" rel="noopener"><img src="${esc(Utils.imgUrl(t.proofUrl, 160))}" alt=""/>Proof of payment</a>` : (st === 'reserved' ? '<span class="hub-meta">No proof yet</span>' : '')}
         <div class="hub-acts">${acts.join('')}</div>
       </div>
     </div>`;
