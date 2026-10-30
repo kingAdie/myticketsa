@@ -72,10 +72,12 @@ exports.handler = async (event) => {
 
     const title = row[kind.titleField] || 'your listing';
     const approved = status === 'published';
-    const isEvent = body.kind === 'event';
+    const isService = body.kind === 'event' && row.kind === 'service';
+    const isEvent = body.kind === 'event' && !isService;
     const isStay  = body.kind === 'accommodation';
     // Events get a short link (ticketssa.co.za/e/jazz-night) once published.
-    const shareUrl = row.slug && (isEvent || isStay) ? `${SITE_URL}/${isEvent ? 'e' : 's'}/${encodeURIComponent(row.slug)}`
+    const shareUrl = row.slug && (isEvent || isStay || isService) ? `${SITE_URL}/${isEvent ? 'e' : isService ? 'b' : 's'}/${encodeURIComponent(row.slug)}`
+                   : isService ? `${SITE_URL}/book-service.html?id=${encodeURIComponent(id)}`
                    : (isEvent || isStay) ? kind.page(id) : null;
     const hi = `Hi ${esc(firstNameOf(owner))},`;
     const mail = approved
@@ -88,11 +90,15 @@ exports.handler = async (event) => {
             ['Share your link', 'People use it to get tickets from you.'],
             ['Mark as paid', 'They pay you by card (your payment link) or bank transfer and upload proof. You mark them as paid.'],
             ['Scan at the door', 'Open your scanner and scan each ticket.'],
+          ] : isService ? [
+            ['Share your link', 'Customers pick a package and one of your open dates, and send a request.'],
+            ['Accept or decline', 'Accept in your Seller Hub and confirm the price. They get your payment details.'],
+            ['Mark as paid', 'When the money arrives, mark it as paid. They get a confirmation.'],
           ] : isStay ? [
             ['Share your link', 'Guests use it to send you booking requests.'],
             ['Confirm with the guest', 'Reply to their request and arrange payment.'],
           ] : null,
-          cta: { href: shareUrl || kind.page(id), label: isEvent ? 'View your event' : 'View your listing' },
+          cta: { href: shareUrl || kind.page(id), label: isEvent ? 'View your event' : isService ? 'View your service' : 'View your listing' },
           more: isEvent ? [
             { href: `${SITE_URL}/dashboard.html?tab=orders`, label: 'Bookings' },
             { href: `${SITE_URL}/scan.html?event=${encodeURIComponent(id)}`, label: 'Scanner' },

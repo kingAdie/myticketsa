@@ -46,6 +46,11 @@
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
+  for = "/booking.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
   for = "/checkout.html"
   [headers.values]
     X-Robots-Tag = "noindex, nofollow"
@@ -122,6 +127,32 @@
 [[redirects]]
   from = "/s/*"
   to   = "/accommodation.html"
+  status = 200
+
+# ... and for services: ticketssa.co.za/b/chef-ramarumo-catering
+[[redirects]]
+  from = "/b/*"
+  to   = "/book-service.html"
+  status = 200
+
+[[redirects]]
+  from = "/book"
+  to   = "/book.html"
+  status = 200
+
+[[redirects]]
+  from = "/booking"
+  to   = "/booking.html"
+  status = 200
+
+[[redirects]]
+  from = "/book-service"
+  to   = "/book-service.html"
+  status = 200
+
+[[redirects]]
+  from = "/sell-service"
+  to   = "/sell-service.html"
   status = 200
 
 # /events had pointed at events.html, which does not exist it 404'd.

@@ -1580,14 +1580,19 @@ async function buildReviewData(kind, id) {
     const owner = await SupabaseAPI.adminGetOwnerProfile(e.organiserId).catch(() => null);
     const ownerEmail = owner && owner.email;
     return {
-      label: e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, status: e.status, note: e.reviewNote,
+      label: e.kind === 'service' ? 'Service' : e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, status: e.status, note: e.reviewNote,
       images: e.image ? [e.image] : [],
       submitter: [['Submitted by', e.organiser || '—'], ['Account email', ownerEmail ? `<a href="mailto:${escH(ownerEmail)}">${escH(ownerEmail)}</a>` : '—', true], ['Submitted', rvDate(e.createdAt)]],
-      sections: [
+      sections: (e.kind === 'service' ? [
+        ['Service', [['Category', e.category], ['Based in', [e.city, e.province].filter(Boolean).join(', ')], ['Travels to', e.serviceArea || '—'],
+          ['Open dates', `${e.openDates.length} date${e.openDates.length === 1 ? '' : 's'}${e.openDates.length ? ` (${e.openDates[0]} to ${e.openDates[e.openDates.length - 1]})` : ''}`], ['Bookings per day', String(e.slotsPerDay)]]],
+        ['Packages', (e.packages || []).map(p => [p.name, `${p.price === null ? 'On quote' : rvMoney(p.price) + (p.unit === 'guest' ? ' per guest' : ' per booking')} · ${p.minGuests || 1}${p.maxGuests ? '–' + p.maxGuests : '+'} guests${p.description ? ' · ' + p.description : ''}`])],
+      ] : [
         ['Event', [['Category', e.category], ['Date', [e.date, e.time].filter(Boolean).join(' · ')], ['Venue', e.location], ['Address', e.address], ['City', [e.city, e.province].filter(Boolean).join(', ')]]],
         ['Tickets', (e.ticketTypes || []).map(t => [t.name, `${rvMoney(t.price)} · ${t.available} available${t.description && t.description !== t.name ? ' · ' + t.description : ''}`])],
+      ]).concat([
         ['How buyers pay', e.paymentType === 'link' ? [['Payment link', e.paymentLink]] : e.paymentType === 'bank' ? [['Bank', e.bankName], ['Account holder', e.accountHolder], ['Account no.', e.accountNumber], ['Branch code', e.branchCode]] : [['Method', e.paymentType === 'free' ? 'Free event' : '—']]],
-      ],
+      ]),
       description: e.description, refund: e.refundPolicy, tags: e.tags,
       missing: e.image ? [] : ['No poster image'],
     };

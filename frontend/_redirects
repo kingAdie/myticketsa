@@ -20,6 +20,11 @@
 /event                       /event.html                                      200
 /e/*                         /event.html                                      200
 /s/*                         /accommodation.html                              200
+/b/*                         /book-service.html                               200
+/book                        /book.html                                       200
+/booking                     /booking.html                                    200
+/book-service                /book-service.html                               200
+/sell-service                /sell-service.html                               200
 /events                      /browse.html                                     200
 /top32-venda                 /top32-venda.html                                200
 /browse                      /browse.html                                     200

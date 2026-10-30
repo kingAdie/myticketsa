@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Services you can book · TicketsSA</title>
+  <meta name="description" content="Book caterers, photographers, DJs and more across South Africa, for the date you need."/>
+  <link rel="canonical" href="https://ticketssa.co.za/book"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
+  <link rel="stylesheet" href="css/phone.css"/>
+</head>
+<body>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="book.html"><span class="cat-icon">🧑‍🍳</span><span class="cat-label">Services</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
+    </nav>
+
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main class="container">
+  <header class="mk-head">
+    <h1 class="mk-head__title">Services you can book</h1>
+    <p class="mk-head__sub">Caterers, photographers, DJs and more. Pick a package and a date that suits you.</p>
+    <div class="search-bar" style="margin-top:22px;max-width:520px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <label class="sr-only" for="searchInput">Search services</label>
+      <input type="search" id="searchInput" placeholder="Search by name, town or province…" autocomplete="off"/>
+    </div>
+  </header>
+  <div class="mk-filters" id="filters" role="group" aria-label="Filter by category"></div>
+  <section class="mk-grid" id="grid" aria-live="polite"><div class="mk-skeleton"></div><div class="mk-skeleton"></div><div class="mk-skeleton"></div></section>
+  <div class="sv-list-cta"><b>Offer a service?</b><span>Caterers, photographers, DJs, decor and more. List it and take bookings by date.</span><a class="btn btn-primary" href="sell-service.html">List your service</a></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  Auth.updateNavbar(); Utils.initMobileNav();
+  var grid = document.getElementById('grid'), filters = document.getElementById('filters'), search = document.getElementById('searchInput');
+  var all = [], active = Utils.getParam('category') || 'All';
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function card(s) { return Utils.serviceCardHTML(s); }
+  function paint() {
+    var q = (search.value || '').trim().toLowerCase();
+    var list = all.filter(function (s) {
+      if (active !== 'All' && s.category !== active) return false;
+      return !q || [s.title, s.city, s.province, s.category, s.serviceArea].filter(Boolean).join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    if (!list.length) {
+      grid.style.display = 'block';
+      grid.innerHTML = '<div class="mk-empty"><div class="mk-empty__icon">🧑‍🍳</div><div class="mk-empty__title">' + (q ? 'Nothing matches that search' : 'No services here yet') + '</div><div class="mk-empty__body">' + (q ? 'Try another name or town.' : 'New services are added regularly. Check back soon.') + '</div></div>';
+      return;
+    }
+    grid.style.display = ''; grid.innerHTML = list.map(card).join('');
+  }
+  function renderFilters() {
+    var cats = ['All'].concat(Array.from(new Set(all.map(function (s) { return s.category; }).filter(Boolean))));
+    filters.innerHTML = cats.map(function (c) { return '<button class="mk-filter' + (c === active ? ' is-active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>'; }).join('');
+    filters.querySelectorAll('.mk-filter').forEach(function (b) { b.addEventListener('click', function () { active = b.dataset.cat; renderFilters(); paint(); }); });
+  }
+  try { all = await SupabaseAPI.getServices(); }
+  catch (e) { grid.style.display = 'block'; grid.innerHTML = '<div class="mk-empty"><div class="mk-empty__title">We could not load services</div><div class="mk-empty__body">Please refresh the page.</div></div>'; return; }
+  renderFilters(); paint();
+  var t = null; search.addEventListener('input', function () { clearTimeout(t); t = setTimeout(paint, 180); });
+});
+</script>
+</body>
+</html>

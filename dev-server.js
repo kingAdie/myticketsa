@@ -80,7 +80,7 @@ http.createServer((req, res) => {
     return;
   }
 
-  const file = resolveFile(ALIASES[pathname] || (/^\/e\/[^/]+$/.test(pathname) ? '/event.html' : /^\/s\/[^/]+$/.test(pathname) ? '/accommodation.html' : pathname));
+  const file = resolveFile(ALIASES[pathname] || (/^\/e\/[^/]+$/.test(pathname) ? '/event.html' : /^\/s\/[^/]+$/.test(pathname) ? '/accommodation.html' : /^\/b\/[^/]+$/.test(pathname) ? '/book-service.html' : pathname));
   if (!file) {
     const nf = path.join(ROOT, '404.html');
     res.writeHead(404, { 'Content-Type': TYPES['.html'] });
