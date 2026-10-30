@@ -72,7 +72,8 @@ async function create(db, b) {
 
   const price = Number(tt.price) || 0;
   const total = Math.round(price * qty * 100) / 100;
-  const free  = total === 0;
+  // R0 on a link/bank event means the price is set on the payment page, not free.
+  const free  = total === 0 && !['link', 'bank'].includes(ev.paymentType);
   const now   = new Date().toISOString();
 
   let expiresAt = null;
