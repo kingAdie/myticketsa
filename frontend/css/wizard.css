@@ -482,3 +482,23 @@
   .wz__step{animation:none}
   .wz__bar-fill{transition:none}
 }
+
+/* ── Open-dates calendar ── */
+.wz__cal{border-radius:18px;border:1px solid var(--b2);background:var(--bg-2);padding:14px;max-width:420px}
+.wz__cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.wz__cal-head b{color:var(--text);font-family:'Plus Jakarta Sans',sans-serif}
+.wz__cal-nav{width:40px;height:40px;border-radius:12px;border:1px solid var(--b2);background:var(--bg-3);color:var(--text);font-size:1.3rem;cursor:pointer}
+.wz__cal-nav:disabled{opacity:.3;cursor:default}
+.wz__cal-week,.wz__cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.wz__cal-week span{text-align:center;color:var(--text-3);font-size:.72rem;font-weight:700;padding:4px 0}
+.wz__cal-day{aspect-ratio:1;min-height:38px;border-radius:11px;border:1px solid var(--b1);background:var(--bg-3);color:var(--text);font:600 .9rem/1 inherit;font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.wz__cal-day:hover:not(:disabled){border-color:var(--green)}
+.wz__cal-day.is-on{background:var(--green);border-color:var(--green);color:#fff}
+.wz__cal-day.is-today:not(.is-on){border-color:var(--green-border);color:var(--green-hi)}
+.wz__cal-day:disabled{opacity:.25;cursor:default}
+.wz__cal-quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.wz__cal-quick button{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--b2);background:var(--bg-3);color:var(--text-2);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
+.wz__cal-quick button:hover:not(:disabled){color:var(--text);border-color:var(--green)}
+.wz__cal-quick button:disabled{opacity:.4;cursor:default}
+.wz__cal-count{margin-top:10px;color:var(--text-2);font-size:.85rem}
+.wz__cal-count b{color:var(--green-hi)}

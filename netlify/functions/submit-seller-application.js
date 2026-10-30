@@ -27,6 +27,7 @@ const KINDS = {
   experience:    { label: 'Experience listing',         prefix: 'EXP' },
   equipment:     { label: 'Equipment hire listing',     prefix: 'EQP' },
   merchandise:   { label: 'Merchandise seller',         prefix: 'MRC' },
+  service:       { label: 'Service listing',            prefix: 'SVC' },
   equipment_request: { label: 'Equipment request',      prefix: 'REQ', next: 'the TicketsSA team has received your request and will match you with available equipment and come back to you with a quote, usually within one working day.' },
   seller_access: { label: 'Seller account request',     prefix: 'SEL' },
 };

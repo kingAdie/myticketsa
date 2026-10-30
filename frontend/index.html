@@ -82,6 +82,7 @@
   <link rel="stylesheet" href="css/home.css"/>
   <link rel="stylesheet" href="css/card-improvements.css"/>
   <link rel="stylesheet" href="css/card-improvements-v2.css"/>
+  <link rel="stylesheet" href="css/marketplace.css"/>
   <link rel="stylesheet" href="css/phone.css"/>
 </head>
 <body>
@@ -101,6 +102,7 @@
       <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
       <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
       <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="book.html"><span class="cat-icon">🧑‍🍳</span><span class="cat-label">Services</span></a>
       <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
       <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
     </nav>
@@ -161,6 +163,9 @@
         </a>
         <a class="hero__cat" href="browse.html?category=Travel%20%26%20Tours">
           <span class="hero__cat-icon">🌍</span><span>Experiences</span>
+        </a>
+        <a class="hero__cat" href="book.html">
+          <span class="hero__cat-icon">🧑‍🍳</span><span>Services</span>
         </a>
         <a class="hero__cat" href="services/index.html">
           <span class="hero__cat-icon">🔊</span><span>Equipment</span>
@@ -367,6 +372,17 @@
   </div>
 </section>
 
+
+<!-- ═══════════ SERVICES (shown once there are some) ═══════════ -->
+<section class="sv-home" id="services" hidden>
+  <div class="container">
+    <div class="sv-home__head">
+      <div><span class="sv-home__eyebrow">Book by date</span><h2>Services</h2><p>Caterers, photographers, DJs and more, for the day you need them.</p></div>
+      <a class="btn btn-secondary btn-sm" href="book.html">See all →</a>
+    </div>
+    <div class="sv-home__grid" id="svHomeGrid"></div>
+  </div>
+</section>
 
 <!-- ═══════════ TRAVEL & TOURS ═══════════ -->
 <section class="travel-section section-lg" id="travel-tours">
@@ -1090,6 +1106,14 @@
 <script src="js/auth.js"></script>
 <script src="js/events.js"></script>
 <script src="js/home.js"></script>
+<script>
+  // Services strip: only appears once something is listed.
+  SupabaseAPI.getServices().then(function (list) {
+    if (!list || !list.length) return;
+    document.getElementById('svHomeGrid').innerHTML = list.slice(0, 4).map(Utils.serviceCardHTML).join('');
+    document.getElementById('services').hidden = false;
+  }).catch(function () {});
+</script>
 <script>
   // Scroll progress
   const scrollProg = document.getElementById('scrollProgress');

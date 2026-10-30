@@ -231,3 +231,23 @@ body.buy{padding-bottom:96px}
 .ep-map{display:inline-flex;align-items:center;gap:5px;min-height:32px;margin-top:4px;padding:0 12px;border-radius:999px;background:var(--bg-5);color:var(--green-hi);font-size:.78rem;font-weight:700}
 .ep-map[hidden]{display:none}
 .ep-map::before{content:'↗'}
+
+/* ── Service booking calendar ── */
+.sv-cal{border-radius:18px;border:1.5px solid var(--b2);background:var(--bg-3);padding:12px}
+.sv-cal__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sv-cal__head b{color:var(--text);font-family:'Plus Jakarta Sans',sans-serif}
+.sv-cal__nav{width:38px;height:38px;border-radius:11px;border:1px solid var(--b2);background:var(--bg-2);color:var(--text);font-size:1.25rem;cursor:pointer}
+.sv-cal__nav:disabled{opacity:.3;cursor:default}
+.sv-cal__week,.sv-cal__grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.sv-cal__week span{text-align:center;color:var(--text-3);font-size:.7rem;font-weight:700;padding:3px 0}
+.sv-day{aspect-ratio:1;min-height:36px;border-radius:10px;border:0;background:none;color:var(--text-3);font:600 .88rem/1 inherit;font-family:inherit}
+.sv-day.is-open{background:rgba(22,163,74,.14);color:var(--text);border:1px solid var(--green-border);cursor:pointer}
+.sv-day.is-open:hover{border-color:var(--green)}
+.sv-day.is-full{background:var(--bg-4);color:var(--text-3);text-decoration:line-through}
+.sv-day.is-on{background:var(--green);color:#fff;border-color:var(--green)}
+.sv-cal__key{display:flex;gap:14px;margin-top:10px;color:var(--text-3);font-size:.75rem}
+.sv-cal__key span{display:flex;align-items:center;gap:6px}
+.sv-cal__key i{width:12px;height:12px;border-radius:4px}
+.k-open{background:rgba(22,163,74,.35)}
+.k-full{background:var(--bg-5)}
+.sv-cal__picked{margin:10px 0 0;color:var(--green-hi);font-weight:700;font-size:.9rem}

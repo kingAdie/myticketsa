@@ -43,6 +43,9 @@ const WizardCore = (() => {
     return 'R' + n.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   }
 
+  /** Local date as YYYY-MM-DD (not UTC, so South African evenings stay on the right day). */
+  function isoDay(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
   function niceDate(v) {
     if (!v) return '';
     try {
@@ -152,6 +155,7 @@ const WizardCore = (() => {
     let stepIx   = 0;
     let maxSeen  = 0;
     let errors   = {};
+    const calView = {};   // month shown by each calendar field
     let busy     = false;
     let finished = false;
 
@@ -319,6 +323,43 @@ const WizardCore = (() => {
           break;
         }
 
+        case 'dates': {
+          // Month calendar: tap days to open or close them. Value: ['YYYY-MM-DD', ...]
+          const picked = new Set(Array.isArray(v) ? v : []);
+          const ym  = calView[f.name] || (picked.size ? [...picked].sort()[0].slice(0, 7) : isoDay(new Date()).slice(0, 7));
+          calView[f.name] = ym;
+          const [Y, M] = ym.split('-').map(Number);
+          const first = new Date(Y, M - 1, 1), days = new Date(Y, M, 0).getDate();
+          const lead = (first.getDay() + 6) % 7;                    // Monday first
+          const todayIso = isoDay(new Date());
+          const thisMonth = ym === todayIso.slice(0, 7);
+          const cells = [];
+          for (let i = 0; i < lead; i++) cells.push('<span class="wz__cal-pad"></span>');
+          for (let d = 1; d <= days; d++) {
+            const iso = `${ym}-${String(d).padStart(2, '0')}`;
+            const past = iso < todayIso;
+            cells.push(`<button type="button" class="wz__cal-day${picked.has(iso) ? ' is-on' : ''}${iso === todayIso ? ' is-today' : ''}"
+                data-wf-day="${esc(f.name)}" data-iso="${iso}" ${past ? 'disabled' : ''} aria-pressed="${picked.has(iso)}">${d}</button>`);
+          }
+          const inMonth = [...picked].filter(x => x.startsWith(ym)).length;
+          control = `<div class="wz__cal">
+              <div class="wz__cal-head">
+                <button type="button" class="wz__cal-nav" data-wf-cal-nav="${esc(f.name)}" data-dir="-1" ${thisMonth ? 'disabled' : ''} aria-label="Previous month">‹</button>
+                <b>${first.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</b>
+                <button type="button" class="wz__cal-nav" data-wf-cal-nav="${esc(f.name)}" data-dir="1" aria-label="Next month">›</button>
+              </div>
+              <div class="wz__cal-week"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+              <div class="wz__cal-grid">${cells.join('')}</div>
+              <div class="wz__cal-quick">
+                <button type="button" data-wf-cal-quick="${esc(f.name)}" data-q="all">Every day</button>
+                <button type="button" data-wf-cal-quick="${esc(f.name)}" data-q="weekends">Weekends</button>
+                <button type="button" data-wf-cal-quick="${esc(f.name)}" data-q="clear"${inMonth ? '' : ' disabled'}>Clear month</button>
+              </div>
+              <div class="wz__cal-count">${picked.size ? `<b>${picked.size}</b> open date${picked.size > 1 ? 's' : ''} picked${inMonth ? ` · ${inMonth} this month` : ''}` : 'No dates picked yet'}</div>
+            </div>`;
+          break;
+        }
+
         case 'repeater': {
           const rows = Array.isArray(v) && v.length ? v : [Object.assign({}, f.blank || {})];
           control = `<div class="wz__rep">
@@ -340,6 +381,10 @@ const WizardCore = (() => {
                         <input id="${sid}" type="number" inputmode="decimal" min="0" step="0.01" class="form-input${sinv}"
                           data-wf-rep="${esc(f.name)}" data-i="${i}" data-sub="${esc(sub.name)}"
                           placeholder="${esc(sub.placeholder || '0.00')}" value="${esc(sv)}"/></div>`;
+                    } else if (sub.type === 'select') {
+                      sc = `<select id="${sid}" class="form-select${sinv}" data-wf-rep="${esc(f.name)}" data-i="${i}" data-sub="${esc(sub.name)}">
+                          ${(sub.options || []).map(o => `<option value="${esc(o.value)}"${String(sv) === String(o.value) ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}
+                        </select>`;
                     } else if (sub.type === 'number') {
                       sc = `<input id="${sid}" type="number" inputmode="numeric" min="${sub.min ?? 0}" class="form-input${sinv}"
                           data-wf-rep="${esc(f.name)}" data-i="${i}" data-sub="${esc(sub.name)}"
@@ -371,7 +416,7 @@ const WizardCore = (() => {
         }
       }
 
-      const labelHTML = f.type === 'cards' || f.type === 'chips' || f.type === 'image' || f.type === 'images' || f.type === 'repeater'
+      const labelHTML = f.type === 'cards' || f.type === 'chips' || f.type === 'image' || f.type === 'images' || f.type === 'repeater' || f.type === 'dates'
         ? `<span class="form-label">${esc(f.label)}${req}</span>`
         : `<label class="form-label" for="${id}">${esc(f.label)}${req}</label>`;
 
@@ -387,6 +432,11 @@ const WizardCore = (() => {
       switch (f.type) {
         case 'money':  return money(v);
         case 'date':   return niceDate(v);
+        case 'dates': {
+          const arr = (Array.isArray(v) ? v : []).slice().sort();
+          if (!arr.length) return null;
+          return `${arr.length} date${arr.length > 1 ? 's' : ''}: ${esc(arr.slice(0, 6).map(niceDate).join(', '))}${arr.length > 6 ? ` and ${arr.length - 6} more` : ''}`;
+        }
         case 'chips':  return (Array.isArray(v) ? v : []).join(', ');
         case 'image':  return `<img src="${esc(v)}" alt=""/>`;
         case 'images': return `<div class="wz__review-imgs">${v.map(s => `<img src="${esc(s)}" alt=""/>`).join('')}</div>`;
@@ -403,6 +453,7 @@ const WizardCore = (() => {
             `${i + 1}. ` + (f.fields || []).map(s => {
               const cell = row[s.name];
               if (cell === undefined || cell === '') return null;
+              if (s.type === 'select') { const o = (s.options || []).find(x => String(x.value) === String(cell)); return `${esc(s.label)}: ${esc(o ? o.label : cell)}`; }
               return `${esc(s.label)}: ${s.type === 'money' ? money(cell) : esc(cell)}`;
             }).filter(Boolean).join(' · ')
           ).join('<br/>');
@@ -674,6 +725,28 @@ const WizardCore = (() => {
           state[name] = arr; saveDraft(true); render();
         });
       });
+
+      // calendar
+      root.querySelectorAll('[data-wf-day]').forEach(b => b.addEventListener('click', () => {
+        const name = b.dataset.wfDay, arr = new Set(Array.isArray(state[name]) ? state[name] : []);
+        arr.has(b.dataset.iso) ? arr.delete(b.dataset.iso) : arr.add(b.dataset.iso);
+        state[name] = [...arr].sort(); delete errors[name]; scheduleSave(); render();
+      }));
+      root.querySelectorAll('[data-wf-cal-nav]').forEach(b => b.addEventListener('click', () => {
+        const name = b.dataset.wfCalNav, [Y, M] = calView[name].split('-').map(Number);
+        const d = new Date(Y, M - 1 + Number(b.dataset.dir), 1);
+        calView[name] = isoDay(d).slice(0, 7); render();
+      }));
+      root.querySelectorAll('[data-wf-cal-quick]').forEach(b => b.addEventListener('click', () => {
+        const name = b.dataset.wfCalQuick, ym = calView[name], [Y, M] = ym.split('-').map(Number);
+        const arr = new Set(Array.isArray(state[name]) ? state[name] : []), todayIso = isoDay(new Date());
+        for (let d = 1; d <= new Date(Y, M, 0).getDate(); d++) {
+          const iso = `${ym}-${String(d).padStart(2, '0')}`, dow = new Date(Y, M - 1, d).getDay();
+          if (b.dataset.q === 'clear') arr.delete(iso);
+          else if (iso >= todayIso && (b.dataset.q === 'all' || dow === 0 || dow === 6)) arr.add(iso);
+        }
+        state[name] = [...arr].sort(); delete errors[name]; scheduleSave(); render();
+      }));
 
       // navigation
       root.querySelector('[data-wz-next]')?.addEventListener('click', next);

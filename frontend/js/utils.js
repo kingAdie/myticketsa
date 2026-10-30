@@ -480,6 +480,27 @@ const Utils = (() => {
     '</article>';
   }
 
+  /** Card for a bookable service (homepage and the Services page). */
+  function serviceCardHTML(s) {
+    const e = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const href = s.slug ? 'b/' + encodeURIComponent(s.slug) : 'book-service.html?id=' + encodeURIComponent(s.id);
+    const priced = (s.packages || []).filter(p => p.price !== null);
+    const from = priced.length ? Math.min(...priced.map(p => p.price)) : null;
+    const unit = priced.length && priced.every(p => p.unit === 'guest') ? ' per guest' : '';
+    const today = new Date().toISOString().slice(0, 10);
+    const next = (s.openDates || []).find(d => d >= today);
+    const img = s.image ? imgUrl(s.image, 700) : '';
+    return `<a class="sv-card" href="${href}">
+      <div class="sv-card__img">${img ? `<img src="${e(img)}" alt="" loading="lazy"/>` : '<span>🧑‍🍳</span>'}</div>
+      <div class="sv-card__body">
+        <span class="sv-card__cat">${e(s.category || 'Service')}</span>
+        <b class="sv-card__title">${e(s.title)}</b>
+        <span class="sv-card__meta">📍 ${e([s.city, s.province].filter(Boolean).join(', '))}</span>
+        <span class="sv-card__meta">📅 ${next ? 'Next open: ' + e(new Date(next + 'T12:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })) : 'No open dates right now'}</span>
+        <div class="sv-card__foot"><span class="sv-card__price">${from !== null ? `From ${e(formatCurrency(from))}<small>${unit}</small>` : 'On quote'}</span><span class="btn btn-primary btn-sm">Book</span></div>
+      </div></a>`;
+  }
+
   /* ---------- Cancellation & refund policy (chosen by the provider) ---------- */
 
   const REFUND_OPTIONS = [
@@ -540,6 +561,7 @@ const Utils = (() => {
     uploadImage,
     shareLink,
     eventCardHTML,
+    serviceCardHTML,
     refundPolicyText,
     refundFields,
   };

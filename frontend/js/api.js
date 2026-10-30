@@ -79,6 +79,14 @@ const SupabaseAPI = (() => {
       createdAt:      doc.createdAt,
       updatedAt:      doc.updatedAt || null,
       slug:           doc.slug || null,
+      kind:           doc.kind || 'event',
+      serviceArea:    doc.serviceArea || null,
+      packages:       (doc.packages || []).map(p => ({ id: p.id, name: p.name, description: p.description || '',
+                        price: p.price === null || p.price === '' || p.price === undefined ? null : parseFloat(p.price),
+                        unit: p.unit === 'guest' ? 'guest' : 'booking',
+                        minGuests: parseInt(p.minGuests) || 1, maxGuests: parseInt(p.maxGuests) || null })),
+      openDates:      Array.isArray(doc.openDates) ? doc.openDates.slice().sort() : [],
+      slotsPerDay:    parseInt(doc.slotsPerDay) || 1,
       address:        doc.address        || null,
       refundPolicy:   doc.refundPolicy   || null,
       reviewNote:     doc.reviewNote     || null,
@@ -164,6 +172,106 @@ const SupabaseAPI = (() => {
     q = q.orderBy('featured', 'desc').orderBy('eventDate', 'asc');
     const snap = await q.get();
     return snap.docs.map(d => normaliseEvent(d.id, d.data()));
+  }
+
+  /* ════════ SERVICES (catering, photography, DJs ...) ════════
+     Stored in `events` with kind: 'service', so review, short links and the
+     existing security rules apply. They have no eventDate, so they never
+     appear in the date-ordered event lists. */
+  function servicePayload(d) {
+    const packages = (d.packages || []).filter(p => p && String(p.name || '').trim()).map((p, i) => ({
+      id: p.id || `PK-${i + 1}`,
+      name: String(p.name).trim(),
+      description: String(p.description || '').trim(),
+      price: p.price === '' || p.price === null || p.price === undefined ? null : (parseFloat(p.price) || 0),
+      unit: p.unit === 'guest' ? 'guest' : 'booking',
+      minGuests: parseInt(p.minGuests) || 1,
+      maxGuests: parseInt(p.maxGuests) || null,
+    }));
+    const priced = packages.filter(p => p.price !== null).map(p => p.price);
+    return {
+      kind: 'service',
+      title: d.title, category: d.category, description: d.description, image: d.image || null,
+      city: d.city, province: d.province || null, location: d.serviceArea || d.city || '', serviceArea: d.serviceArea || null,
+      packages, price: priced.length ? Math.min(...priced) : 0,
+      openDates: [...new Set(d.openDates || [])].sort(), slotsPerDay: parseInt(d.slotsPerDay) || 1,
+      paymentType: d.paymentType || null,
+      paymentLink:   d.paymentType === 'link' ? (d.paymentLink || null) : null,
+      bankName:      d.paymentType === 'bank' ? (d.bankName || null) : null,
+      accountHolder: d.paymentType === 'bank' ? (d.accountHolder || null) : null,
+      accountNumber: d.paymentType === 'bank' ? (d.accountNumber || null) : null,
+      branchCode:    d.paymentType === 'bank' ? (d.branchCode || null) : null,
+      refundPolicy: d.refundPolicy || null,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  async function createService(d) {
+    const db = await firestoreClient();
+    const user = Auth?.getUser();
+    if (!user) throw new Error('Please sign in first.');
+    const id = makeId('EVT');
+    const row = servicePayload(d);
+    await db.collection('events').doc(id).set({
+      ...row, status: 'pending', featured: false, soldOut: false, ticketTypes: [], tags: [],
+      organiserId: user.id, organiserName: user.organisationName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+      createdAt: row.updatedAt,
+    });
+    return { id };
+  }
+
+  async function updateService(id, d) {
+    const db = await firestoreClient();
+    const row = servicePayload(d);
+    if (!d.image) delete row.image;      // keep an admin-curated image
+    await db.collection('events').doc(id).update(row);
+    return { id };
+  }
+
+  async function getServices() {
+    const db = await firestoreClient();
+    const snap = await db.collection('events').where('kind', '==', 'service').where('status', '==', 'published').get();
+    return snap.docs.map(d => normaliseEvent(d.id, d.data())).sort((a, b) => (b.featured - a.featured) || String(a.title).localeCompare(String(b.title)));
+  }
+
+  async function getMyServices() {
+    const user = Auth?.getUser();
+    if (!user) return [];
+    const db = await firestoreClient();
+    const snap = await db.collection('events').where('organiserId', '==', user.id).where('kind', '==', 'service').get();
+    return snap.docs.map(d => normaliseEvent(d.id, d.data()));
+  }
+
+  /** Service bookings always go through the server (netlify/functions/service-bookings.js). */
+  async function serviceCall(body, withAuth) {
+    let res, data = null;
+    try {
+      const headers = withAuth && typeof Auth !== 'undefined' ? await Auth.freshHeaders() : { 'Content-Type': 'application/json' };
+      res = await fetch('/.netlify/functions/service-bookings', { method: 'POST', headers, body: JSON.stringify(body) });
+      data = await res.json();
+    } catch (_) { throw new Error('We could not reach TicketsSA. Please check your connection and try again.'); }
+    if (!res.ok || !data || !data.ok) throw Object.assign(new Error((data && data.error) || 'Something went wrong. Please try again.'), { friendly: true });
+    return data;
+  }
+  const requestService     = p  => serviceCall({ action: 'request', ...p, uid: Auth?.getUser()?.id || null });
+  const getServiceBooking  = id => serviceCall({ action: 'get', id });
+  const getServiceTaken    = async serviceId => { try { return (await serviceCall({ action: 'availability', serviceId })).taken || {}; } catch (_) { return {}; } };
+  async function uploadServiceProof(id, file) {
+    const url = await Utils.uploadImage(file, 'proofs', { allowGuest: true });
+    await serviceCall({ action: 'proof', id, url });
+    notifyBooking('service_proof', id);
+    return url;
+  }
+  const listServiceBookings = async () => (await serviceCall({ action: 'list' }, true)).bookings || [];
+  async function respondServiceBooking(id, accept, amount, reason) {
+    const r = await serviceCall({ action: 'respond', id, accept, amount, reason }, true);
+    notifyBooking(accept ? 'service_accepted' : 'service_declined', id);
+    return r.booking;
+  }
+  async function setServiceBookingStatus(id, status) {
+    const r = await serviceCall({ action: 'status', id, status }, true);
+    if (status === 'paid') notifyBooking('service_paid', id);
+    return r.booking;
   }
 
   async function getEvent(id) {
@@ -822,7 +930,7 @@ const SupabaseAPI = (() => {
       pend('sellerListings', normaliseSellerListing).catch(() => []),
     ]);
     const rows = [
-      ...ev.map(e => ({ kind: 'event', id: e.id, label: e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, by: e.organiser || '', image: e.image, at: e.createdAt })),
+      ...ev.map(e => ({ kind: 'event', id: e.id, label: e.kind === 'service' ? 'Service' : e.category === 'Travel & Tours' ? 'Experience' : 'Event', title: e.title, by: e.organiser || '', image: e.image, at: e.createdAt })),
       ...ac.map(a => ({ kind: 'accommodation', id: a.id, label: 'Stay', title: a.name, by: a.contactEmail || '', image: (a.images || [])[0], at: a.createdAt })),
       ...li.map(l => ({ kind: 'listing', id: l.id, label: l.category === 'merchandise' ? 'Merchandise' : 'Equipment', title: l.title, by: l.contactEmail || l.contactName || '', image: (Array.isArray(l.images) ? l.images : [])[0], at: l.createdAt })),
     ];
@@ -1289,6 +1397,9 @@ const SupabaseAPI = (() => {
 
   return {
     getEvents, getEvent, getEventBySlug,
+    createService, updateService, getServices, getMyServices,
+    requestService, getServiceBooking, getServiceTaken, uploadServiceProof,
+    listServiceBookings, respondServiceBooking, setServiceBookingStatus,
     createEvent, updateEvent, deleteEvent,
     adminCreateEvent, adminUpdateEvent,
     adminGetStats,

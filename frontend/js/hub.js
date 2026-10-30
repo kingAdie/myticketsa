@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('hubHello').textContent = (hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening') + (user.firstName ? ', ' + user.firstName : '');
   $('hubEmail').textContent = user.email || '';
 
-  const HUB = { events: [], accs: [], others: [], sales: [], enquiries: [], drafts: [] };
+  const HUB = { events: [], accs: [], others: [], sales: [], enquiries: [], drafts: [], services: [], svc: [] };
   const isPaid = t => t.state === 'confirmed' || t.state === 'checked_in';
 
   /* ── Tabs ─────────────────────────────────────────────── */
@@ -57,7 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
       SupabaseAPI.getMyAccommodations(),
       SupabaseAPI.getSalesForMyEvents(),
       SupabaseAPI.getMySellerListings(),
+      SupabaseAPI.getMyServices(),
     ]);
+    HUB.services = r[4].status === 'fulfilled' ? r[4].value || [] : [];
+    try { HUB.svc = HUB.services.length ? await SupabaseAPI.listServiceBookings() : []; } catch (_) { HUB.svc = []; }
     HUB.events = r[0].status === 'fulfilled' ? r[0].value || [] : [];
     HUB.accs   = r[1].status === 'fulfilled' ? r[1].value || [] : [];
     HUB.sales  = r[2].status === 'fulfilled' ? r[2].value || [] : [];
@@ -69,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderAll() {
     renderShare(); renderOrders(); renderScan(); renderListings();
-    const waiting = HUB.sales.filter(t => t.state === 'reserved').length;
+    const waiting = HUB.sales.filter(t => t.state === 'reserved').length + HUB.svc.filter(b => b.status === 'requested' || (b.status === 'accepted' && b.proofUrl)).length;
     const c = $('cntOrders'); c.textContent = waiting; c.hidden = !waiting;
   }
 
@@ -81,8 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const live = [
       ...HUB.events.filter(e => e.status === 'published').map(e => ({ title: e.title, img: e.image, url: Utils.eventLink(e), meta: [e.date ? Utils.formatDate(e.date) : '', e.city].filter(Boolean).join(' · '), sold: soldFor(e.id) })),
       ...HUB.accs.filter(a => a.status === 'published').map(a => ({ title: a.name, img: (a.images || [])[0], url: Utils.stayLink(a), meta: [a.city, a.province].filter(Boolean).join(', ') })),
+      ...HUB.services.filter(v => v.status === 'published').map(v => ({ title: v.title, img: v.image, url: svcLink(v), meta: [v.category, v.city].filter(Boolean).join(' · '), cta: 'book here' })),
     ];
-    const waiting = [...HUB.events, ...HUB.accs].filter(x => x.status !== 'published');
+    const waiting = [...HUB.events, ...HUB.accs, ...HUB.services].filter(x => x.status !== 'published');
 
     if (!live.length && !waiting.length) {
       $('shareBody').innerHTML = emptyState('🚀', 'Nothing to share yet', 'List your event or place. Once our team approves it, your link appears here, ready to send.',
@@ -99,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="share__link"><input value="${esc(x.url)}" readonly aria-label="Link to share"/></div>
             <div class="share__acts">
               <button class="btn btn-primary btn-sm" data-copy="${esc(x.url)}">Copy link</button>
-              <a class="btn btn-secondary btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(x.title + ' – get your tickets here: ' + x.url)}">WhatsApp</a>
+              <a class="btn btn-secondary btn-sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(x.title + ' – ' + (x.cta || 'get your tickets here') + ': ' + x.url)}">WhatsApp</a>
               <button class="btn btn-ghost btn-sm" data-share="${esc(x.url)}" data-share-title="${esc(x.title)}">More…</button>
             </div>
           </div>
@@ -109,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="hub-row__main"><b>${esc(x.title || x.name)}</b><span class="hub-meta">${x.status === 'rejected' ? 'Needs changes: ' + esc(x.reviewNote || 'see your email') : 'In review. Usually within 24 hours.'}</span></div>
           <span class="hub-pill hub-pill--${x.status === 'rejected' ? 'red' : 'amber'}">${STATUS[x.status] || 'In review'}</span></div>`).join('') : '');
   }
+  const svcLink = v => v.slug ? `${location.origin}/b/${encodeURIComponent(v.slug)}` : `${location.origin}/book-service.html?id=${encodeURIComponent(v.id)}`;
   const soldFor = id => HUB.sales.filter(t => t.event.id === id && isPaid(t)).reduce((n, t) => n + (Number(t.ticket.quantity) || 0), 0);
 
   document.addEventListener('click', async ev => {
@@ -129,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderOrders() {
     const host = $('ordersBody');
-    if (!HUB.sales.length && !HUB.enquiries.length) {
+    if (!HUB.sales.length && !HUB.enquiries.length && !HUB.svc.length) {
       host.innerHTML = emptyState('🎟', 'No bookings yet', 'When someone reserves a ticket or sends a booking enquiry, they show up here with their proof of payment.',
         '<button class="btn btn-secondary" data-goto="share">Share your link</button>');
       return;
@@ -153,11 +158,70 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="hub-meta"><a href="mailto:${esc(b.customer_email)}">${esc(b.customer_email)}</a></span>
             <span class="hub-meta">${b.customer_phone ? `<a href="tel:${esc(b.customer_phone)}">${esc(b.customer_phone)}</a> · ` : ''}${ago(b.created_at)}</span></div>
           <a class="btn btn-secondary btn-sm" href="mailto:${esc(b.customer_email)}?subject=${encodeURIComponent('Your booking at ' + (b.accommodation_name || ''))}">Reply</a>
-        </div>`).join('') : '');
+        </div>`).join('') : '')
+      + (HUB.svc.length ? `<div class="hub-sub">Service bookings</div>` + HUB.svc.map(svcRow).join('') : '');
 
     host.querySelectorAll('.hub-chip').forEach(b => b.addEventListener('click', () => { ordFilter = b.dataset.f; renderOrders(); }));
     $('ordEvent')?.addEventListener('change', e => { ordEvent = e.target.value; renderOrders(); });
     host.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => orderAction(b, b.dataset.id, b.dataset.act)));
+    host.querySelectorAll('[data-svc]').forEach(b => b.addEventListener('click', () => svcAction(b, b.dataset.id, b.dataset.svc)));
+  }
+
+  /* Service bookings: accept (confirm the price) or decline, then mark as paid. */
+  const SVC_LABEL = { requested: 'New request', accepted: 'Awaiting payment', paid: 'Paid', declined: 'Declined', cancelled: 'Cancelled' };
+  const SVC_PILL  = { requested: 'reserved', accepted: 'reserved', paid: 'confirmed', declined: 'red', cancelled: 'red' };
+  function svcRow(b) {
+    const acts = [];
+    if (b.status === 'requested') acts.push(`<button class="btn btn-primary btn-sm" data-svc="accept" data-id="${esc(b.id)}">✓ Accept</button>`, `<button class="btn btn-ghost btn-sm hub-danger" data-svc="decline" data-id="${esc(b.id)}">Decline</button>`);
+    if (b.status === 'accepted') acts.push(`<button class="btn btn-primary btn-sm" data-svc="paid" data-id="${esc(b.id)}">✓ Mark as paid</button>`, `<button class="btn btn-ghost btn-sm hub-danger" data-svc="cancel" data-id="${esc(b.id)}">Cancel</button>`);
+    if (b.status === 'paid') acts.push(`<button class="btn btn-ghost btn-sm hub-danger" data-svc="cancel" data-id="${esc(b.id)}">Cancel</button>`);
+    const price = b.amount ? money(b.amount) : b.estimate ? 'About ' + money(b.estimate) : 'On quote';
+    const day = new Date(b.date + 'T12:00:00').toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+    return `<div class="hub-row bk--${b.status === 'paid' ? 'confirmed' : b.status === 'requested' || b.status === 'accepted' ? 'reserved' : 'x'}">
+      <div class="hub-row__main">
+        <div class="hub-row__top"><b>${esc(b.customerName)}</b><span class="hub-pill hub-pill--${SVC_PILL[b.status] || 'amber'}">${SVC_LABEL[b.status] || esc(b.status)}</span></div>
+        <span class="hub-meta"><b>${esc(day)}</b> · ${esc(b.packageName)} · ${esc(b.guests)} guest${b.guests > 1 ? 's' : ''} · <b>${esc(price)}</b></span>
+        ${b.note ? `<span class="hub-meta">“${esc(b.note)}”</span>` : ''}
+        <span class="hub-meta"><a href="mailto:${esc(b.customerEmail)}">${esc(b.customerEmail)}</a></span>
+        ${b.customerPhone ? `<span class="hub-meta"><a href="tel:${esc(b.customerPhone)}">${esc(b.customerPhone)}</a></span>` : ''}
+        <span class="hub-meta">Ref <code>${esc(b.id)}</code> · ${ago(b.requestedAt)}</span>
+      </div>
+      <div class="hub-row__side">
+        ${b.proofUrl ? `<a class="hub-proof" href="${esc(b.proofUrl)}" target="_blank" rel="noopener"><img src="${esc(Utils.imgUrl(b.proofUrl, 160))}" alt=""/>Proof of payment</a>` : ''}
+        <div class="hub-acts">${acts.join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  async function svcAction(btn, id, act) {
+    const b = HUB.svc.find(x => x.id === id);
+    if (!b) return;
+    let call;
+    if (act === 'accept') {
+      const suggested = b.estimate ? String(b.estimate) : '';
+      const typed = prompt(`Accept ${b.customerName}'s booking for ${b.date}?\n\nEnter the total amount they must pay (R):`, suggested);
+      if (typed === null) return;
+      const amount = parseFloat(String(typed).replace(/[^0-9.]/g, ''));
+      if (!(amount > 0)) { Utils.showToast('Enter an amount above R0.', 'error'); return; }
+      call = () => SupabaseAPI.respondServiceBooking(id, true, amount);
+    } else if (act === 'decline') {
+      const reason = prompt('Decline this request? You can add a short note for the customer (optional):', '');
+      if (reason === null) return;
+      call = () => SupabaseAPI.respondServiceBooking(id, false, null, reason);
+    } else if (act === 'paid') {
+      if (!confirm(`Mark ${id} as paid?\n\nOnly do this once the money is in your account. The customer gets a confirmation email.`)) return;
+      call = () => SupabaseAPI.setServiceBookingStatus(id, 'paid');
+    } else {
+      if (!confirm(`Cancel booking ${id}? The date opens up again.`)) return;
+      call = () => SupabaseAPI.setServiceBookingStatus(id, 'cancelled');
+    }
+    btn.disabled = true;
+    try {
+      const updated = await call();
+      HUB.svc = HUB.svc.map(x => x.id === id ? { ...x, ...updated, id } : x);
+      Utils.showToast(act === 'accept' ? 'Accepted. The customer was emailed how to pay.' : act === 'decline' ? 'Declined. The customer was told.' : act === 'paid' ? 'Marked as paid. The customer got a confirmation.' : 'Booking cancelled.', 'success');
+      renderAll();
+    } catch (err) { btn.disabled = false; Utils.showToast((err && err.message) || 'Could not update this booking.', 'error'); }
   }
 
   function orderRow(t) {
@@ -232,9 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const META = {
     event: { name: 'Events', edit: id => `sell-event.html?edit=${encodeURIComponent(id)}` },
     accommodation: { name: 'Stays' }, experience: { name: 'Experiences' },
-    equipment: { name: 'Equipment' }, merchandise: { name: 'Merch' }, draft: { name: 'Drafts' },
+    equipment: { name: 'Equipment' }, merchandise: { name: 'Merch' }, draft: { name: 'Drafts' }, service: { name: 'Services' },
   };
-  const DRAFT_HREF = { event: 'sell-event.html', accommodation: 'sell-accommodation.html', experience: 'sell-experience.html', equipment: 'sell-equipment.html', merchandise: 'sell-merchandise.html' };
+  const DRAFT_HREF = { event: 'sell-event.html', accommodation: 'sell-accommodation.html', experience: 'sell-experience.html', equipment: 'sell-equipment.html', merchandise: 'sell-merchandise.html', service: 'sell-service.html' };
 
   function renderListings() {
     const rows = [];
@@ -249,6 +313,12 @@ document.addEventListener('DOMContentLoaded', () => {
                <a class="btn btn-secondary btn-sm" href="${exp ? 'sell-experience.html' : 'sell-event.html'}?edit=${encodeURIComponent(e.id)}">Edit</a>
                <button class="btn btn-ghost btn-sm hub-danger" data-del="event" data-id="${esc(e.id)}" data-title="${esc(e.title)}">Delete</button>` });
     });
+    HUB.services.forEach(v => rows.push({ kind: 'service', id: v.id, img: v.image, title: v.title, note: v.status === 'rejected' ? v.reviewNote : '',
+      meta: [v.category, v.city].filter(Boolean).join(' · ') + ` · ${v.openDates.filter(d => d >= new Date().toISOString().slice(0, 10)).length} open dates`,
+      status: STATUS[v.status] || 'In review', pill: v.status === 'published' ? 'green' : v.status === 'rejected' ? 'red' : 'amber',
+      acts: `<a class="btn btn-secondary btn-sm" href="book-service.html?id=${encodeURIComponent(v.id)}">View</a>
+             <a class="btn btn-secondary btn-sm" href="sell-service.html?edit=${encodeURIComponent(v.id)}">Edit dates</a>
+             <button class="btn btn-ghost btn-sm hub-danger" data-del="service" data-id="${esc(v.id)}" data-title="${esc(v.title)}">Delete</button>` }));
     HUB.accs.forEach(a => rows.push({ kind: 'accommodation', img: (a.images || [])[0], title: a.name, note: a.status === 'rejected' ? a.reviewNote : '',
       meta: [a.city, a.province].filter(Boolean).join(', ') + (a.priceFrom ? ' · from ' + money(a.priceFrom) + ' a night' : ''),
       status: STATUS[a.status] || 'In review', pill: a.status === 'published' ? 'green' : a.status === 'rejected' ? 'red' : 'amber',
@@ -262,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '<a class="btn btn-primary" href="sell.html">+ List something</a>');
       return;
     }
-    const kinds = ['draft', 'event', 'accommodation', 'experience', 'equipment', 'merchandise'].filter(k => rows.some(r => r.kind === k));
+    const kinds = ['draft', 'event', 'service', 'accommodation', 'experience', 'equipment', 'merchandise'].filter(k => rows.some(r => r.kind === k));
     const list = lstFilter === 'all' ? rows : rows.filter(r => r.kind === lstFilter);
     $('listingsBody').innerHTML = (kinds.length > 1 ? `<div class="hub-chips hub-chips--top">${[['all', 'All']].concat(kinds.map(k => [k, META[k].name])).map(c =>
         `<button class="hub-chip${lstFilter === c[0] ? ' is-on' : ''}" data-lf="${c[0]}">${c[1]} <span>${c[0] === 'all' ? rows.length : rows.filter(r => r.kind === c[0]).length}</span></button>`).join('')}</div>` : '')
@@ -282,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
       b.disabled = true;
       try {
         if (b.dataset.del === 'event') { await SupabaseAPI.deleteEvent(b.dataset.id); HUB.events = HUB.events.filter(e => e.id !== b.dataset.id); }
+        else if (b.dataset.del === 'service') { await SupabaseAPI.deleteEvent(b.dataset.id); HUB.services = HUB.services.filter(v => v.id !== b.dataset.id); }
         else { await SupabaseAPI.adminDeleteAccommodation(b.dataset.id); HUB.accs = HUB.accs.filter(a => a.id !== b.dataset.id); }
         Utils.showToast('Deleted.', 'success'); renderAll();
       } catch (err) { b.disabled = false; Utils.showToast('Could not delete. Please try again.', 'error'); }

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+  <meta charset="UTF-8"/>
+  <!-- Served at /book-service.html and at the short link /b/<slug>: resolve files from the site root. -->
+  <base href="/"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Book a service · TicketsSA</title>
+  <meta name="description" content="Book a service on TicketsSA."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎟</text></svg>"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+  <link rel="stylesheet" href="css/buy.css"/>
+  <link rel="stylesheet" href="css/phone.css"/>
+</head>
+<body class="buy">
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar__inner">
+    <a href="index.html" class="navbar__logo">
+      <div class="navbar__logo-wordmark">
+        <span class="w">tickets</span><span class="g">sa</span>
+      </div>
+    </a>
+
+    <nav class="navbar__cats" id="navCats" aria-label="Browse categories">
+      <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
+      <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
+      <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="book.html"><span class="cat-icon">🧑‍🍳</span><span class="cat-label">Services</span></a>
+      <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
+      <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
+    </nav>
+
+    <div class="navbar__actions" id="navbarActions"></div>
+    <button class="navbar__toggle" id="mobileToggle" aria-label="Open menu">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main class="ep ep--stay" id="epMain">
+  <div class="ep-poster" id="epPoster">
+    <div class="sk"></div>
+    <img class="ep-poster__bg" id="posterBg" alt="" aria-hidden="true"/>
+    <img class="ep-poster__img" id="posterImg" alt=""/>
+    <a class="ep-back" href="book.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>Services</a>
+    <button class="ep-share" id="shareBtn" type="button" aria-label="Share this service">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+    </button>
+  </div>
+
+  <section class="ep-card" id="bookCard">
+    <span class="ep-chip" id="svCat">Service</span>
+    <h1 class="ep-title" id="svTitle"><span class="sk"></span></h1>
+    <div class="ep-facts">
+      <div class="ep-fact">
+        <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <div><b id="svOwner"><span class="sk"></span></b><span>Provider</span></div>
+      </div>
+      <div class="ep-fact">
+        <span class="ep-fact__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
+        <div><b id="svCity"><span class="sk"></span></b><span id="svArea"></span></div>
+      </div>
+    </div>
+
+    <form id="reqForm" novalidate>
+      <h2 class="ep-h">1. Choose a package</h2>
+      <div class="tt-list" id="pkgList" role="radiogroup" aria-label="Packages"><div class="sk" style="height:64px"></div></div>
+
+      <div class="bk-step" id="stepDate">
+        <h2 class="ep-h">2. Pick a date</h2>
+        <div class="sv-cal" id="svCal"></div>
+      </div>
+
+      <div class="bk-step" id="stepGuests">
+        <h2 class="ep-h">3. How many guests?</h2>
+        <div class="bk-guests">
+          <span id="gHint">Guests</span>
+          <div class="stepper"><button type="button" id="gMinus" aria-label="Fewer guests">−</button><output id="gOut">1</output><button type="button" id="gPlus" aria-label="More guests">+</button></div>
+        </div>
+        <div class="bk-total" id="svEstimate" hidden><span id="svEstLine"></span><b id="svEstTotal"></b></div>
+      </div>
+
+      <div class="bk-step" id="stepWho">
+        <h2 class="ep-h">4. Your details</h2>
+        <div class="co co--inline"><div class="co-fields">
+          <div class="co-two">
+            <div class="form-group"><label class="form-label" for="rqFirst">First name</label><input class="form-input" id="rqFirst" autocomplete="given-name" placeholder="Thabo"/></div>
+            <div class="form-group"><label class="form-label" for="rqLast">Last name</label><input class="form-input" id="rqLast" autocomplete="family-name" placeholder="Nkosi"/></div>
+          </div>
+          <div class="form-group"><label class="form-label" for="rqEmail">Email</label><input class="form-input" type="email" id="rqEmail" autocomplete="email" inputmode="email" placeholder="you@email.com"/></div>
+          <div class="form-group"><label class="form-label" for="rqPhone">Phone <small>(optional)</small></label><input class="form-input" type="tel" id="rqPhone" autocomplete="tel" inputmode="tel" placeholder="082 123 4567"/></div>
+          <div class="form-group"><label class="form-label" for="rqNote">Note for the provider <small>(optional)</small></label><input class="form-input" id="rqNote" placeholder="e.g. Venue address, start time, dietary needs"/></div>
+        </div></div>
+      </div>
+
+      <p class="bk-err" id="rqErr" role="alert"></p>
+      <div class="ep-buy" style="display:block"><button type="submit" class="btn btn-primary" id="rqBtn">Send booking request</button></div>
+      <p class="co-terms">Nothing to pay yet. The provider accepts your request first and confirms the price. By sending you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a>.</p>
+    </form>
+  </section>
+
+  <div class="ep-about">
+    <section class="ep-block">
+      <h2 class="ep-h">About this service</h2>
+      <div class="ep-desc" id="svDesc"></div>
+      <button class="ep-more" id="descMore" type="button" hidden>Read more</button>
+    </section>
+    <section class="ep-block" id="refundSection" hidden>
+      <h2 class="ep-h">Cancellations &amp; refunds</h2>
+      <div class="ep-desc" id="svRefund"></div>
+    </section>
+  </div>
+</main>
+
+<div class="buybar" id="buybar">
+  <div class="buybar__info"><b id="barPrice">&nbsp;</b><span id="barSub">Book by date</span></div>
+  <button class="btn btn-primary" id="barBtn" type="button">Choose a package</button>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/book-service.js"></script>
+<script>Auth.updateNavbar();</script>
+</body>
+</html>

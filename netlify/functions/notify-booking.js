@@ -29,6 +29,8 @@ const MAX_AGE_MS    = 60 * 60 * 1000;   // only notify for bookings made in the 
 const SITE_URL      = 'https://ticketssa.co.za';
 const ticketLink    = id => `${SITE_URL}/ticket.html?id=${encodeURIComponent(id)}`;
 const fresh         = iso => iso && Date.now() - new Date(iso).getTime() <= MAX_AGE_MS;
+const bookingLink   = id => `${SITE_URL}/booking.html?id=${encodeURIComponent(id)}`;
+const SERVICE_KINDS = ['service_request', 'service_accepted', 'service_declined', 'service_proof', 'service_paid'];
 
 const json = (statusCode, obj) => ({ statusCode, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
 
@@ -49,7 +51,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'Invalid JSON' }); }
   const kind = String(body.kind || '');
   const id   = String(body.id   || '');
-  if (!['ticket', 'ticket_proof', 'ticket_confirmed', 'accommodation'].includes(kind) || !/^[A-Za-z0-9-]{4,60}$/.test(id)) {
+  if (!['ticket', 'ticket_proof', 'ticket_confirmed', 'accommodation', ...SERVICE_KINDS].includes(kind) || !/^[A-Za-z0-9-]{4,60}$/.test(id)) {
     return json(400, { error: 'Bad request' });
   }
 
@@ -62,6 +64,7 @@ exports.handler = async (event) => {
     const mails = kind === 'ticket'           ? await ticketMails(id, one)
                 : kind === 'ticket_proof'     ? await ticketProofMails(id, one)
                 : kind === 'ticket_confirmed' ? await ticketConfirmedMails(id, one)
+                : SERVICE_KINDS.includes(kind) ? await serviceMails(kind, id, one)
                 :                               await accommodationMails(id, one);
     if (!mails) return json(404, { error: 'Booking not found or too old' });
 
@@ -223,6 +226,71 @@ async function accommodationMails(id, one) {
 }
 
 /* ── Email layout ───────────────────────────────────────── */
+/* ── Service bookings (catering, photography ...) ─────────── */
+async function serviceMails(kind, id, one) {
+  const b = await one('serviceBookings', id);
+  if (!b) return null;
+  const owner = b.ownerId ? await one('users', b.ownerId) : null;
+  const svc   = b.serviceId ? await one('events', b.serviceId) : null;
+  const R     = n => 'R' + Number(n || 0).toLocaleString('en-ZA', { maximumFractionDigits: 2 });
+  const when  = new Date(b.date + 'T12:00:00').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const rows  = [['Reference', id], ['Service', b.serviceTitle], ['Package', b.packageName], ['Date', when], ['Guests', String(b.guests)],
+                 ['Price', b.amount ? R(b.amount) : b.estimate ? `About ${R(b.estimate)}` : 'On quote']];
+  const cust  = [['Name', b.customerName], ['Email', b.customerEmail], ['Phone', b.customerPhone || ''], ['Note', b.note || '']];
+  const btn   = (href, label) => `<br><br><a href="${href}" style="display:inline-block;background:#16A34A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 24px;border-radius:10px;">${label}</a>`;
+  const hub   = `${SITE_URL}/dashboard.html?tab=orders`;
+  const first = esc(String(b.customerName || '').split(' ')[0] || 'there');
+
+  if (kind === 'service_request') {
+    if (!fresh(b.requestedAt)) return null;
+    const mails = [{
+      to: [b.customerEmail],
+      subject: `Request sent: ${b.serviceTitle} on ${when}`,
+      html: shell('Request sent', `Hi ${first}, your booking request is with ${esc(b.ownerName || 'the provider')}. They will accept or decline it, and you will get an email either way. Nothing to pay yet.${btn(bookingLink(id), 'View my request')}`, [['Your request', rows]]),
+    }];
+    if (owner && owner.email) mails.push({
+      to: [owner.email], replyTo: b.customerEmail,
+      subject: `New booking request: ${b.packageName} on ${when}`,
+      html: shell('New booking request', hi(owner) + `${esc(b.customerName)} wants to book <strong>${esc(b.serviceTitle)}</strong>. Accept it (and confirm the price) or decline it in your Seller Hub.${btn(hub, 'Accept or decline')}`, [['Request', rows], ['Customer', cust]]),
+    });
+    return mails;
+  }
+  if (kind === 'service_accepted') {
+    if (b.status !== 'accepted' || !fresh(b.acceptedAt)) return null;
+    const pay = svc ? paymentInstructions(svc) : '';
+    return [{
+      to: [b.customerEmail],
+      subject: `Accepted: ${b.serviceTitle} on ${when}. Pay ${R(b.amount)} to confirm`,
+      html: shell("You're accepted 🎉", `Hi ${first}, ${esc(b.ownerName || 'the provider')} accepted your booking. Pay <strong>${R(b.amount)}</strong> to confirm it. ${pay} Use <strong>${esc(id)}</strong> as your reference.${btn(bookingLink(id), 'Pay and confirm')}`, [['Your booking', rows]]),
+    }];
+  }
+  if (kind === 'service_declined') {
+    if (b.status !== 'declined' || !fresh(b.declinedAt)) return null;
+    return [{
+      to: [b.customerEmail],
+      subject: `Not available: ${b.serviceTitle} on ${when}`,
+      html: shell('Request declined', `Hi ${first}, ${esc(b.ownerName || 'the provider')} can't take this booking.${b.declineReason ? ` Their note: “${esc(b.declineReason)}”.` : ''} You can pick another date or package.${svc && svc.slug ? btn(`${SITE_URL}/b/${encodeURIComponent(svc.slug)}`, 'Choose another date') : ''}`, [['Your request', rows]]),
+    }];
+  }
+  if (kind === 'service_proof') {
+    if (!b.proofUrl || !fresh(b.proofUploadedAt) || !owner || !owner.email) return null;
+    return [{
+      to: [owner.email], replyTo: b.customerEmail,
+      subject: `Proof of payment: ${b.serviceTitle} on ${when} (${id})`,
+      html: shell('Proof of payment received', hi(owner) + `${esc(b.customerName)} uploaded proof of payment. Check the money is in your account, then press <strong>Mark as paid</strong> in your Seller Hub. Proof: <a href="${esc(b.proofUrl)}">view the upload</a>.${btn(hub, 'Open Seller Hub')}`, [['Booking', rows], ['Customer', cust]]),
+    }];
+  }
+  if (kind === 'service_paid') {
+    if (b.status !== 'paid' || !fresh(b.paidAt)) return null;
+    return [{
+      to: [b.customerEmail],
+      subject: `Confirmed: ${b.serviceTitle} on ${when}`,
+      html: shell("You're booked ✅", `Hi ${first}, ${esc(b.ownerName || 'the provider')} confirmed your payment. Your booking for <strong>${when}</strong> is confirmed. They will contact you about the details.${btn(bookingLink(id), 'View my booking')}`, [['Your booking', rows]]),
+    }];
+  }
+  return null;
+}
+
 function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

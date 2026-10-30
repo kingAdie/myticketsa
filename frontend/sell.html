@@ -30,6 +30,7 @@
       <a class="navbar__cat" href="browse.html"><span class="cat-icon">🎟</span><span class="cat-label">Events</span></a>
       <a class="navbar__cat" href="accommodations.html"><span class="cat-icon">🏨</span><span class="cat-label">Stays</span></a>
       <a class="navbar__cat" href="browse.html?category=Travel%20%26%20Tours"><span class="cat-icon">🌍</span><span class="cat-label">Experiences</span></a>
+      <a class="navbar__cat" href="book.html"><span class="cat-icon">🧑‍🍳</span><span class="cat-label">Services</span></a>
       <a class="navbar__cat" href="services/index.html"><span class="cat-icon">🔊</span><span class="cat-label">Equipment</span></a>
       <a class="navbar__cat" href="index.html#merch"><span class="cat-icon">🛍</span><span class="cat-label">Merch</span></a>
     </nav>
@@ -69,7 +70,7 @@
     <section class="sl-section sl-center sl-rv" id="chooser" aria-labelledby="listTitle">
       <div class="sl-eyebrow">What would you like to list?</div>
       <h2 class="sl-title" id="listTitle">Pick one to <span class="accent">get started</span></h2>
-      <div class="sl-types" id="sellTypes"><a class="sl-type" data-type="event" href="sell-event.html"><div class="sl-type__icon">🎟️</div><div class="sl-type__name">Events &amp; tickets</div><div class="sl-type__desc">Concerts, sport, festivals and shows.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="accommodation" href="sell-accommodation.html"><div class="sl-type__icon">🏨</div><div class="sl-type__name">Accommodation</div><div class="sl-type__desc">Lodges, guesthouses, B&amp;Bs and hotels.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="experience" href="sell-experience.html"><div class="sl-type__icon">🌍</div><div class="sl-type__name">Experiences &amp; tours</div><div class="sl-type__desc">Day trips, safaris and guided activities.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="equipment" href="sell-equipment.html"><div class="sl-type__icon">🔊</div><div class="sl-type__name">Equipment hire</div><div class="sl-type__desc">Sound, staging, tents, generators and more.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="merchandise" href="sell-merchandise.html"><div class="sl-type__icon">🛍️</div><div class="sl-type__name">Merchandise</div><div class="sl-type__desc">Branded apparel, tags and printing.</div><div class="sl-type__go">Start listing <span>→</span></div></a></div>
+      <div class="sl-types" id="sellTypes"><a class="sl-type" data-type="event" href="sell-event.html"><div class="sl-type__icon">🎟️</div><div class="sl-type__name">Events &amp; tickets</div><div class="sl-type__desc">Concerts, sport, festivals and shows.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="service" href="sell-service.html"><div class="sl-type__icon">🧑‍🍳</div><div class="sl-type__name">Services</div><div class="sl-type__desc">Catering, photography, DJs and more. Booked by date.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="accommodation" href="sell-accommodation.html"><div class="sl-type__icon">🏨</div><div class="sl-type__name">Accommodation</div><div class="sl-type__desc">Lodges, guesthouses, B&amp;Bs and hotels.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="experience" href="sell-experience.html"><div class="sl-type__icon">🌍</div><div class="sl-type__name">Experiences &amp; tours</div><div class="sl-type__desc">Day trips, safaris and guided activities.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="equipment" href="sell-equipment.html"><div class="sl-type__icon">🔊</div><div class="sl-type__name">Equipment hire</div><div class="sl-type__desc">Sound, staging, tents, generators and more.</div><div class="sl-type__go">Start listing <span>→</span></div></a><a class="sl-type" data-type="merchandise" href="sell-merchandise.html"><div class="sl-type__icon">🛍️</div><div class="sl-type__name">Merchandise</div><div class="sl-type__desc">Branded apparel, tags and printing.</div><div class="sl-type__go">Start listing <span>→</span></div></a></div>
     </section>
 
     <section class="sl-section sl-center sl-rv" aria-labelledby="howTitle">
@@ -117,7 +118,8 @@ document.addEventListener('DOMContentLoaded', function () {
     accommodation: { href: 'sell-accommodation.html', label: 'List your lodge' },
     equipment:     { href: 'sell-equipment.html',     label: 'List your equipment' },
     experience:    { href: 'sell-experience.html',    label: 'List your experience' },
-    merchandise:   { href: 'sell-merchandise.html',   label: 'List your merchandise' }
+    merchandise:   { href: 'sell-merchandise.html',   label: 'List your merchandise' },
+    service:       { href: 'sell-service.html',       label: 'List your service' }
   };
   var target = TARGETS[type] || null;
 
