@@ -8,7 +8,12 @@
 
 (function () {
 
-  if (!Auth.isLoggedIn()) { window.location.replace('sell.html?type=service&signup=1'); return; }
+  // ?from=EVT-… turns one of your existing events into a service, pre-filled.
+  const fromId = Utils.getParam('from');
+  if (!Auth.isLoggedIn()) {
+    if (fromId) { document.addEventListener('DOMContentLoaded', () => Auth.requireAuth(() => location.reload(), 'Sign in to finish listing your service', 'login')); return; }
+    window.location.replace('sell.html?type=service&signup=1'); return;
+  }
 
   const CATEGORIES = ['Catering & Chefs', 'Photography & Video', 'DJs & Music', 'Decor & Hiring', 'Hair & Makeup', 'MCs & Entertainment', 'Transport', 'Cleaning', 'Other'];
   const PROVINCES  = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'];
@@ -150,6 +155,27 @@
   });
 
   (async () => {
+    if (!editId && fromId) {
+      try {
+        const ev = await SupabaseAPI.getEvent(fromId);
+        const me = Auth.getUser() || {};
+        if (ev && ev.organiserId === me.id) {   // only the owner, so the service stays theirs
+          const guests = String(ev.description || '').match(/(\d+)\s*[–-]\s*(\d+)\s*guests/i);
+          wizard.start({
+            title: ev.title, category: /food|drink/i.test(ev.category || '') ? 'Catering & Chefs' : '', description: ev.description || '', image: ev.image || '',
+            city: String(ev.city || '').trim(), province: ev.province || '',
+            packages: (ev.ticketTypes || []).map(t => ({ name: t.name, description: t.description && t.description !== t.name ? t.description : '',
+              price: Number(t.price) > 0 ? t.price : '', unit: 'booking', minGuests: guests ? guests[1] : '', maxGuests: guests ? guests[2] : '' })),
+            openDates: [], slotsPerDay: '1',
+            paymentType: ev.paymentType === 'bank' ? 'bank' : ev.paymentType === 'link' ? 'link' : '', paymentLink: ev.paymentLink || '',
+            bankName: ev.bankName || '', accountHolder: ev.accountHolder || '', accountNumber: ev.accountNumber || '', branchCode: ev.branchCode || '',
+            refundPolicy: ev.refundPolicy ? 'custom' : '', refundNote: ev.refundPolicy || '',
+          });
+          Utils.showToast('We filled this in from your event. Pick your open dates, check the prices, then submit.', 'info', 7000);
+          return;
+        }
+      } catch (e) { console.error(e); }
+    }
     if (!editId) { wizard.start(); return; }
     try {
       const sv = await SupabaseAPI.getEvent(editId);

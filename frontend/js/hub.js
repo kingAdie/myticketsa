@@ -311,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         status: STATUS[e.status] || 'In review', pill: e.status === 'published' ? 'green' : e.status === 'rejected' ? 'red' : 'amber',
         acts: `<a class="btn btn-secondary btn-sm" href="event.html?id=${encodeURIComponent(e.id)}">View</a>
                <a class="btn btn-secondary btn-sm" href="${exp ? 'sell-experience.html' : 'sell-event.html'}?edit=${encodeURIComponent(e.id)}">Edit</a>
+               ${/food|drink/i.test(e.category || '') ? `<a class="btn btn-secondary btn-sm" href="sell-service.html?from=${encodeURIComponent(e.id)}">Make it a service</a>` : ''}
                <button class="btn btn-ghost btn-sm hub-danger" data-del="event" data-id="${esc(e.id)}" data-title="${esc(e.title)}">Delete</button>` });
     });
     HUB.services.forEach(v => rows.push({ kind: 'service', id: v.id, img: v.image, title: v.title, note: v.status === 'rejected' ? v.reviewNote : '',
