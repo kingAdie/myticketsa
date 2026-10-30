@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <dl class="tk-facts">
           <div><dt>Ticket</dt><dd>${esc(t.ticket.typeName)} × ${esc(t.ticket.quantity)}</dd></div>
-          <div><dt>Total</dt><dd>${t.pricing.total > 0 ? money(t.pricing.total) : 'Free'}</dd></div>
+          <div><dt>Total</dt><dd>${esc(Utils.priceText(t.pricing.total, event && event.paymentType))}</dd></div>
           <div><dt>Reference</dt><dd class="tk-mono">${esc(t.id)}</dd></div>
           <div><dt>Name</dt><dd>${esc([t.buyer.firstName, t.buyer.lastName].filter(Boolean).join(' '))}</dd></div>
         </dl>`}
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function payDetails() {
     const ev = event || {}, t = ticket;
     if (ev.paymentType === 'link' && /^https?:\/\//i.test(ev.paymentLink || '')) {
-      return `<a class="pay-btn" href="${esc(ev.paymentLink)}" rel="noopener noreferrer">Pay ${money(t.pricing.total)} now</a>
+      return `<a class="pay-btn" href="${esc(ev.paymentLink)}" rel="noopener noreferrer">${t.pricing.total > 0 ? `Pay ${money(t.pricing.total)} now` : 'Go to the payment page'}</a>
         ${row('Reference', t.id, true)}`;
     }
     if (ev.paymentType === 'bank' && ev.bankName) {
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.innerHTML = `
       <div class="pay-total">
         <span>Amount to pay</span>
-        <b>${money(t.pricing.total)}</b>
+        <b${t.pricing.total > 0 ? '' : ' class="is-text"'}>${t.pricing.total > 0 ? money(t.pricing.total) : esc(Utils.priceText(0, event && event.paymentType))}</b>
         <small>${by}</small>
       </div>
 

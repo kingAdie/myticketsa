@@ -186,3 +186,4 @@
 .done-acts{text-align:center;margin-top:14px}
 .done-acts .tk-linkbtn{color:var(--text-2);text-decoration:underline;cursor:pointer;font-size:.85rem}
 .done--in{padding-top:0}
+.pay-total b.is-text{font-size:1.3rem;margin:6px 0}

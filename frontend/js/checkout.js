@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // TicketsSA adds no fee: the buyer pays the organiser exactly the ticket price.
     const total = Math.round(sel.total * 100) / 100;
-    Utils.setText('#summaryTotal', total > 0 ? Utils.formatCurrency(total) : 'Free');
+    Utils.setText('#summaryTotal', Utils.priceText(total, sel.paymentType));
     sel.fee = 0; sel.grandTotal = total;
     Utils.setStorage('mt_selection', sel);
   }

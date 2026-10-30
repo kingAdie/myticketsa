@@ -672,7 +672,7 @@ const SupabaseAPI = (() => {
     // How long the organiser holds an unpaid reservation (set on their event).
     const evSnap = await db.collection('events').doc(payload.eventId).get();
     const ev     = evSnap.exists ? evSnap.data() : {};
-    const free   = ev.paymentType === 'free' && total === 0;
+    const free   = total === 0 && !['link', 'bank'].includes(ev.paymentType);
     let expiresAt = null;
     if (!free) {
       const start = ev.eventDate ? new Date(`${ev.eventDate}T${(ev.eventTime || '00:00').slice(0, 5)}:00`) : null;

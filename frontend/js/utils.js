@@ -303,6 +303,14 @@ const Utils = (() => {
     return a.slug ? `${location.origin}/s/${encodeURIComponent(a.slug)}` : `${location.origin}/accommodation.html?id=${encodeURIComponent(a.id)}`;
   }
 
+  /** Price text that never says "Free" when the organiser does take payment. */
+  function priceText(amount, paymentType) {
+    if (Number(amount) > 0) return formatCurrency(amount);
+    if (paymentType === 'link') return 'Price on payment page';
+    if (paymentType === 'bank') return 'Price from organiser';
+    return 'Free';
+  }
+
   function imgUrl(src, width = 800) {
     if (!src || typeof src !== 'string') return src || '';
     if (!src.includes('res.cloudinary.com')) return src;
@@ -446,7 +454,7 @@ const Utils = (() => {
     const mon  = d && !isNaN(d) ? d.toLocaleDateString('en-ZA', { month: 'short' }).toUpperCase() : '';
     const when = [ev.date ? formatDate(ev.date) : '', ev.time ? formatTime(ev.time) : ''].filter(Boolean).join(' · ');
     const where = [ev.location, ev.city].filter(Boolean).join(', ');
-    const price = Number(ev.price) > 0 ? formatCurrency(ev.price) : 'Free';
+    const price = priceText(ev.price, ev.paymentType);
     return '<article class="event-card" role="listitem" data-href="' + e(href) + '">' +
       '<a class="event-card__img-wrap" href="' + e(href) + '" aria-label="' + e(ev.title) + '" tabindex="-1">' +
         '<img class="event-card__bg" src="' + e(img) + '" alt="" aria-hidden="true" loading="lazy"/>' +
@@ -462,7 +470,7 @@ const Utils = (() => {
           (where ? '<div class="event-card__meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>' + e(where) + '</span></div>' : '') +
         '</div>' +
         '<div class="event-card__foot">' +
-          '<div class="event-card__price">' + e(price) + '<span class="event-card__price-note">' + (price !== 'Free' ? 'per ticket' : 'no payment needed') + '</span>' + '</div>' +
+          '<div class="event-card__price">' + e(price) + '<span class="event-card__price-note">' + (Number(ev.price) > 0 ? 'per ticket' : price === 'Free' ? 'no payment needed' : '') + '</span>' + '</div>' +
           '<div class="event-card__actions">' +
             '<a class="btn btn-secondary btn-sm" href="' + e(href) + '">Details</a>' +
             '<a class="btn btn-primary btn-sm" href="' + e(href) + '#tickets">Buy tickets</a>' +
@@ -525,6 +533,7 @@ const Utils = (() => {
     setHTML,
     initMobileNav,
     imgUrl,
+    priceText,
     eventLink,
     stayLink,
     compressImage,

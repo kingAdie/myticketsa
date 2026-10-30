@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${tt.description && tt.description !== tt.name ? `<span class="tt__desc">${esc(tt.description)}</span>` : ''}
             ${out ? '<span class="tt__left">Sold out</span>' : left <= 20 ? `<span class="tt__left">Only ${left} left</span>` : ''}
           </span>
-          <span class="tt__price">${Number(tt.price) > 0 ? Utils.formatCurrency(tt.price) : 'Free'}</span>
+          <span class="tt__price">${esc(Utils.priceText(tt.price, currentEvent.paymentType))}</span>
         </div>
         <div class="tt__qty">
           <small>How many?</small>
@@ -154,13 +154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const total = Number(selected.price) * quantity;
       const label = total > 0 ? `Continue · ${Utils.formatCurrency(total)}` : 'Continue';
       btn.disabled = false; btn.textContent = label;
-      $('barPrice').textContent = total > 0 ? Utils.formatCurrency(total) : 'Free';
+      $('barPrice').textContent = Utils.priceText(total, currentEvent.paymentType);
       $('barSub').textContent   = `${quantity} × ${selected.name}`;
       barBtn.textContent = 'Continue';
     } else {
       const min = Math.min(...types.map(t => Number(t.price) || 0));
       btn.disabled = true; btn.textContent = 'Choose a ticket';
-      $('barPrice').textContent = min > 0 ? 'From ' + Utils.formatCurrency(min) : 'Free';
+      $('barPrice').textContent = min > 0 ? 'From ' + Utils.formatCurrency(min) : Utils.priceText(0, currentEvent.paymentType);
       $('barSub').textContent   = currentEvent.date ? Utils.formatDate(currentEvent.date) : 'Tickets';
       barBtn.textContent = 'Get tickets';
     }
