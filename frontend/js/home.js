@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /* The events and stays an admin has switched on for the hero replace the
-     default "list your lodge" card. With none chosen, the default card stays. */
+     default "Sell on TicketsSA" card. With none chosen, the default card stays. */
   async function renderHeroSpots() {
     const card = document.getElementById('heroSpot');
     if (!card || typeof SupabaseAPI === 'undefined' || !SupabaseAPI.getHeroSpots) return;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { spots = await SupabaseAPI.getHeroSpots(); } catch { return; }
     if (!spots.length) return;                       // nothing chosen: keep the default card
 
-    /* Slides: every item the admin picked, then the default "List your lodge" card.
+    /* Slides: every item the admin picked, then the default "Sell on TicketsSA" card.
        They swap on their own, so even a single pick keeps the hero moving. */
     const defaultSlide = card.innerHTML;
     const slideFor = s => `
