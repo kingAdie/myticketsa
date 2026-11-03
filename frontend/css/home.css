@@ -1587,3 +1587,32 @@
 .hero-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#16A34A,#22C55E)}
 @keyframes heroBar{from{width:0}to{width:100%}}
 @media (prefers-reduced-motion:reduce){.hero-slide{transition:none}.hero-slide .featured-event-card__bg-img{animation:none}}
+
+/* ══ Hero: "Sell on TicketsSA" advert (default slide) ══ */
+.sell-ad{position:relative;z-index:2;display:flex;flex-direction:column;gap:14px;padding:26px 22px 24px;min-height:400px;
+  background:radial-gradient(120% 70% at 100% 0%,rgba(22,163,74,.22),transparent 60%),radial-gradient(90% 60% at 0% 100%,rgba(22,163,74,.10),transparent 60%),#070b08}
+.sell-ad::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:28px 28px;
+  -webkit-mask-image:linear-gradient(to bottom,#000,transparent 75%);mask-image:linear-gradient(to bottom,#000,transparent 75%)}
+.sell-ad > *{position:relative}
+.sell-ad__eyebrow{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35);
+  color:#4ADE80;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.sell-ad__eyebrow i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.2);animation:fePulse 2s ease-in-out infinite}
+.sell-ad__title{margin:2px 0 0;font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(1.7rem,2.8vw,2.3rem);font-weight:800;line-height:1.08;letter-spacing:-.035em;color:#fff}
+.sell-ad__title span{background:linear-gradient(90deg,#22C55E,#A3E635);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sell-ad__sub{margin:-4px 0 2px;color:rgba(255,255,255,.7);font-size:.92rem;line-height:1.5}
+.sell-ad__opts{display:grid;gap:8px}
+.sell-ad__opt{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:#fff;
+  transition:background .2s,border-color .2s,transform .2s}
+.sell-ad__opt:hover{background:rgba(22,163,74,.12);border-color:rgba(34,197,94,.5);transform:translateX(3px)}
+.sell-ad__icon{flex:0 0 40px;height:40px;border-radius:12px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:1.25rem}
+.sell-ad__txt{flex:1;min-width:0}
+.sell-ad__txt b{display:block;font-size:.96rem;font-weight:700}
+.sell-ad__txt small{display:block;color:rgba(255,255,255,.6);font-size:.8rem;margin-top:1px}
+.sell-ad__go{color:#4ADE80;font-weight:800;transition:transform .2s}
+.sell-ad__opt:hover .sell-ad__go{transform:translateX(3px)}
+.sell-ad__perks{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0;padding:0;list-style:none}
+.sell-ad__perks li{display:flex;align-items:center;gap:6px;color:rgba(255,255,255,.72);font-size:.8rem;font-weight:600}
+.sell-ad__perks li::before{content:'✓';width:16px;height:16px;border-radius:50%;background:rgba(22,163,74,.25);color:#4ADE80;font-size:.62rem;font-weight:900;display:flex;align-items:center;justify-content:center}
+.sell-ad__cta{width:100%;justify-content:center;margin-top:auto;border-radius:16px}
+.hero-slide .sell-ad{flex:1}
